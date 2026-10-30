@@ -46,6 +46,10 @@ plain-text format:
 
 Welcome, ${character_name}. Your influence is ${influence}.
 
+*show_if influence >= 5
+The guards recognize your achievements.
+They open the council doors.
+
 *choice
   #Request an audience -> council [if influence >= 5]
   #Meet the messenger -> messenger
@@ -83,6 +87,13 @@ effects. The browser displays only that view; `navigate()` enforces eligibility
 too. Repeated reads never change state or rerun effects. There are no expressions,
 logical operators, multiple conditions, or conditional Continue actions.
 
+`*show_if variable operator literal` applies the same condition rules to exactly
+the next narrative paragraph. It must be at a paragraph boundary after the title
+and entry effects, with prose on the immediately following source line. Blank
+lines separate paragraphs; the following ordinary paragraph is unconditional.
+Every passage requires at least one unconditional paragraph. The renderer uses
+`Game.visibleParagraphs`, so hidden paragraphs create no empty elements.
+
 `Game` owns one immutable `GameState`. It applies a destination's effects once in
 source order on a candidate state and commits only after all effects succeed.
 Initial entry uses the same path; later re-entry applies effects again. Reading
@@ -97,12 +108,19 @@ and reports errors with source lines and passage IDs. See the
 
 ## Planned future work (not implemented)
 
-Character attributes/UI, arithmetic expressions, basic skills,
-inventory quantities, chapter-organized journals, character creation, session-only
-Undo, and one persistent automatic author-defined checkpoint. Undo and checkpoint
-saving must share the documented pre-passage `GameSnapshot` contract; it remains
-a type-only proposal. Continue Game will resume that checkpoint, and New Game will
-require confirmation. Current Continue only follows an in-story destination.
+Character attributes/UI, arithmetic expressions, basic skills, inventory
+quantities, chapter-organized journals, and character creation remain future work.
+The saving/death roadmap is one automatic persistent checkpoint, future
+author-controlled `*checkpoint`/`*death` directives, and Try Again on death
+passages. A new game must establish an initial checkpoint; authored checkpoints
+replace it. Try Again restores the complete pre-passage state and enters that
+passage once. Death must never overwrite the checkpoint with dead state.
+Continue Game will resume the latest checkpoint on reopening, and New Game will
+require confirmation before overwriting progress. There will be no traditional
+Undo, choice-history stack, manual rewind, Return to Checkpoint control, or save
+slots. This is documentation only: `GameSnapshot` remains a type-only proposal,
+and no persistence, death, title-screen changes, or Try Again is implemented.
+Current Continue only follows an in-story destination.
 
 Excluded unless requirements explicitly change: random mechanics, glossary,
 shops, skill purchasing, manual saves, save slots, import/export, procedures,

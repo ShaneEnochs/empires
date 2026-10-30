@@ -43,13 +43,13 @@ test('reading and resolving paragraphs repeatedly cannot execute effects or muta
   const game = new Game(route);
   game.navigate('second');
   const before = game.state;
-  const text = game.passage.text;
+  const paragraphs = game.passage.paragraphs;
   for (let i = 0; i < 3; i++) {
-    assert.deepEqual(game.passage.text.map(p => interpolate(p, game.state.variables)), ['Count: 11, Alexander, loyal: true.']);
-    assert.equal(game.passage.text, text);
+    assert.deepEqual(game.visibleParagraphs.map(p => interpolate(p.text, game.state.variables)), ['Count: 11, Alexander, loyal: true.']);
+    assert.equal(game.passage.paragraphs, paragraphs);
     assert.equal(game.state, before);
   }
-  assert.deepEqual(text, ['Count: ${count}, ${name}, loyal: ${loyal}.']);
+  assert.deepEqual(paragraphs, [{ text: 'Count: ${count}, ${name}, loyal: ${loyal}.' }]);
 });
 
 test('a later legitimate re-entry applies effects once again without resetting variables', () => {

@@ -1,5 +1,5 @@
 import { interpolate } from './interpolate';
-import type { Choice, ChoiceCondition, Passage, PassageEffect, Story, Variables, VariableValue } from './types';
+import type { Choice, Condition, NarrativeParagraph, Passage, PassageEffect, Story, Variables, VariableValue } from './types';
 
 function syntaxError(message: string, line: number, passageId?: string): Error {
   return new Error(`Line ${line}${passageId ? `, passage "${passageId}"` : ''}: ${message}`);
@@ -25,12 +25,12 @@ function literal(value: string, line: number, passageId?: string): VariableValue
   throw syntaxError('Expected a finite number, true, false, or a double-quoted string literal.', line, passageId);
 }
 
-function parseCondition(source: string, variables: Variables, line: number, passageId: string): ChoiceCondition {
-  const parts = /^\[if\s+(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)\]$/.exec(source);
-  if (!parts) throw syntaxError('Expected [if variable operator literal] with ==, !=, >, >=, <, or <=.', line, passageId);
+function parseCondition(source: string, variables: Variables, line: number, passageId: string): Condition {
+  const parts = /^(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(source);
+  if (!parts) throw syntaxError('Expected variable operator literal with ==, !=, >, >=, <, or <=.', line, passageId);
   const variable = id(parts[1]!, 'Condition variable', line, passageId);
   if (!Object.hasOwn(variables, variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, passageId);
-  const operator = parts[2] as ChoiceCondition['operator'];
+  const operator = parts[2] as Condition['operator'];
   const value = literal(parts[3]!.trim(), line, passageId);
   if (typeof variables[variable] !== typeof value) {
     throw syntaxError('Condition operands must have compatible types.', line, passageId);
@@ -47,26 +47,40 @@ export function parseStory(source: string): Story {
   const initialVariables: Record<string, VariableValue> = {};
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
-    id: string; line: number; title?: string; text: string[];
+    id: string; line: number; title?: string; paragraphs: NarrativeParagraph[];
     choices: Choice[]; effects: PassageEffect[]; continueTo?: string;
   } | undefined;
   let paragraph: string[] = [];
+  let paragraphCondition: Condition | undefined;
+  let showIfLine = 1;
   let action: 'choice' | 'continue' | undefined;
   let actionLine = 1;
 
   function flushParagraph(): void {
-    if (current && paragraph.length > 0) current.text.push(paragraph.join(' '));
+    if (current && paragraph.length > 0) {
+      current.paragraphs.push(Object.freeze({
+        text: paragraph.join(' '),
+        ...(paragraphCondition === undefined ? {} : { condition: paragraphCondition }),
+      }));
+    }
     paragraph = [];
+    paragraphCondition = undefined;
   }
 
   function finishPassage(): void {
     if (!current) return;
+    if (paragraphCondition !== undefined && paragraph.length === 0) {
+      throw syntaxError('*show_if requires a narrative paragraph on the immediately following source line.', showIfLine, current.id);
+    }
     flushParagraph();
     if (current.title === undefined) {
       throw syntaxError('Passage requires exactly one *title.', current.line, current.id);
     }
-    if (current.text.length === 0) {
+    if (current.paragraphs.length === 0) {
       throw syntaxError('Passage requires at least one narrative paragraph.', current.line, current.id);
+    }
+    if (!current.paragraphs.some(paragraph => paragraph.condition === undefined)) {
+      throw syntaxError('Passage requires at least one unconditional narrative paragraph.', current.line, current.id);
     }
     if (action === 'choice' && current.choices.length === 0) {
       throw syntaxError('*choice requires at least one choice.', actionLine, current.id);
@@ -76,7 +90,7 @@ export function parseStory(source: string): Story {
       throw syntaxError('A conditional choice block requires at least one unconditional choice.', actionLine, current.id);
     }
     passages.push(Object.freeze({
-      id: current.id, title: current.title, text: Object.freeze(current.text),
+      id: current.id, title: current.title, paragraphs: Object.freeze(current.paragraphs),
       effects: Object.freeze(current.effects),
       choices: Object.freeze(current.choices),
       ...(current.continueTo === undefined ? {} : { continueTo: current.continueTo }),
@@ -87,6 +101,9 @@ export function parseStory(source: string): Story {
   for (const [index, raw] of lines.entries()) {
     const line = index + 1;
     const text = raw.trim();
+    if (paragraphCondition !== undefined && paragraph.length === 0 && (text === '' || text.startsWith('*'))) {
+      throw syntaxError('*show_if requires a narrative paragraph on the immediately following source line.', line, current?.id);
+    }
     if (text === '') {
       flushParagraph();
       continue;
@@ -95,11 +112,19 @@ export function parseStory(source: string): Story {
     if (text.startsWith('*')) {
       const directive = text.split(/\s/, 1)[0]!;
       const argument = text.slice(directive.length).trim();
+      if (directive === '*show_if') {
+        if (!current || current.title === undefined || action !== undefined || paragraph.length > 0) {
+          throw syntaxError('*show_if must be at a paragraph boundary after the title and effects, before navigation.', line, current?.id);
+        }
+        paragraphCondition = parseCondition(argument, initialVariables, line, current.id);
+        showIfLine = line;
+        continue;
+      }
       if (directive === '*var' || directive === '*set' || directive === '*add') {
         if (directive === '*var' && current) {
           throw syntaxError('*var declarations must precede the first passage.', line, current.id);
         }
-        if (directive !== '*var' && (!current || current.title === undefined || current.text.length > 0 || paragraph.length > 0 || action !== undefined)) {
+        if (directive !== '*var' && (!current || current.title === undefined || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined)) {
           throw syntaxError('Effects must appear after *title and before the first narrative paragraph.', line, current?.id);
         }
         const parts = /^(\S+)\s+(.+)$/.exec(argument);
@@ -130,7 +155,7 @@ export function parseStory(source: string): Story {
         const passageId = id(argument, 'Passage ID', line);
         if (ids.has(passageId)) throw syntaxError(`Duplicate passage ID "${passageId}".`, line, passageId);
         ids.add(passageId);
-        current = { id: passageId, line, text: [], choices: [], effects: [] };
+        current = { id: passageId, line, paragraphs: [], choices: [], effects: [] };
         action = undefined;
         continue;
       }
@@ -170,7 +195,12 @@ export function parseStory(source: string): Story {
       }
       if (/\[if\b/i.test(label)) throw syntaxError('Choice conditions must follow the destination.', line, current.id);
       const destinationId = id(target, 'Choice destination', line, current.id);
-      const condition = bracket === -1 ? undefined : parseCondition(destination.slice(bracket), initialVariables, line, current.id);
+      let condition: Condition | undefined;
+      if (bracket !== -1) {
+        const wrapper = /^\[if\s+(.+)\]$/.exec(destination.slice(bracket));
+        if (!wrapper) throw syntaxError('Expected a single [if variable operator literal] suffix.', line, current.id);
+        condition = parseCondition(wrapper[1]!, initialVariables, line, current.id);
+      }
       current.choices.push(Object.freeze({ label, destinationId, ...(condition === undefined ? {} : { condition }) }));
       references.push({ destinationId, passageId: current.id, line });
     } else if (action === 'continue') {

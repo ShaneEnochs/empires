@@ -15,7 +15,7 @@ test('parses multiple passages, choices, Continue, and terminal content from the
   const story = parseStory(readFileSync(new URL('../src/example.story', import.meta.url), 'utf8'));
   assert.equal(story.startId, 'gate');
   assert.deepEqual(story.passages.map(p => p.id), ['gate', 'messenger', 'council']);
-  assert.equal(story.passages[0]?.text.length, 2);
+  assert.equal(story.passages[0]?.paragraphs.length, 2);
   assert.deepEqual(story.passages[0]?.choices, [
     { label: 'Speak to the messenger', destinationId: 'messenger' },
     { label: 'Go straight to the council', destinationId: 'council' },
@@ -27,7 +27,7 @@ test('parses multiple passages, choices, Continue, and terminal content from the
 
 test('joins consecutive prose lines with spaces and separates paragraphs on blank lines', () => {
   const story = parseStory('*passage intro\n*title Arrival\n\n  First line.\nSecond line.  \n \t\nThird line.\nFourth line.');
-  assert.deepEqual(story.passages[0]?.text, ['First line. Second line.', 'Third line. Fourth line.']);
+  assert.deepEqual(story.passages[0]?.paragraphs, [{ text: 'First line. Second line.' }, { text: 'Third line. Fourth line.' }]);
 });
 
 test('accepts common line endings, surrounding blank lines, and a UTF-8 BOM', () => {
@@ -158,7 +158,7 @@ test('preserves literal HTML, Markdown, JavaScript, expressions, titles, and cho
   const literal = '<script>alert(1)</script> **bold** [link](url) ${gold} {window.alert(1)}';
   const story = parseStory(`*var gold 0\n*passage intro\n*title ${literal}\n${literal}\n\n# A literal Markdown heading\n*choice\n#${literal} -> end\n${end}`);
   assert.equal(story.passages[0]?.title, literal);
-  assert.deepEqual(story.passages[0]?.text, [literal, '# A literal Markdown heading']);
+  assert.deepEqual(story.passages[0]?.paragraphs, [{ text: literal }, { text: '# A literal Markdown heading' }]);
   assert.equal(story.passages[0]?.choices[0]?.label, literal);
 });
 
@@ -168,7 +168,8 @@ test('validated story definitions cannot be changed by callers', () => {
   assert.equal(Reflect.set(story, 'startId', 'end'), false);
   assert.throws(() => Array.prototype.push.call(story.passages, passage), TypeError);
   assert.equal(Reflect.set(passage, 'id', 'renamed'), false);
-  assert.equal(Reflect.set(passage.text, 0, 'Changed'), false);
+  assert.equal(Reflect.set(passage.paragraphs, 0, { text: 'Changed' }), false);
+  assert.equal(Reflect.set(passage.paragraphs[0]!, 'text', 'Changed'), false);
   assert.throws(() => Array.prototype.push.call(passage.choices, { label: 'Other', destinationId: 'end' }), TypeError);
   assert.equal(Reflect.set(passage.choices[0]!, 'destinationId', 'missing'), false);
   assert.equal(story.startId, 'opening');

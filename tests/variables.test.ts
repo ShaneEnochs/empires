@@ -100,8 +100,8 @@ test('variable names are case-sensitive and inherited object properties are not 
 
 test('validates interpolation while preserving placeholders in immutable passage text', () => {
   const story = parseStory('*var count 1\n*passage start\n*title Start\nCount: ${count}.');
-  assert.deepEqual(story.passages[0]?.text, ['Count: ${count}.']);
-  assert.equal(interpolate(story.passages[0]!.text[0]!, { count: 2 }), 'Count: 2.');
+  assert.deepEqual(story.passages[0]?.paragraphs, [{ text: 'Count: ${count}.' }]);
+  assert.equal(interpolate(story.passages[0]!.paragraphs[0]!.text, { count: 2 }), 'Count: 2.');
 });
 
 for (const placeholder of ['${missing}', '${Count}', '${count + 1}', '${ count }', '${}', '${count', '${count${count}}']) {
