@@ -1,9 +1,9 @@
 # Empires
 
-A small, passage-based interactive-fiction foundation written in TypeScript for
-the browser. No frontend framework, interpreter, or backend is involved.
+A small, passage-based interactive-fiction engine written in TypeScript for the
+browser. No frontend framework, backend, or runtime library dependencies.
 
-## Run it
+## Install and run
 
 Requires Node.js **22.12+** and npm.
 
@@ -14,41 +14,52 @@ npm run dev
 
 Open the address printed by Vite. The example offers two routes through three
 passages: **gate → messenger → council**, or **gate → council**. The messenger's
-Continue button explicitly targets `council`; the council is a terminal passage.
-Refreshing the page starts the example again. No progress is saved.
+Continue button explicitly targets `council`; the council is terminal. Refreshing
+starts the example again. No progress is saved.
 
 ```sh
-npm test          # Node's test runner: parsing, IDs, validation, navigation
+npm test          # Node's test runner: parsing, validation, navigation
 npm run build    # strict TypeScript check, then browser build in dist/
 npm run preview  # serve that production build locally
 ```
 
-## What is built
+GitHub Actions runs `npm ci`, `npm test`, and `npm run build` on Node.js 22 for
+pull requests targeting `main` and pushes to `main`. Its only granted permission
+is reading repository contents; it does not deploy, publish, or merge anything.
 
-- A validated JSON story format with stable, authored passage IDs.
-- Rejection of duplicate IDs, missing destinations, and unsupported fields.
-- A runtime that owns one immutable `GameState` and enters one explicit destination
-  per player action. Rendering never changes gameplay state.
-- Plain-text paragraphs, choice buttons, Continue, and a tiny original story.
-- Core interfaces, including a **proposed, type-only** `GameSnapshot` contract.
+## Write a story
 
-See [engine design](docs/ENGINE.md), [story format](docs/SCRIPTING.md), and
-[contributor rules](AGENTS.md). Vite handles TypeScript development/builds; tests
-use Node and tsx. There are no runtime library dependencies.
+Edit [src/example.story](src/example.story). Stories use plain text with five
+constructs: `*passage id`, `*title text`, `*choice`, `#Label -> destination_id`,
+and `*continue destination_id`. Blank lines separate paragraphs; consecutive
+prose lines join with spaces. Content is displayed literally, without evaluating
+markup or code. The first passage is the start; navigation always uses explicit
+IDs, never the next passage in the file.
 
-## Next stage (not implemented)
+The parser rejects duplicate IDs, missing destinations, missing or duplicate
+titles, malformed actions, and unsupported directives before play begins, with
+source lines and passage IDs in errors. Validated story definitions are
+immutable. One centrally owned `GameState` tracks play; rendering cannot change
+it. There are no entry effects or executable scripting commands.
 
-Add variables and conditions with a small, explicitly defined grammar; simple
-skills and item quantities; a journal; and character creation. Later add
-session-only Undo and one automatic, author-defined checkpoint. Both must reuse
-the same pre-passage snapshot boundary described in `docs/ENGINE.md`. Continue
-eventually resumes that checkpoint from a title screen; the current in-story
-Continue button simply follows its authored destination. New Game will require
-confirmation before discarding progress. Build these in focused stages with
-tests; this foundation has no storage, history, expression evaluator, or gameplay
-effects.
+See the complete [authoring guide](docs/SCRIPTING.md), [engine design and proposed
+snapshot contract](docs/ENGINE.md), and [contributor rules](AGENTS.md). Vite handles
+TypeScript development/builds; tests use Node and tsx. JSON is no longer a story
+authoring format.
 
-Excluded: glossary, randomness, shops, skill purchasing, save slots, manual saving,
-import/export, nested calls, subroutines, loops, complex UI styling, and a plugin
-system. System Awakening was consulted only for the desired experience and story
-syntax; no engine code or architecture was imported.
+## Planned future work (not implemented)
+
+Character attributes and variables, arithmetic and conditional choices, basic
+skills, inventory quantities, chapter-organized journal entries, character
+creation, session-only Undo, and one persistent automatic author-defined
+checkpoint. Undo and checkpoint saving must reuse the same pre-passage snapshot
+boundary documented in `docs/ENGINE.md`. Continue Game will resume that checkpoint;
+the current in-story Continue button only follows its explicit destination.
+New Game will require confirmation before discarding progress. None of these
+future gameplay systems is implemented; `GameSnapshot` is a type-only proposal.
+
+Excluded unless requirements explicitly change: random mechanics, glossary,
+shops, skill purchasing, manual saving, save slots, import/export, procedures,
+subroutines, loops, and a plugin system. This stage adds no visual redesign,
+cloud storage, database, or backend. System Awakening is reference only; no
+engine code or architecture was imported.
