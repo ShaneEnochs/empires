@@ -35,7 +35,7 @@ Edit [src/example.story](src/example.story); read the full
 plain-text format:
 
 ```text
-*var influence 0
+*var influence 4
 *var loyal false
 *var character_name "Unknown"
 
@@ -47,6 +47,7 @@ plain-text format:
 Welcome, ${character_name}. Your influence is ${influence}.
 
 *choice
+  #Request an audience -> council [if influence >= 5]
   #Meet the messenger -> messenger
 
 *passage messenger
@@ -54,6 +55,13 @@ Welcome, ${character_name}. Your influence is ${influence}.
 *set loyal true
 
 Loyal: ${loyal}.
+
+*continue council
+
+*passage council
+*title The Council
+
+The council awaits your answer.
 ```
 
 Blank lines separate paragraphs; consecutive prose lines join with spaces. The
@@ -62,6 +70,18 @@ stable IDs. Every variable must be declared before the first passage. Values are
 finite numbers, booleans, or double-quoted strings; `*set` preserves the declared
 type, and `*add` only accepts numeric variables and numeric literals. Effects
 must follow the title and precede all narrative.
+
+Choices may have one optional `[if variable operator literal]` suffix. Operators
+are `==`, `!=`, `>`, `>=`, `<`, and `<=`; equality supports matching primitive
+types, while ordering requires numbers. In the example above entry raises
+influence from 4 to 5, making the audience choice available. A conditional block
+must include an unconditional fallback, such as meeting the messenger.
+
+`passage.choices` contains all authored choices. The read-only
+`Game.availableChoices` view filters them against committed state after entry
+effects. The browser displays only that view; `navigate()` enforces eligibility
+too. Repeated reads never change state or rerun effects. There are no expressions,
+logical operators, multiple conditions, or conditional Continue actions.
 
 `Game` owns one immutable `GameState`. It applies a destination's effects once in
 source order on a candidate state and commits only after all effects succeed.
@@ -77,7 +97,7 @@ and reports errors with source lines and passage IDs. See the
 
 ## Planned future work (not implemented)
 
-Character attributes/UI, expressions and conditional choices, basic skills,
+Character attributes/UI, arithmetic expressions, basic skills,
 inventory quantities, chapter-organized journals, character creation, session-only
 Undo, and one persistent automatic author-defined checkpoint. Undo and checkpoint
 saving must share the documented pre-passage `GameSnapshot` contract; it remains
