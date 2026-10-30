@@ -86,6 +86,7 @@ Before entering the council, choose the name you wish to use at court.
 
 *passage choose_background
 *title Choose Your Background
+*checkpoint
 *journal chose_name "You introduced yourself as ${character_name}."
 
 Welcome, ${character_name}. What shaped your life before this journey?

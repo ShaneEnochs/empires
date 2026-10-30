@@ -54,6 +54,7 @@ export interface Passage {
   readonly id: string;
   readonly chapter: string;
   readonly title: string;
+  readonly checkpoint?: true;
   readonly effects: readonly PassageEffect[];
   readonly paragraphs: readonly NarrativeParagraph[];
   readonly choices: readonly Choice[];
@@ -78,7 +79,7 @@ export interface GameState {
   readonly inventory: Inventory;
 }
 
-/** Proposed future contract only: state at the destination, before entry effects. */
+/** The single in-memory checkpoint: complete state before destination entry effects. */
 export interface GameSnapshot {
   readonly state: GameState;
 }

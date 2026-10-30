@@ -113,7 +113,7 @@ variables at that point in effect order. The resolved text and passage chapter
 are recorded once; re-entry never duplicates or rewrites the event.
 
 Recorded entries live in the frozen `GameState.journal`, participate in atomic
-entry, and will be part of the future single checkpoint. Opening or closing the
+entry, and are part of the single in-memory checkpoint. Opening or closing the
 Journal section changes no gameplay state. Chapter groups follow first-recorded
 order, with events in recording order within each group; an open journal updates
 after navigation. Empty journals show “No journal entries yet.”
@@ -130,7 +130,7 @@ order. All effects share the same placement and execute in source order.
 Only acquired IDs live in the frozen, JSON-serializable `GameState.skills` array.
 New games start empty before initial effects. Entry clones skills along with
 variables and journal; any failure commits none of their changes. The future
-single checkpoint must preserve these and inventory. The Skills section derives names from
+single checkpoint preserves these and inventory. The Skills section derives names from
 story definitions and IDs from current state, updates after navigation, and
 shows “No skills acquired yet.” when empty. Its button changes no gameplay state.
 
@@ -148,7 +148,7 @@ operands are unsupported. They share the existing entry-effect placement/order.
 Insufficient removal or quantity overflow fails the entire entry, including all
 earlier variable, skill, journal, and item changes. Each operation must be valid,
 even if a later operation would repair it. Candidate inventory is copied before
-effects; earlier states remain unchanged. The future checkpoint must include it.
+effects; earlier states remain unchanged. The checkpoint includes it.
 The native Inventory section resolves names from story definitions and lists
 `Name × quantity` in insertion order. Empty inventory shows “No items in inventory.”
 Opening it changes no gameplay state; all three sections update after navigation
@@ -223,24 +223,60 @@ There is no dedicated character object or allocation system: names, identity,
 and numeric attributes are ordinary variables; backgrounds use existing choices,
 skills, inventory, and journal effects. See the complete example in the
 [authoring guide](docs/SCRIPTING.md#text-input-and-character-creation).
-The future checkpoint at an input destination must include accepted text before
-entry effects, so restoring there will not prompt again. Restoring a genuine
-input passage will show its form. Saving/restoration remains unimplemented.
+The checkpoint at an input destination includes accepted text before entry
+effects, so restoration there does not prompt again. Restoring a genuine input
+passage makes its form available on rendering. Persistence remains unimplemented.
 
-## Planned future work (not implemented)
+## In-memory checkpoint
 
-Character attributes/UI and arithmetic expressions remain future work.
-The saving/death roadmap is one automatic persistent checkpoint, future
-author-controlled `*checkpoint`/`*death` directives, and Try Again on death
-passages. A new game must establish an initial checkpoint; authored checkpoints
-replace it. Try Again restores the complete pre-passage state and enters that
-passage once. Death must never overwrite the checkpoint with dead state.
-Continue Game will resume the latest checkpoint on reopening, and New Game will
-require confirmation before overwriting progress. There will be no traditional
-Undo, choice-history stack, manual rewind, Return to Checkpoint control, or save
-slots. This is documentation only: `GameSnapshot` remains a type-only proposal,
-and no persistence, death, title-screen changes, or Try Again is implemented.
-Current Continue only follows an in-story destination.
+`*checkpoint` marks a passage as an automatic checkpoint. It takes no arguments
+and must be the next nonblank directive after `*title`, before effects or prose,
+at most once per passage. It is immutable passage metadata, not an entry effect.
+All action categories remain supported. The example marks `choose_background`
+after the player submits a preferred name.
+
+Every new game establishes an initial checkpoint before starting-passage effects.
+Successful entry to an authored checkpoint replaces it with the complete
+destination state **before effects**: variables, journal records, ordered skills,
+and ordered inventory. Re-entry updates it even for the same passage ID. Ordinary
+passages and reads never replace it. Failed entry changes neither current state
+nor checkpoint; failed startup exposes no partially initialized game.
+
+The engine APIs are:
+
+```ts
+const game = new Game(story);
+const snapshot = game.checkpoint; // Frozen { state: GameState }, before entry effects.
+game.restoreCheckpoint();       // Engine recovery; apply saved passage effects once.
+const restored = new Game(story, { checkpoint: snapshot }); // Enter saved passage directly.
+```
+
+Restoration validates and copies the snapshot, re-enters its destination, and
+commits only if entry succeeds. It preserves the checkpoint itself, and repeated
+restoration produces the same state without accumulating effects. Fresh-instance
+restoration never runs the starting passage first. Validation checks exact fields,
+declared variable types/finite values, journal IDs and origin chapters, unique
+known skills, and positive safe quantities of known items. Data is copied and
+deeply frozen without storing story definitions, derived views, or form drafts.
+See [engine details](docs/ENGINE.md#in-memory-checkpoint-capture-and-restoration).
+
+This is engine-only recovery in memory: there is no player-facing checkpoint
+return control, storage, or saved progress across refreshes.
+
+## Roadmap
+
+1. **Stage 7A (implemented):** in-memory capture, validation, and restoration.
+2. **Stage 7B (planned):** persistent saving, Continue Game, and confirmed New Game.
+3. **Stage 7C (planned):** `*death` and Try Again restoring the latest checkpoint.
+4. **Stage 8 (planned):** interface improvements and end-to-end testing.
+
+Persistent format/version policy, browser storage, title screens, death, and
+Try Again remain unimplemented. Continue Game will resume the single checkpoint;
+New Game will confirm before replacing progress. Death must never overwrite it
+with dead state. Traditional Undo, choice-history stacks, manual rewind, Return
+to Checkpoint controls, manual saves, and save slots remain excluded. Current
+Continue only follows an in-story destination. Character attributes/UI and
+arithmetic expressions still require separate requests.
 
 Excluded unless requirements explicitly change: random mechanics, glossary,
 shops, skill purchasing, manual saves, save slots, import/export, procedures,

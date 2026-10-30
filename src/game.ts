@@ -1,17 +1,34 @@
 import { evaluateCondition } from './condition';
 import { interpolate } from './interpolate';
 import { validateTextInput } from './input';
-import type { Choice, GameState, NarrativeParagraph, Passage, Story } from './types';
+import { validateSnapshot } from './snapshot';
+import type { Choice, GameSnapshot, GameState, NarrativeParagraph, Passage, Story } from './types';
 
 export class Game {
   private currentState: GameState;
+  private currentCheckpoint: GameSnapshot;
 
-  constructor(private readonly story: Story) {
-    this.currentState = this.enterPassage({ passageId: story.startId, variables: story.initialVariables, journal: [], skills: [], inventory: {} });
+  constructor(private readonly story: Story, options?: { readonly checkpoint: unknown }) {
+    const snapshot = validateSnapshot(options === undefined ? {
+      state: { passageId: story.startId, variables: story.initialVariables, journal: [], skills: [], inventory: {} },
+    } : options.checkpoint, story);
+    const next = this.enterPassage(snapshot.state);
+    this.currentState = next;
+    this.currentCheckpoint = snapshot;
   }
 
   get state(): GameState {
     return this.currentState;
+  }
+
+  get checkpoint(): GameSnapshot {
+    return this.currentCheckpoint;
+  }
+
+  /** Engine recovery only; replays pre-entry state without capturing over it. */
+  restoreCheckpoint(): void {
+    const snapshot = validateSnapshot(this.currentCheckpoint, this.story);
+    this.currentState = this.enterPassage(snapshot.state);
   }
 
   get passage(): Passage {
@@ -36,7 +53,7 @@ export class Game {
     if (!allowed) {
       throw new Error(`Passage "${current.id}" has no action to "${destinationId}".`);
     }
-    this.currentState = this.enterPassage({ ...this.currentState, passageId: destinationId });
+    this.transition({ ...this.currentState, passageId: destinationId });
   }
 
   /** The validated current passage alone selects the variable and destination. */
@@ -44,16 +61,25 @@ export class Game {
     const action = this.passage.textInput;
     if (action === undefined) throw new Error(`Passage "${this.passage.id}" does not offer text input.`);
     const text = validateTextInput(value);
-    this.currentState = this.enterPassage({
+    this.transition({
       ...this.currentState, passageId: action.destinationId,
       variables: { ...this.currentState.variables, [action.variable]: text },
     });
   }
 
+  private transition(input: GameState): void {
+    const checkpoint = this.findPassage(input.passageId).checkpoint
+      ? validateSnapshot({ state: input }, this.story)
+      : this.currentCheckpoint;
+    const next = this.enterPassage(input);
+    this.currentState = next;
+    this.currentCheckpoint = checkpoint;
+  }
+
   private enterPassage(input: GameState): GameState {
     const { passageId } = input;
     const passage = this.findPassage(passageId);
-    // Future pre-passage snapshots belong at this boundary, before any effect.
+    // Checkpoints preserve this input boundary; effects run only on the copy below.
     const next = {
       passageId, variables: { ...input.variables }, journal: [...input.journal],
       skills: [...input.skills], inventory: { ...input.inventory },

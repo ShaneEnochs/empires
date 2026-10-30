@@ -24,21 +24,21 @@ libraries. Use the existing checkout; no frontend framework is needed.
   entries; failed entry must commit neither variables nor journal changes.
 - The Journal control is presentation only: viewing/grouping entries must never
   trigger entry effects, navigation, or gameplay changes. Keep recorded chapter
-  and text values intact and include the complete journal in the future checkpoint.
+  and text values intact in checkpoints and future persistent storage.
 - Skill definitions are immutable `Story.skills` metadata containing only IDs and
   display names. Acquired IDs belong only to `GameState.skills`: a unique,
   acquisition-ordered, frozen JSON array. Clone it for entry candidates so mixed
   skill, journal, and variable effects commit atomically. Skill IDs and variable
   IDs have separate namespaces; use the existing condition parser/evaluator for
   explicit `has_skill`/`lacks_skill` checks. The Skills control is presentation
-  only; the future checkpoint must preserve acquired IDs, not duplicate definitions.
+  only; checkpoints preserve acquired IDs, not duplicate definitions.
 - Item definitions are immutable `Story.items` ID/name metadata. Quantities belong
   only to the frozen `GameState.inventory` record, with positive safe integers
   and no zero properties. Clone the record for each entry candidate; every item
   operation must succeed before committing any gameplay changes. Use own-property
   checks for item reads, including `constructor`. Deletion and reacquisition must
   preserve object insertion order. Reuse shared conditions/navigation enforcement;
-  inventory inspection is presentation only. The future checkpoint preserves the
+  inventory inspection is presentation only. The checkpoint preserves the
   complete inventory alongside variables, skills, and journal.
 - `*input_text` is one concluding player action, never an entry effect. It targets
   a declared string variable and explicit destination from immutable passage data.
@@ -54,8 +54,20 @@ libraries. Use the existing checkout; no frontend framework is needed.
 - Passage IDs are authored, unique, and stable. Never derive them from order,
   titles, prose, timestamps, or random values. Preserve IDs for navigation and
   future checkpoint compatibility.
-- Preserve the pre-passage `GameSnapshot` boundary for the future single persistent
-  checkpoint. Restoration must enter its passage and apply effects exactly once.
+- `Game` owns exactly one in-memory `GameSnapshot`, independent of current state.
+  Always capture complete pre-entry state, including accepted submitted text.
+  The start passage has an automatic initial checkpoint. Authored `*checkpoint`
+  is immutable passage metadata immediately after the title, before effects/prose.
+  Replace the checkpoint only after successful entry, even on re-entry to the same
+  ID; ordinary passages and reads must not capture. Failures preserve both state
+  and checkpoint. Copy/freeze records, arrays, and journal entries explicitly.
+- Validate snapshot input against current story definitions before restoration;
+  reject missing/extra fields, incompatible variables, invalid IDs/quantities,
+  duplicates, inherited data, and accessor callbacks. `restoreCheckpoint()` replays
+  the saved pre-entry state exactly once and preserves the checkpoint itself.
+  Fresh `new Game(story, { checkpoint: data })` enters that destination directly;
+  never initialize the starting passage before restoring. These are engine APIs,
+  not player controls. Future persistence must save this pre-entry snapshot.
   Do not add traditional Undo, a history stack, manual rewind, or a player-facing
   Return to Checkpoint command.
 - Implement new features only when explicitly requested. Do not replace working
@@ -78,18 +90,18 @@ libraries. Use the existing checkout; no frontend framework is needed.
 
 ## Planned features, only when requested
 
-Character attributes/UI; expressions;
-one persistent automatic checkpoint; author-controlled
-`*checkpoint` and `*death`; Try Again on death passages; Continue Game; and
-confirmed New Game. None of this roadmap is implemented yet. The first new game
-must establish an initial checkpoint; authored checkpoints replace it. Death
-shows authored prose without saving dead state over the checkpoint. Try Again
-restores all gameplay state, including current variables/journal/skills/inventory.
-Submitted names and character attributes are already ordinary variables. A future
-snapshot at an input destination includes accepted text before entry effects;
-restoring it must not ask for that text again. A snapshot at a genuine input
-passage shows the form and permits a new submission. There are no manual save slots
-or rewind controls.
+Stage 7A is implemented: one in-memory checkpoint, automatic initial capture,
+author-controlled `*checkpoint`, validation, and engine restoration. Stage 7B adds
+persistent saving, Continue Game, and confirmed New Game; Stage 7C adds `*death`
+and Try Again; Stage 8 adds interface improvements and end-to-end testing. Do not
+start later stages without a request. Storage keys, versioning, changing-release
+compatibility, title screens, and browser storage remain unimplemented.
+Death must eventually show authored prose without saving dead state over the
+checkpoint. Try Again will restore the existing complete pre-entry snapshot.
+Submitted names and character attributes are ordinary variables; a checkpoint at
+their destination already includes them. Restoring a genuine input passage permits
+a new submission when rendered. There are no manual save slots or rewind controls.
+Character attributes/UI and expressions still require separate requests.
 Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
 are implemented, as are single typed conditions on choices and narrative
 paragraphs, chapter metadata, the chapter-organized journal, binary skills, item
