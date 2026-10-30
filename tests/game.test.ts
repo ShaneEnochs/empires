@@ -39,7 +39,7 @@ test('can follow the alternative direct route', () => {
 test('navigation uses IDs even when passage definitions are reordered', () => {
   // Reorder validated definitions while retaining their static chapter metadata.
   const reordered = Object.freeze({
-    ...story, passages: Object.freeze([story.passages[0]!, story.passages[2]!, story.passages[1]!]),
+    ...story, passages: Object.freeze([story.passages[0]!, story.passages[2]!, story.passages[1]!, ...story.passages.slice(3)]),
   });
   const game = new Game(reordered);
   assert.equal(game.passage.id, 'gate');

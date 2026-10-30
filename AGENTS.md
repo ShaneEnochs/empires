@@ -40,6 +40,17 @@ libraries. Use the existing checkout; no frontend framework is needed.
   preserve object insertion order. Reuse shared conditions/navigation enforcement;
   inventory inspection is presentation only. The future checkpoint preserves the
   complete inventory alongside variables, skills, and journal.
+- `*input_text` is one concluding player action, never an entry effect. It targets
+  a declared string variable and explicit destination from immutable passage data.
+  Only `Game.submitText` may execute it; ordinary navigation cannot bypass it.
+  Use the shared text validator: reject controls/line breaks, trim outer whitespace,
+  and require 1–80 Unicode code points. Prepare the accepted value before the
+  destination's pre-entry snapshot boundary and effects; commit only after every
+  effect succeeds. Failed submissions preserve every committed field.
+- Character names/background attributes are ordinary `GameState.variables`; use
+  choices and normal effects for backgrounds. Do not add a CharacterState model,
+  allocation engine, or form framework. Draft text may live in the native input
+  until submission, but rendering and panel controls must never submit it.
 - Passage IDs are authored, unique, and stable. Never derive them from order,
   titles, prose, timestamps, or random values. Preserve IDs for navigation and
   future checkpoint compatibility.
@@ -68,23 +79,29 @@ libraries. Use the existing checkout; no frontend framework is needed.
 ## Planned features, only when requested
 
 Character attributes/UI; expressions;
-character creation; one persistent automatic checkpoint; author-controlled
+one persistent automatic checkpoint; author-controlled
 `*checkpoint` and `*death`; Try Again on death passages; Continue Game; and
 confirmed New Game. None of this roadmap is implemented yet. The first new game
 must establish an initial checkpoint; authored checkpoints replace it. Death
 shows authored prose without saving dead state over the checkpoint. Try Again
-restores all gameplay state, including current variables/journal/skills/inventory
-and future character-creation data. There are no manual save slots
+restores all gameplay state, including current variables/journal/skills/inventory.
+Submitted names and character attributes are already ordinary variables. A future
+snapshot at an input destination includes accepted text before entry effects;
+restoring it must not ask for that text again. A snapshot at a genuine input
+passage shows the form and permits a new submission. There are no manual save slots
 or rewind controls.
 Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
 are implemented, as are single typed conditions on choices and narrative
-paragraphs, chapter metadata, the chapter-organized journal, binary skills, and
-item quantities. Item operands use decimal integer literals, never variables or
+paragraphs, chapter metadata, the chapter-organized journal, binary skills, item
+quantities, and text input for story-driven character creation. Item operands
+use decimal integer literals, never variables or
 expressions; do not add shops, equipment, crafting, weight, rarity, durability,
 categories, capacity, descriptions, or passive effects.
 Skills have no levels, experience, purchasing, rarity, cooldowns, passive bonuses,
 or progression trees. Keep these small without expanding into a general evaluator
 or event framework.
+Text input remains one string field per passage; exclude numeric inputs, complex
+forms, point-buy, portraits, visual customization, and a character-sheet UI.
 
 Unless a future task explicitly changes the requirements, exclude random
 mechanics, glossary systems, shops, skill purchasing, manual saving, save slots,
