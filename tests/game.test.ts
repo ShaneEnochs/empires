@@ -12,6 +12,7 @@ test('enters the authored starting passage', () => {
   assert.deepEqual(game.state, {
     passageId: 'gate', variables: { influence: 1, honor: 5, loyal: false, character_name: 'Alexander' },
     journal: [{ id: 'arrived_city', chapter: 'Prologue', text: 'Alexander reached the city with influence 1.' }],
+    skills: ['composure'],
   });
   assert.equal(game.passage.id, 'gate');
 });

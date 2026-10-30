@@ -4,7 +4,13 @@ export type Variables = Readonly<Record<string, VariableValue>>;
 export type PassageEffect =
   | { readonly kind: 'set'; readonly variable: string; readonly value: VariableValue }
   | { readonly kind: 'add'; readonly variable: string; readonly value: number }
-  | { readonly kind: 'journal'; readonly id: string; readonly text: string };
+  | { readonly kind: 'journal'; readonly id: string; readonly text: string }
+  | { readonly kind: 'grant_skill' | 'revoke_skill'; readonly skillId: string };
+
+export interface SkillDefinition {
+  readonly id: string;
+  readonly name: string;
+}
 
 export interface JournalEntry {
   readonly id: string;
@@ -14,7 +20,8 @@ export interface JournalEntry {
 
 export type Condition =
   | { readonly variable: string; readonly operator: '==' | '!='; readonly value: VariableValue }
-  | { readonly variable: string; readonly operator: '>' | '>=' | '<' | '<='; readonly value: number };
+  | { readonly variable: string; readonly operator: '>' | '>=' | '<' | '<='; readonly value: number }
+  | { readonly operator: 'has_skill' | 'lacks_skill'; readonly skillId: string };
 
 export interface Choice {
   readonly label: string;
@@ -40,6 +47,7 @@ export interface Passage {
 export interface Story {
   readonly startId: string;
   readonly initialVariables: Variables;
+  readonly skills: readonly SkillDefinition[];
   readonly passages: readonly Passage[];
 }
 
@@ -48,6 +56,7 @@ export interface GameState {
   readonly passageId: string;
   readonly variables: Variables;
   readonly journal: readonly JournalEntry[];
+  readonly skills: readonly string[];
 }
 
 /** Proposed future contract only: state at the destination, before entry effects. */

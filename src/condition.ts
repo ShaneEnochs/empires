@@ -1,7 +1,12 @@
-import type { Condition, Variables } from './types';
+import type { Condition, GameState } from './types';
 
-/** Compare validated data with committed variables without executing effects. */
-export function evaluateCondition(condition: Condition, variables: Variables): boolean {
+/** Check validated conditions against committed state without executing effects. */
+export function evaluateCondition(condition: Condition, state: GameState): boolean {
+  if ('skillId' in condition) {
+    const acquired = state.skills.includes(condition.skillId);
+    return condition.operator === 'has_skill' ? acquired : !acquired;
+  }
+  const { variables } = state;
   if (!Object.hasOwn(variables, condition.variable)) return false;
   const actual = variables[condition.variable];
   switch (condition.operator) {

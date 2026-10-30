@@ -17,7 +17,8 @@ function showError(error: unknown): void {
 }
 
 try {
-  const game = new Game(parseStory(exampleStory));
+  const story = parseStory(exampleStory);
+  const game = new Game(story);
   const journalButton = document.createElement('button');
   journalButton.type = 'button';
   journalButton.textContent = 'Journal';
@@ -62,6 +63,42 @@ try {
     if (!journalSection.hidden) renderJournal();
   });
 
+  const skillsButton = document.createElement('button');
+  skillsButton.type = 'button';
+  skillsButton.textContent = 'Skills';
+  skillsButton.setAttribute('aria-controls', 'skills');
+  skillsButton.setAttribute('aria-expanded', 'false');
+  const skillsSection = document.createElement('section');
+  skillsSection.id = 'skills';
+  skillsSection.hidden = true;
+  skillsSection.setAttribute('aria-labelledby', 'skills-heading');
+
+  function renderSkills(): void {
+    const heading = document.createElement('h2');
+    heading.id = 'skills-heading';
+    heading.textContent = 'Skills';
+    skillsSection.replaceChildren(heading);
+    if (game.state.skills.length === 0) {
+      const empty = document.createElement('p');
+      empty.textContent = 'No skills acquired yet.';
+      skillsSection.append(empty);
+      return;
+    }
+    const list = document.createElement('ul');
+    for (const id of game.state.skills) {
+      const item = document.createElement('li');
+      item.textContent = story.skills.find(skill => skill.id === id)!.name;
+      list.append(item);
+    }
+    skillsSection.append(list);
+  }
+
+  skillsButton.addEventListener('click', () => {
+    skillsSection.hidden = !skillsSection.hidden;
+    skillsButton.setAttribute('aria-expanded', String(!skillsSection.hidden));
+    if (!skillsSection.hidden) renderSkills();
+  });
+
   function render(): void {
     const passage = game.passage;
     const heading = document.createElement('h1');
@@ -95,8 +132,9 @@ try {
     for (const choice of game.availableChoices) addAction(choice.label, choice.destinationId);
     if (passage.continueTo !== undefined) addAction('Continue', passage.continueTo);
 
-    root.replaceChildren(heading, ...paragraphs, actions, journalButton, journalSection);
+    root.replaceChildren(heading, ...paragraphs, actions, journalButton, skillsButton, journalSection, skillsSection);
     renderJournal();
+    renderSkills();
     heading.focus();
   }
 

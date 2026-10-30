@@ -3,9 +3,10 @@
 ## Validated story data
 
 `parseStory` reads one `.story` authoring format into a complete immutable `Story`
-before `new Game` can run. The story contains `initialVariables`, `startId`, and
-`passages`. Variables are declared before the first passage; their primitive
-initial values establish fixed types. Variable names and stable passage IDs share
+before `new Game` can run. The story contains `initialVariables`, `skills`,
+`startId`, and `passages`. Variable and skill declarations may be interleaved
+before all chapters and passages. Primitive variable initial values establish
+fixed types. Variable names and stable passage IDs share
 `[a-z][a-z0-9_-]*`. IDs are authored, never derived from titles, text, or randomness.
 The first passage is the start; all later navigation uses explicit destinations.
 
@@ -17,7 +18,8 @@ in place of the old `Passage.text` string array. `ChoiceCondition` was renamed
 ```ts
 type Condition =
   | { readonly variable: string; readonly operator: '==' | '!='; readonly value: VariableValue }
-  | { readonly variable: string; readonly operator: '>' | '>=' | '<' | '<='; readonly value: number };
+  | { readonly variable: string; readonly operator: '>' | '>=' | '<' | '<='; readonly value: number }
+  | { readonly operator: 'has_skill' | 'lacks_skill'; readonly skillId: string };
 
 interface NarrativeParagraph {
   readonly text: string;
@@ -34,19 +36,23 @@ separate content registries.
 and is copied into each following passage until another declaration. A chapter
 can close a valid previous passage, but cannot bypass missing titles, prose,
 choices, or a pending `*show_if`. Every declaration needs a following passage,
-and variable declarations must come before chapters and the first passage.
+and variable/skill declarations must come before chapters and the first passage.
 Labels are nonempty literal text, not interpolated values; repeated labels are
 allowed. There is no mutable runtime `currentChapter`, so navigation order cannot
 change a passage's chapter affiliation.
 
 ## Shared condition parsing and paragraph boundaries
 
-One `parseCondition` helper validates `variable operator literal` for both
-`[if ...]` choice suffixes and `*show_if ...` narrative directives. It reuses the
+One `parseCondition` helper validates `variable operator literal`, `has_skill id`,
+and `lacks_skill id` for both `[if ...]` choice suffixes and `*show_if ...` narrative
+directives. It reuses the
 existing identifier/literal rules: strict typed equality/inequality for finite
 numbers, booleans and strings, and ordering for numbers only. It rejects unknown
 variables, mismatched types, malformed literals, non-finite values, compound
-conditions, logical operators, parentheses, and arithmetic expressions.
+conditions, logical operators, parentheses, and arithmetic expressions. Skill
+conditions validate declared skill IDs, with no numeric values or comparisons.
+The shared `evaluateCondition` receives committed `GameState` and reads either
+its variables or acquired skills. Ordinary variable comparisons remain unchanged.
 
 `*show_if` attaches a condition only to the next narrative paragraph. It must
 follow the title and any entry effects at a paragraph boundary. The next physical
@@ -67,23 +73,26 @@ available. Invalid late content cannot partially initialize a game.
 ## State ownership and deterministic entry
 
 `Game` owns one frozen `GameState` with `passageId`, a frozen `variables` record,
-and a frozen `journal` array. Each frozen `JournalEntry` contains only `id`,
+a frozen `journal` array, and a frozen `skills` array of acquired IDs.
+Each frozen `JournalEntry` contains only `id`,
 `chapter`, and resolved `text` strings. `Story.initialVariables` is metadata,
-never mutable runtime state. Candidates copy the primitive variable record and
-journal array; existing frozen entries can safely be shared. No deep-cloning
-framework or separate journal manager is needed. Earlier states and other games
-cannot change when one game progresses.
+never mutable runtime state. Candidates copy the primitive variable record,
+journal array, and acquired-skill array; existing frozen journal entries can
+safely be shared. No deep-cloning framework or separate state manager is needed.
+Earlier states and other games cannot change when one game progresses.
 
 Startup and navigation share the existing private `Game.enterPassage` path:
 
 1. Validate an eligible outgoing action against current committed state, or use
    the validated start ID for initial entry.
 2. Resolve the destination and copy the complete input state into a candidate
-   `next`, with a new variable record and journal array. Initial input uses story
-   variable declarations and an empty journal; ordinary input uses current state.
+   `next`, with a new variable record, journal array, and acquired-skill array.
+   Initial input uses story variable declarations and empty journal/skills arrays;
+   ordinary input uses current state.
 3. **This candidate before effects is the future pre-passage checkpoint boundary.**
-4. Apply `set`/`add`/`journal` effects once, in source order. Assignments preserve
-   types, and every addition must produce a finite number. Arithmetic uses normal
+4. Apply `set`/`add`/`journal`/`grant_skill`/`revoke_skill` effects once, in source
+   order. Assignments preserve types, and every addition must produce a finite
+   number. Arithmetic uses normal
    JavaScript floating-point precision. A new journal event resolves its template
    using candidate variables at that exact point, then appends a frozen record
    with the passage's static chapter. There is no expression interpreter.
@@ -96,7 +105,30 @@ Execution never reads DOM state, clocks, randomness, storage, or remote services
 Identical inputs and destinations produce identical results. Failed navigation
 or numeric overflow leaves the complete current state unchanged. The browser
 keeps the current passage and displays a text error; a failed initial entry
-cannot expose a partially started game.
+cannot expose a partially started game. Mixed skill, journal, and variable effects
+roll back together, regardless of their order.
+
+## Binary skills
+
+`Story.skills` is a frozen array of frozen `{ id, name }` definitions, separate
+from mutable gameplay data. `*skill id "Name"` uses the existing identifier and
+JSON string-literal parsers. Names must be nonempty after trimming; duplicate
+names are allowed, duplicate IDs are not. Skill IDs and variable IDs have separate
+namespaces. Names are literal text without interpolation. Definitions can only
+appear in the initial metadata section, including unused definitions.
+
+`GameState.skills` contains acquired IDs only, as a unique JSON-serializable array
+in acquisition order. New games begin empty before initial entry effects.
+`*grant_skill id` appends an absent ID; `*revoke_skill id` removes a present ID.
+Repeated grants and absent revocations are no-ops. Regranting after removal
+appends at the end. Both commands share variable/journal effect placement, run in
+source order, and reference declared skills. Unreachable passages and hidden
+conditions receive the same validation. There are no conditional effects.
+
+Only the candidate array is changed during entry. Previously committed arrays
+are never mutated, and the new array is frozen before exposure. Reads, conditions,
+and rendering cannot execute effects. No registry, manager, or mutable eligibility
+cache exists. Skills have no numerical values or additional metadata.
 
 ## Journal recording
 
@@ -122,8 +154,9 @@ record events normally because failed attempts leave no hidden deduplication sta
 `game.passage.paragraphs` and `.choices` retain all authored content in source
 order. `game.visibleParagraphs` and `game.availableChoices` return fresh frozen
 filtered arrays. Both use the same pure `evaluateCondition` function and current
-committed variables, after entry effects. They do not cache visibility, change
-state, or repeat effects. Re-entry recomputes both views from its new state.
+committed variables and acquired skills, after entry effects. They do not cache
+visibility, change state, or repeat effects. Re-entry recomputes both views from
+its new state.
 
 The renderer consumes these views directly, never evaluates conditions itself,
 and creates no elements for hidden paragraphs or choices. Native headings,
@@ -138,6 +171,13 @@ order within each chapter. Later returns to an earlier chapter append to that
 existing group. DOM grouping is derived locally, never a separate state store.
 An open section refreshes after a successful navigation; no entries yields the
 plain empty message. Headings and entries use `textContent` throughout.
+
+The native Skills button independently toggles a section with `aria-expanded`,
+`aria-controls`, and a labeled heading. Each render derives display names from
+immutable `Story.skills` using current acquired IDs in acquisition order. There
+is no UI copy of acquired-skill state. Empty lists show “No skills acquired yet.”
+An open section refreshes after navigation, including revocations. Toggling either
+Skills or Journal never changes gameplay state; skill names use `textContent`.
 
 Paragraph records preserve `${name}` placeholders. The pure `interpolate` helper
 validates references during parsing and substitutes current post-entry values
@@ -182,26 +222,30 @@ The permanent design is:
 Storage/version policy is deferred. In-story Continue currently just navigates
 to its authored ID, and refreshing currently starts over. This roadmap introduces
 no saving or death behavior in the current implementation. The complete journal
-is already part of `GameState` and must be preserved by that future checkpoint.
+and acquired skills are already part of `GameState` and must be preserved by
+that future checkpoint. Static skill definitions remain in `Story`.
 
 ## Scope and verification
 
 Implemented: typed variables, literal entry effects, conditional choices,
 one-paragraph conditional narrative, chapter metadata, journal recording/viewing,
-interpolation, validated text authoring,
+binary skill definitions/acquisition/revocation/viewing, interpolation, validated text authoring,
 explicit navigation, and basic rendering. No dependencies or visual redesign are
 needed. Ordinary TypeScript iteration over data is not a story-language loop.
 
-Character attributes/UI, arithmetic expressions, skills, inventory,
+Character attributes/UI, arithmetic expressions, inventory,
 character creation, and the saving/death roadmap require future tasks. Randomness,
 glossary, shops, skill purchasing, manual saves, save slots, import/export,
 procedures, subroutines, loops, and plugin systems remain excluded. System
 Awakening is reference only and its engine architecture is not imported.
+Skill levels, experience, purchasing, rarity, categories, cooldowns, passive
+bonuses, and progression trees are excluded.
 
 `npm test` covers parsing, shared comparisons, paragraph boundaries, visibility
 and eligibility after effects/re-entry, interpolation, immutability, exactly-once
 execution, navigation, chapter metadata, journal ordering/deduplication,
-record-time interpolation, nested immutability, and atomic failure. `npm run build` checks source/tests
+record-time interpolation, skill metadata/conditions/acquisition order/revocation,
+nested immutability, and mixed-effect atomic failure. `npm run build` checks source/tests
 with strict TypeScript and builds the app. Browser checks cover hidden content,
 rerendering, keyboard navigation, and inert HTML-like interpolation.
 
