@@ -91,6 +91,9 @@ route has an extra event. Stored text keeps its original resolved values.
 Both routes acquire Composure at the gate and lose it at the council. Only the
 messenger route acquires Diplomacy, changing the council's visible prose. The
 Skills button lists current acquisitions by display name, in acquisition order.
+The shipped `src/example.story` also offers a third gate choice for a preferred
+name and noble/soldier background. It keeps the original start ID and both routes
+above; see the text-input section below for a complete independent example.
 Both routes start with ten coins and a gate token. The messenger grants two more
 coins; council entry removes five coins and the token, leaving seven coins on the
 messenger route and five on the direct route. Neither route can underflow.
@@ -124,9 +127,10 @@ messenger route and five on the direct route. Neither route can underflow.
 | `#Label -> destination_id [if has_skill id]` / `[if lacks_skill id]` | Optional skill condition, using the same evaluator and requiring an unconditional fallback. |
 | `#Label -> destination_id [if has_item id]` / `[if lacks_item id]` / `[if item_count id >= 1]` | Optional item condition with the same evaluator/fallback rules; all six comparison operators work for counts. |
 | `*continue destination_id` | One explicit Continue destination, mutually exclusive with choices. Must conclude the passage. |
+| `*input_text variable "Label" -> destination_id` | One concluding text-input action after narrative, targeting a declared string variable and existing passage. Mutually exclusive with choices/Continue. |
 
-A passage ends at the next `*passage`, a `*chapter` after a valid passage, or EOF. Terminal passages have neither
-choices nor Continue. After navigation, only blank lines, choices inside the
+A passage ends at the next `*passage`, a `*chapter` after a valid passage, or EOF. Terminal passages have no
+choices, Continue, or input action. After navigation, only blank lines, choices inside the
 current `*choice` block, or a new chapter/passage are allowed. Additional prose, titles,
 effects, duplicate action blocks, or nested choices are errors.
 
@@ -378,6 +382,112 @@ and a numeric literal. `*set count other_count`, `*add count 1 + 2`, and
 operands, interpolation in assignments, or general evaluator are implemented.
 A quoted string such as `"${other_count}"` is just a literal string.
 
+## Text input and character creation
+
+`*input_text character_name "Character name" -> choose_background` offers a
+single-line field and Continue submit button after the passage's narrative.
+`character_name` must already be declared as a string variable. The label must
+be a nonempty double-quoted JSON string (nonempty after trimming), with the same
+escapes as other literals. Labels are literal text: `${...}` does not interpolate,
+and `->` inside the quoted label is ordinary text. The arrow outside the label
+must name one existing explicit destination. Both references are validated even
+in unreachable passages.
+
+Input is one concluding action category. It cannot coexist with `*choice` or
+`*continue`, appear before the title/prose, repeat within a passage, or be wrapped
+by a narrative condition. No prose, effects, or further actions may follow it in
+the passage. A new passage, a chapter boundary, or EOF finishes the passage under
+the existing rules. Every input passage still needs unconditional prose.
+
+Player text is not a script literal: players enter names without quotes/escapes.
+The engine's shared validator requires an actual string, rejects line breaks and
+C0/C1 controls (including tabs and Unicode line/paragraph separators), and checks
+for these before trimming so edge controls are rejected too. It then trims outer
+whitespace and requires **1–80 Unicode code points**. Internal spacing,
+capitalization, punctuation, and Unicode are preserved. `Alexander`, `Mary Jane`,
+`O'Brien`, and `Mary-Jane` are valid; ` Alexandra ` stores `Alexandra`. Emoji use
+code points rather than UTF-16 units; combining sequences count each code point.
+Empty, whitespace-only, overlong, multiline, and non-string submissions fail.
+There is no linguistic validation or interpretation as commands, HTML, code,
+interpolation templates, or expressions.
+
+`Game.submitText(value)` uses only the current passage's authored variable and
+destination. Ordinary `navigate()` cannot bypass input; submission outside an
+input passage fails unchanged. Accepted text enters candidate variables **before
+destination entry effects**. Journal interpolation can immediately record the
+name, and narrative/choice conditions see post-entry values. All existing effects
+retain their order; an authored `*set` can replace the string normally. If any
+destination effect fails, the entire submission rolls back, including variables,
+passage ID, skills, inventory, and journal. Failed attempts do not accumulate
+changes, and the form remains available for correction or retry.
+
+Character creation needs no special engine. Use ordinary string/numeric variables
+for identity and attributes, choices for backgrounds, and existing effects for
+skills, inventory, and journal. For example:
+
+```text
+*var character_name "Unknown"
+*var background "Traveler"
+*var influence 0
+*var honor 0
+*skill diplomacy "Diplomacy"
+
+*passage choose_name
+*title Your Name
+
+What name will you use on your journey?
+
+*input_text character_name "Character name" -> choose_background
+
+*passage choose_background
+*title Your Background
+*journal introduced "The hero is named ${character_name}."
+
+Welcome, ${character_name}. Choose your background.
+
+*choice
+  #Raised among nobility -> noble_origin
+  #Trained with soldiers -> soldier_origin
+
+*passage noble_origin
+*title A Noble Upbringing
+*set background "Noble"
+*add influence 2
+*grant_skill diplomacy
+
+${character_name}, your ${background} upbringing taught you the customs of court.
+
+*passage soldier_origin
+*title A Soldier's Training
+*set background "Soldier"
+*add honor 2
+
+${character_name}, your ${background} training taught you discipline.
+```
+
+The shipped optional route returns either background to the council. Names and
+attributes stay in `GameState.variables`; acquired skills, inventory, and journal
+retain their existing state fields, and definitions remain static story metadata.
+There is no CharacterState, attribute-allocation subsystem, or second variable
+registry. Initial story entry remains deterministic; submission is a deliberate
+player action followed by deterministic destination entry. A later ordinary visit
+runs entry effects once again; recorded journal IDs keep their original text.
+
+The browser uses a native labeled form. Enter or its Continue button submits
+without reloading, and success focuses the new heading. Invalid input or failed
+destination entry shows an accessible text error, keeps the typed value and form,
+and returns focus to the field. Unsaved typing belongs only to that field until
+submission. Opening Journal, Skills, or Inventory does not change or submit it.
+Rendering and state reads never resubmit text. All display content uses
+`textContent`; HTML-like input remains inert.
+
+The future checkpoint at a submitted destination must contain the accepted name
+before destination effects, so restoration there must not ask for it again.
+A checkpoint that actually starts at an input passage instead displays its form
+and permits a fresh submission. This stage adds no persistence, restoration,
+input history, or Undo. Only one text field is supported: no numeric input,
+multi-field forms, point-buy, portraits, visual customization, or character sheet.
+
 ## Conditional choices
 
 A choice can have one condition **after its destination**:
@@ -490,7 +600,7 @@ Boundary rules:
   ordinary prose. Another `*show_if` requires a separate paragraph boundary.
 - Navigation, the next passage, or EOF can also conclude the final paragraph
   normally. There is no closing command, nested block, `*else`, or `*endif`.
-- Conditions cannot wrap `*set`, `*add`, choices, Continue, or other commands.
+- Conditions cannot wrap `*set`, `*add`, choices, Continue, input, or other commands.
   Effects after narrative remain invalid. `*show_if` is also invalid before a
   title, inside a choice block, or after Continue.
 - Every passage needs at least one unconditional narrative paragraph, even if
@@ -556,7 +666,7 @@ unreachable passages. Immutable source text keeps its placeholders.
 Interpolation is a single read-only substitution pass. If a variable contains
 `<em>${other}</em>`, that entire string is displayed as literal text; it does not
 execute HTML or recursively interpolate `other`. Titles, choice labels,
-chapter labels, skill/item display names, and variable/condition literals never interpolate; `${unknown}`
+chapter labels, input labels, skill/item display names, and variable/condition literals never interpolate; `${unknown}`
 there remains literal text. Journal templates resolve once when first recorded.
 All display content uses `textContent`, so HTML and JavaScript are never executed.
 Markdown and other inline syntax stay literal as well.
@@ -610,6 +720,9 @@ passage references are valid, and all destinations are checked before play.
 | `# -> council` or an empty `*choice` | Provide at least one nonempty label with an explicit destination. |
 | An action to `unknown_hall` | Define that passage or correct the destination. |
 | Continue after choices | Use either choices or Continue in that passage. |
+| `*input_text count "Name" -> end` for a number | Target an already declared string variable. |
+| Input before prose or alongside choices/Continue | Use one input action after all narrative, concluding the passage. |
+| Empty input label or missing input destination | Supply a non-whitespace JSON-string label and an existing explicit ID. |
 | `[if influence >= other]` | Compare with a literal, not another variable. |
 | A conditional block with no unconditional option | Add a fallback choice. |
 | A condition before `->` or malformed brackets | Put exactly one valid `[if name operator literal]` suffix after the destination. |
@@ -624,10 +737,11 @@ referring actions. No partially validated story can initialize a game.
 
 ## Future functionality, not current syntax
 
-Character attributes/UI, arithmetic expressions, and character creation remain
-future work. Chapters, the journal, binary skills, and inventory quantities are
-implemented; journal, acquired skills, and inventory must be
-included in the future single checkpoint. Definitions stay in static `Story` metadata.
+Character attributes/UI and arithmetic expressions remain
+future work. Chapters, the journal, binary skills, inventory quantities, and
+text input for story-driven character creation are implemented. Variables,
+journal, acquired skills, and inventory must all be included in the future single
+checkpoint. Definitions stay in static `Story` metadata.
 
 The saving/death roadmap is documentation only: one persistent automatic
 checkpoint, future author-controlled `*checkpoint` and `*death`, Try Again on
@@ -635,7 +749,8 @@ death passages, Continue Game on reopening, and confirmed New Game. The first ne
 game must establish an initial checkpoint. Authored checkpoints replace it;
 death must not save dead state over it. Try Again restores complete pre-passage
 state and enters that passage with effects applied exactly once, including current
-variables/journal/skills/inventory and future character-creation data. Continue Game resumes
+variables (with character names/background attributes), journal, skills, and
+inventory. Continue Game resumes
 the latest checkpoint; New Game confirms before overwriting progress.
 
 There will be no traditional Undo, choice-history stack, manual rewind, Return to

@@ -23,6 +23,9 @@ Diplomacy and changes the council's visible prose.
 The Inventory button lists item names and quantities in acquisition order. Both
 routes start with ten coins and a gate token; the messenger adds two coins. The
 council collects five coins and the token, leaving seven or five coins.
+An optional third gate action lets the player choose a preferred name and a
+noble or soldier background. The original two routes keep their outcomes.
+The name is an ordinary string variable; backgrounds use choices and entry effects.
 Variables, journal entries, acquired skills, and inventory persist across passages.
 Refreshing starts a new game from the story's initial values; there is no saved progress.
 
@@ -193,9 +196,40 @@ and reports errors with source lines and passage IDs. See the
 [engine design and pre-passage snapshot boundary](docs/ENGINE.md) and
 [contributor rules](AGENTS.md). No new dependencies were needed for these features.
 
+## Player text and character creation
+
+`*input_text character_name "Character name" -> choose_background` concludes a
+passage after its narrative. It requires a declared string variable, a nonempty
+JSON-string label, and an existing explicit destination. The label stays literal.
+An input passage has one field and cannot also offer choices or ordinary Continue.
+The browser displays a labeled native text field and Continue submit button;
+Enter submits without reloading. Journal, Skills, and Inventory remain available.
+
+`Game.submitText(value)` validates the player action; `navigate()` cannot bypass
+the form. Input must be a string, with no line breaks or C0/C1 control characters
+(including tabs), even at the edges. It trims outer whitespace and accepts 1–80
+Unicode code points, preserving internal spacing, capitalization, and punctuation.
+Names such as `Mary Jane`, `O'Brien`, and Unicode names are valid. Text remains
+plain data, never script, HTML, or an expression. Invalid submissions keep both
+the current gameplay state and the typed field value, with an accessible error.
+
+The accepted value is placed in candidate variables before destination effects,
+so journal interpolation and post-entry conditions see it immediately. Entry
+failure rolls back the submitted value along with every other candidate change.
+Successful submissions focus the destination heading. Reads, rendering, and
+opening panels never submit text or repeat effects.
+
+There is no dedicated character object or allocation system: names, identity,
+and numeric attributes are ordinary variables; backgrounds use existing choices,
+skills, inventory, and journal effects. See the complete example in the
+[authoring guide](docs/SCRIPTING.md#text-input-and-character-creation).
+The future checkpoint at an input destination must include accepted text before
+entry effects, so restoring there will not prompt again. Restoring a genuine
+input passage will show its form. Saving/restoration remains unimplemented.
+
 ## Planned future work (not implemented)
 
-Character attributes/UI, arithmetic expressions, and character creation remain future work.
+Character attributes/UI and arithmetic expressions remain future work.
 The saving/death roadmap is one automatic persistent checkpoint, future
 author-controlled `*checkpoint`/`*death` directives, and Try Again on death
 passages. A new game must establish an initial checkpoint; authored checkpoints
@@ -216,3 +250,5 @@ Skills are binary only: no levels, experience, purchasing, rarity, categories,
 cooldowns, passive bonuses, or progression trees.
 Inventory has no shops, buying/selling systems, equipment, crafting, weight,
 capacity, rarity, durability, categories, descriptions, or automatic bonuses.
+Text input has no numeric mode, multiple fields, general forms, point-buy,
+portraits, visual customization, or character sheet.

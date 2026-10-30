@@ -28,6 +28,7 @@ Your name is ${character_name}. Your influence is ${influence}.
 *choice
   #Speak to the messenger -> messenger
   #Go straight to the council -> council
+  #Choose a preferred name and background -> choose_name
 
 *passage messenger
 *title A Quiet Warning
@@ -63,7 +64,7 @@ Every voice falls silent as you enter. Your story is only beginning.
 Influence: ${influence}. Honor: ${honor}. Loyal: ${loyal}.
 
 *show_if has_skill diplomacy
-Your exchange with the messenger helps you choose your words.
+Your diplomatic training helps you choose your words.
 
 *show_if lacks_skill diplomacy
 Without diplomatic training, you face the council unaided.
@@ -73,3 +74,42 @@ The coins remaining in your purse offer a small reassurance.
 
 *show_if item_count gold_coin >= 7
 The messenger's extra coins remain after the entry fee.
+
+*chapter Prologue
+
+*passage choose_name
+*title Choose Your Name
+
+Before entering the council, choose the name you wish to use at court.
+
+*input_text character_name "Preferred name" -> choose_background
+
+*passage choose_background
+*title Choose Your Background
+*journal chose_name "You introduced yourself as ${character_name}."
+
+Welcome, ${character_name}. What shaped your life before this journey?
+
+*choice
+  #Raised among nobility -> noble_origin
+  #Trained with soldiers -> soldier_origin
+
+*passage noble_origin
+*title A Noble Upbringing
+*add influence 2
+*grant_skill diplomacy
+*journal noble_origin "${character_name} learned the customs of the royal court."
+
+You learned to navigate the customs of the royal court.
+
+*continue council
+
+*passage soldier_origin
+*title A Soldier's Training
+*add honor 2
+*set loyal true
+*journal soldier_origin "${character_name} trained with soldiers and swore an oath of loyalty."
+
+Discipline and loyalty shaped your years of training.
+
+*continue council

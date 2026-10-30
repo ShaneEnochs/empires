@@ -11,7 +11,8 @@ fixed types. Variable names and stable passage IDs share
 The first passage is the start; all later navigation uses explicit destinations.
 
 A `Passage` contains its ID, static `chapter`, title, ordered literal effects, `paragraphs`, choices,
-and optional Continue destination. Each paragraph now has one uniform record,
+and optional Continue destination or `textInput` action. A passage has exactly
+one concluding category: choices, Continue, text input, or terminal. Each paragraph has one uniform record,
 in place of the old `Passage.text` string array. `ChoiceCondition` was renamed
 `Condition` because both paragraphs and choices use exactly the same data:
 
@@ -35,6 +36,10 @@ Full interfaces live in `src/types.ts`. Story metadata, paragraph records and
 conditions, choices, effects, and their arrays are frozen. There are no callbacks
 or executable expressions in story data, parallel text/condition arrays, or
 separate content registries.
+
+`TextInputAction` contains only readonly `variable`, `label`, and `destinationId`
+strings. The optional `Passage.textInput` record is frozen and JSON-serializable,
+with no DOM nodes, callbacks, validators, or executable instructions.
 
 `*chapter Label` is parser metadata. A parser-local label starts as `Prologue`
 and is copied into each following passage until another declaration. A chapter
@@ -100,6 +105,8 @@ Startup and navigation share the existing private `Game.enterPassage` path:
    Initial input uses story variable declarations, empty journal/skills arrays,
    and an empty inventory record;
    ordinary input uses current state.
+   For text submission, the accepted text is already in the candidate variables
+   before this copy and boundary; no destination effect runs beforehand.
 3. **This candidate before effects is the future pre-passage checkpoint boundary.**
 4. Apply `set`/`add`/`journal`/`grant_skill`/`revoke_skill`/`add_item`/`remove_item` effects once, in source
    order. Assignments preserve types, and every addition must produce a finite
@@ -118,6 +125,48 @@ or numeric overflow leaves the complete current state unchanged. The browser
 keeps the current passage and displays a text error; a failed initial entry
 cannot expose a partially started game. Mixed inventory, skill, journal, and variable effects
 roll back together, regardless of their order.
+
+## Explicit text submission
+
+`*input_text variable "Label" -> destination_id` is a concluding action after
+the passage's title and narrative. The parser reuses the existing identifier and
+JSON-string literal rules. It requires a declared string variable, a non-whitespace
+label, and an existing destination. Labels are literal, without interpolation;
+quoted labels may contain arrows and JSON escapes. Whole-story validation checks
+unreachable input passages too. Input cannot coexist with choices/Continue,
+repeat within a passage, precede prose, follow another action, or be wrapped by
+`*show_if`. No further prose/effects/actions may follow before the next passage
+boundary. As with other concluding actions, a top-level chapter can end the
+completed passage and assign metadata to subsequent passages.
+
+`Game.submitText(value)` obtains the target variable and destination exclusively
+from the current passage. A passage without input rejects submission unchanged.
+`navigate()` still accepts only eligible choices or Continue, so it cannot enter
+an input passage's destination without a successful submission. Other passages
+can independently offer that same destination through their own valid actions.
+
+The pure shared `validateTextInput` accepts only strings. It rejects C0/C1 control
+characters and Unicode line/paragraph separators before trimming, so controls
+cannot be hidden in outer whitespace. It trims the remaining outer whitespace
+and requires 1–80 Unicode code points using string iteration, not UTF-16 length.
+Internal spaces, capitalization, punctuation, combining characters, and Unicode
+names remain intact. There is no linguistic or expression validation. Input is
+plain data: existing single-pass interpolation never interprets inserted text.
+
+Submission creates an independent variable record with that normalized string,
+then calls the existing `enterPassage` path with the authored destination. The
+complete candidate copies journal, skills, and inventory as usual. Journal text
+therefore resolves the accepted value in effect order, and visibility/eligibility
+use the resulting committed state. A later authored `*set` may replace it like any
+other variable. Entry failure commits neither the input nor any other effect.
+Repeated failed attempts do not accumulate changes; the input action remains
+available for correction or retry. The same prior state and accepted value produce
+the same result. Ordinary later visits apply entry effects once again.
+
+Character creation is story-driven: string/numeric variables hold identity and
+attributes, ordinary choices select backgrounds, and normal entry effects assign
+variables, skills, inventory, and journal entries. There is no character object,
+second variable registry, allocation engine, input history, or instruction stack.
 
 ## Binary skills
 
@@ -213,6 +262,18 @@ and creates no elements for hidden paragraphs or choices. Native headings,
 paragraphs and buttons retain their appearance and keyboard behavior. All display
 content uses `textContent`; heading focus follows navigation.
 
+Input passages render one native form inside passage actions, with an associated
+label, single-line field initialized from the committed string, and Continue
+submit button. Enter submits; the handler prevents page reload and calls only
+`Game.submitText`. Browser constraint validation is disabled so the engine owns
+validation and error reporting. No native `maxLength` is set because it counts
+UTF-16 units rather than Unicode code points. On failure, the same form/value
+remains, the field is marked `aria-invalid` and associated with a `role="alert"`
+message, and focus returns to it. On success the destination renders and receives
+heading focus. Authored labels, narrative, and errors use `textContent`.
+Draft text exists only in the field until submission. Rendering or toggling
+Journal/Skills/Inventory never submits it; toggles do not rebuild the input form.
+
 The native Journal button controls an accessible section with `aria-expanded`
 and `aria-controls`. Toggling it changes only presentation; it does not navigate,
 rebuild passage choices, or execute effects. The section groups the current flat
@@ -271,7 +332,7 @@ The permanent design is:
   passage, and applies its effects exactly once. Do not replay effects over a
   post-entry snapshot. Future nested gameplay data must be copied deeply.
 - The checkpoint must eventually contain variables, skills, inventory, journal
-  entries, and character-creation data. Visibility and eligibility remain derived
+  entries, and character identity/attributes already stored in variables. Visibility and eligibility remain derived
   views, not stored gameplay state.
 - Continue Game on reopening resumes the latest checkpoint. New Game requires
   confirmation before overwriting progress.
@@ -284,17 +345,25 @@ no saving or death behavior in the current implementation. The complete journal,
 acquired skills, and inventory are already part of `GameState` and must be
 preserved by that future checkpoint. Static skill/item definitions remain in `Story`.
 
+Text submission preserves this boundary: the destination's pre-entry state already
+contains accepted text. Restoring a checkpoint there must enter that destination
+without prompting or resubmitting the name; its effects execute once as usual.
+Restoring a checkpoint at an actual input passage instead displays that passage's
+form and permits a fresh explicit submission. No historical input record or
+special character recovery logic is needed, and none is implemented now.
+
 ## Scope and verification
 
 Implemented: typed variables, literal entry effects, conditional choices,
 one-paragraph conditional narrative, chapter metadata, journal recording/viewing,
 binary skill definitions/acquisition/revocation/viewing, interpolation, validated text authoring,
 item definitions/quantities/conditions and inventory viewing,
+one-field player text input and story-driven character creation,
 explicit navigation, and basic rendering. No dependencies or visual redesign are
 needed. Ordinary TypeScript iteration over data is not a story-language loop.
 
 Character attributes/UI, arithmetic expressions,
-character creation, and the saving/death roadmap require future tasks. Randomness,
+and the saving/death roadmap require future tasks. Randomness,
 glossary, shops, skill purchasing, manual saves, save slots, import/export,
 procedures, subroutines, loops, and plugin systems remain excluded. System
 Awakening is reference only and its engine architecture is not imported.
@@ -302,13 +371,18 @@ Skill levels, experience, purchasing, rarity, categories, cooldowns, passive
 bonuses, and progression trees are excluded.
 Inventory excludes shops, buying/selling systems, equipment, crafting, weight,
 capacity, rarity, durability, categories, descriptions, and passive effects.
+Numeric input, multiple fields, complex forms, point-buy, portraits, visual
+customization, and a character sheet are excluded.
 
 `npm test` covers parsing, shared comparisons, paragraph boundaries, visibility
 and eligibility after effects/re-entry, interpolation, immutability, exactly-once
 execution, navigation, chapter metadata, journal ordering/deduplication,
 record-time interpolation, skill metadata/conditions/acquisition order/revocation,
 nested immutability, item literal validation, own-property safety, quantity limits,
-insertion order, and mixed-effect atomic failure. `npm run build` checks source/tests
+insertion order, and mixed-effect atomic failure. Text-input coverage includes
+parsing/normalization, Unicode limits, submission guards, input rollback,
+exactly-once destination entry, and character-background routes.
+`npm run build` checks source/tests
 with strict TypeScript and builds the app. Browser checks cover hidden content,
 rerendering, keyboard navigation, and inert HTML-like interpolation.
 

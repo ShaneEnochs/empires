@@ -12,6 +12,7 @@ function showError(error: unknown): void {
   root.querySelector('[role="alert"]')?.remove();
   const message = document.createElement('p');
   message.setAttribute('role', 'alert');
+  message.id = 'story-error';
   message.textContent = `Story error: ${error instanceof Error ? error.message : String(error)}`;
   root.append(message);
 }
@@ -168,6 +169,39 @@ try {
 
     for (const choice of game.availableChoices) addAction(choice.label, choice.destinationId);
     if (passage.continueTo !== undefined) addAction('Continue', passage.continueTo);
+
+    if (passage.textInput !== undefined) {
+      const action = passage.textInput;
+      const form = document.createElement('form');
+      form.setAttribute('aria-label', 'Text input');
+      form.noValidate = true;
+      const label = document.createElement('label');
+      label.htmlFor = 'player-text';
+      label.textContent = action.label;
+      const input = document.createElement('input');
+      input.id = 'player-text';
+      input.type = 'text';
+      input.required = true;
+      // Native maxLength counts UTF-16 units; Game validates Unicode code points.
+      input.value = String(game.state.variables[action.variable]);
+      const submit = document.createElement('button');
+      submit.type = 'submit';
+      submit.textContent = 'Continue';
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        try {
+          game.submitText(input.value);
+          render();
+        } catch (error) {
+          input.setAttribute('aria-invalid', 'true');
+          input.setAttribute('aria-describedby', 'story-error');
+          showError(error);
+          input.focus();
+        }
+      });
+      form.append(label, input, submit);
+      actions.append(form);
+    }
 
     root.replaceChildren(heading, ...paragraphs, actions, journalButton, skillsButton, inventoryButton, journalSection, skillsSection, inventorySection);
     renderJournal();

@@ -44,6 +44,12 @@ export interface NarrativeParagraph {
   readonly condition?: Condition;
 }
 
+export interface TextInputAction {
+  readonly variable: string;
+  readonly label: string;
+  readonly destinationId: string;
+}
+
 export interface Passage {
   readonly id: string;
   readonly chapter: string;
@@ -52,6 +58,7 @@ export interface Passage {
   readonly paragraphs: readonly NarrativeParagraph[];
   readonly choices: readonly Choice[];
   readonly continueTo?: string;
+  readonly textInput?: TextInputAction;
 }
 
 export interface Story {

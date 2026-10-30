@@ -1,5 +1,6 @@
 import { evaluateCondition } from './condition';
 import { interpolate } from './interpolate';
+import { validateTextInput } from './input';
 import type { Choice, GameState, NarrativeParagraph, Passage, Story } from './types';
 
 export class Game {
@@ -36,6 +37,17 @@ export class Game {
       throw new Error(`Passage "${current.id}" has no action to "${destinationId}".`);
     }
     this.currentState = this.enterPassage({ ...this.currentState, passageId: destinationId });
+  }
+
+  /** The validated current passage alone selects the variable and destination. */
+  submitText(value: unknown): void {
+    const action = this.passage.textInput;
+    if (action === undefined) throw new Error(`Passage "${this.passage.id}" does not offer text input.`);
+    const text = validateTextInput(value);
+    this.currentState = this.enterPassage({
+      ...this.currentState, passageId: action.destinationId,
+      variables: { ...this.currentState.variables, [action.variable]: text },
+    });
   }
 
   private enterPassage(input: GameState): GameState {
