@@ -31,18 +31,23 @@ libraries. Use the existing checkout; no frontend framework is needed.
   successful paths, and validate a whole story before initializing a game.
 - Render authored content with `textContent`, never as HTML. Keep native keyboard
   access and the small UI; visual changes require a concrete request.
+- Use `Game.availableChoices` for display and enforce the same eligibility inside
+  navigation. Conditions are immutable data evaluated against committed state;
+  eligibility checks must never mutate state or repeat entry effects. Conditional
+  blocks require an unconditional fallback.
 - System Awakening is reference material only. Do not modify it, copy its engine,
   or reuse its save, undo, interpreter, or UI architecture.
 
 ## Planned features, only when requested
 
-Character attributes/UI; expressions and conditional choices; basic
+Character attributes/UI; expressions; basic
 skills; basic inventory with quantities; journal entries organized by chapter;
 character creation; Undo for recent choices in the current session; one
 persistent automatic author-defined checkpoint; Continue Game; and confirmed
 New Game. These are plans, not currently supported commands or gameplay systems.
 Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
-are implemented; keep them small without expanding into a general evaluator.
+are implemented, as are single typed conditions on choices. Keep these small
+without expanding into a general evaluator.
 
 Unless a future task explicitly changes the requirements, exclude random
 mechanics, glossary systems, shops, skill purchasing, manual saving, save slots,

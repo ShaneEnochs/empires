@@ -68,6 +68,7 @@ persist between passages in the current game, not across page reloads.
 | `${name}` | In narrative only, displays the variable's post-entry value as text. |
 | `*choice` | Takes no arguments; starts one or more flat choice lines. Must conclude the passage. |
 | `#Label -> destination_id` | Inside a choice block, a nonempty literal label and explicit existing destination. Exactly one `->` separator. |
+| `#Label -> destination_id [if name operator literal]` | Optional single typed condition, evaluated against the committed post-entry state. The block must include an unconditional choice. |
 | `*continue destination_id` | One explicit Continue destination, mutually exclusive with choices. Must conclude the passage. |
 
 A passage ends at the next `*passage` or EOF. Terminal passages have neither
@@ -101,6 +102,72 @@ and a numeric literal. `*set count other_count`, `*add count 1 + 2`, and
 `*set count ${other_count}` are errors. No arithmetic expressions, variable
 operands, interpolation in assignments, or general evaluator are implemented.
 A quoted string such as `"${other_count}"` is just a literal string.
+
+## Conditional choices
+
+A choice can have one condition **after its destination**:
+
+```text
+*var influence 4
+*var honor 11
+*var loyal false
+*var faction "guild"
+
+*passage audience
+*title Audience
+*add influence 1
+
+The king awaits your answer.
+
+*choice
+  #Request a title -> receive_title [if influence >= 5]
+  #Challenge the knight -> duel [if honor > 10]
+  #Declare loyalty -> oath [if loyal == false]
+  #Speak to the merchant -> merchant [if faction == "guild"]
+  #Leave -> departure
+```
+
+This excerpt assumes each destination is defined elsewhere in the same file.
+The title request is available because entry raises influence from 4 to 5 before
+conditions are checked. The unconditional Leave action is the required fallback.
+
+Each condition is exactly one declared variable, one operator, and one literal:
+
+| Operators | Operand types |
+| --- | --- |
+| `==`, `!=` | Matching numbers, booleans, or strings; strict equality without coercion. |
+| `>`, `>=`, `<`, `<=` | Numbers only. |
+
+Conditions use the same names and literals as declarations/effects, including
+negative/decimal numbers and escaped double-quoted strings. Whitespace around the
+operator is optional. The suffix starts with lowercase `[if` and ends with `]`;
+string values may themselves contain brackets, arrows, or operator-like text.
+Conditions belong after the destination, never in the label. `[if ...]`-looking
+syntax in a choice label is rejected, not silently displayed as prose.
+
+Every block containing a conditional choice needs **at least one unconditional
+choice**, even if a condition starts true. A second conditional choice is not a
+fallback. All destinations must exist, including those of false conditions.
+Continue and terminal passages are unaffected, and conditional Continue is
+unsupported.
+
+Authored choices remain in immutable story data. The game exposes only currently
+eligible ones to the renderer, so unavailable choices are hidden entirely.
+Eligibility uses committed values after entry effects, never initial declaration
+values or DOM state. Evaluating choices or rerendering never applies effects.
+A later legitimate re-entry applies its effects once and recomputes eligibility.
+The runtime also enforces conditions when navigating; bypassing a hidden button
+cannot change state. If choices share a destination, any eligible one permits it.
+
+Unsupported: variable-to-variable comparisons, arithmetic, parentheses, logical
+operators, multiple conditions, conditional narrative, nested `*if`, and `*else`.
+For example, `[if influence >= other]`, `[if influence + 1 >= 5]`, and
+`[if influence >= 5 && loyal == true]` are errors. Type mismatches such as
+`[if loyal == 0]`, ordered strings such as `[if faction > "guild"]`, non-finite
+numbers, missing operands/brackets, extra suffixes, and invalid operators are also
+rejected with passage/source-line errors before gameplay can start.
+
+## Entry effects
 
 Effects run once, in source order, on entry. For example:
 
@@ -148,7 +215,8 @@ Markdown and other inline syntax stay literal as well.
 Source lines lose leading/trailing whitespace; internal spacing is retained.
 Consecutive narrative lines join with one space between lines. Indentation does
 not imply nesting; all choices are peers. Whitespace around `->` is optional,
-and labels cannot contain another `->`. Blank lines around passages are harmless.
+and labels cannot contain another `->`. A condition's quoted string may contain
+`->` without creating another choice. Blank lines around passages are harmless.
 LF, CRLF, CR, and a leading UTF-8 BOM are accepted.
 
 Directives are case-sensitive. Lines beginning with `*` are reserved for supported
@@ -180,6 +248,9 @@ passage references are valid, and all destinations are checked before play.
 | `# -> council` or an empty `*choice` | Provide at least one nonempty label with an explicit destination. |
 | An action to `unknown_hall` | Define that passage or correct the destination. |
 | Continue after choices | Use either choices or Continue in that passage. |
+| `[if influence >= other]` | Compare with a literal, not another variable. |
+| A conditional block with no unconditional option | Add a fallback choice. |
+| A condition before `->` or malformed brackets | Put exactly one valid `[if name operator literal]` suffix after the destination. |
 | `*if`, `*comment`, or nested `*choice` | These commands are unsupported. |
 
 Errors include one-based source lines and passage IDs when available. Missing
@@ -188,7 +259,7 @@ referring actions. No partially validated story can initialize a game.
 
 ## Future functionality, not current syntax
 
-Character attributes/UI, conditional choices/narrative, arithmetic expressions,
+Character attributes/UI, conditional narrative, arithmetic expressions,
 basic skills, inventory quantities, chapter journals, character creation, recent
 session Undo, one automatic persistent author-defined checkpoint, Continue Game,
 and confirmed New Game require future requests. There are no placeholder

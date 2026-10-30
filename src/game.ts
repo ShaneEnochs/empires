@@ -1,4 +1,5 @@
-import type { GameState, Passage, Story, Variables } from './types';
+import { evaluateCondition } from './condition';
+import type { Choice, GameState, Passage, Story, Variables } from './types';
 
 export class Game {
   private currentState: GameState;
@@ -15,11 +16,16 @@ export class Game {
     return this.findPassage(this.currentState.passageId);
   }
 
+  get availableChoices(): readonly Choice[] {
+    return Object.freeze(this.passage.choices.filter(choice =>
+      choice.condition === undefined || evaluateCondition(choice.condition, this.currentState.variables)));
+  }
+
   /** One explicit action enters one passage; there is no automatic traversal. */
   navigate(destinationId: string): void {
     const current = this.passage;
     const allowed = current.continueTo === destinationId
-      || current.choices.some(choice => choice.destinationId === destinationId);
+      || this.availableChoices.some(choice => choice.destinationId === destinationId);
     if (!allowed) {
       throw new Error(`Passage "${current.id}" has no action to "${destinationId}".`);
     }

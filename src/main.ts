@@ -49,7 +49,7 @@ try {
       actions.append(button);
     }
 
-    for (const choice of passage.choices) addAction(choice.label, choice.destinationId);
+    for (const choice of game.availableChoices) addAction(choice.label, choice.destinationId);
     if (passage.continueTo !== undefined) addAction('Continue', passage.continueTo);
 
     root.replaceChildren(heading, ...paragraphs, actions);

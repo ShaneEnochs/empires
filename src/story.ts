@@ -1,5 +1,5 @@
 import { interpolate } from './interpolate';
-import type { Choice, Passage, PassageEffect, Story, VariableValue } from './types';
+import type { Choice, ChoiceCondition, Passage, PassageEffect, Story, Variables, VariableValue } from './types';
 
 function syntaxError(message: string, line: number, passageId?: string): Error {
   return new Error(`Line ${line}${passageId ? `, passage "${passageId}"` : ''}: ${message}`);
@@ -23,6 +23,21 @@ function literal(value: string, line: number, passageId?: string): VariableValue
     try { return JSON.parse(value) as string; } catch { /* Report the source location below. */ }
   }
   throw syntaxError('Expected a finite number, true, false, or a double-quoted string literal.', line, passageId);
+}
+
+function parseCondition(source: string, variables: Variables, line: number, passageId: string): ChoiceCondition {
+  const parts = /^\[if\s+(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)\]$/.exec(source);
+  if (!parts) throw syntaxError('Expected [if variable operator literal] with ==, !=, >, >=, <, or <=.', line, passageId);
+  const variable = id(parts[1]!, 'Condition variable', line, passageId);
+  if (!Object.hasOwn(variables, variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, passageId);
+  const operator = parts[2] as ChoiceCondition['operator'];
+  const value = literal(parts[3]!.trim(), line, passageId);
+  if (typeof variables[variable] !== typeof value) {
+    throw syntaxError('Condition operands must have compatible types.', line, passageId);
+  }
+  if (operator === '==' || operator === '!=') return Object.freeze({ variable, operator, value });
+  if (typeof value !== 'number') throw syntaxError('Ordering comparisons require numbers.', line, passageId);
+  return Object.freeze({ variable, operator, value });
 }
 
 /** Parse and validate the entire story before any passage can be entered. */
@@ -55,6 +70,10 @@ export function parseStory(source: string): Story {
     }
     if (action === 'choice' && current.choices.length === 0) {
       throw syntaxError('*choice requires at least one choice.', actionLine, current.id);
+    }
+    if (current.choices.some(choice => choice.condition !== undefined)
+      && !current.choices.some(choice => choice.condition === undefined)) {
+      throw syntaxError('A conditional choice block requires at least one unconditional choice.', actionLine, current.id);
     }
     passages.push(Object.freeze({
       id: current.id, title: current.title, text: Object.freeze(current.text),
@@ -141,14 +160,18 @@ export function parseStory(source: string): Story {
 
     if (!current) throw syntaxError('Expected *passage before any content.', line);
     if (action === 'choice') {
-      const parts = text.startsWith('#') ? text.slice(1).split('->') : [];
-      const label = parts[0]?.trim();
-      const destination = parts[1]?.trim();
-      if (parts.length !== 2 || !label || !destination) {
+      const arrow = text.indexOf('->');
+      const label = text.startsWith('#') && arrow !== -1 ? text.slice(1, arrow).trim() : '';
+      const destination = arrow !== -1 ? text.slice(arrow + 2).trim() : '';
+      const bracket = destination.indexOf('[');
+      const target = (bracket === -1 ? destination : destination.slice(0, bracket)).trim();
+      if (!label || !target || target.includes('->')) {
         throw syntaxError('Expected #Nonempty choice label -> destination_id.', line, current.id);
       }
-      const destinationId = id(destination, 'Choice destination', line, current.id);
-      current.choices.push(Object.freeze({ label, destinationId }));
+      if (/\[if\b/i.test(label)) throw syntaxError('Choice conditions must follow the destination.', line, current.id);
+      const destinationId = id(target, 'Choice destination', line, current.id);
+      const condition = bracket === -1 ? undefined : parseCondition(destination.slice(bracket), initialVariables, line, current.id);
+      current.choices.push(Object.freeze({ label, destinationId, ...(condition === undefined ? {} : { condition }) }));
       references.push({ destinationId, passageId: current.id, line });
     } else if (action === 'continue') {
       throw syntaxError('Continue must conclude the passage; no further prose or choices are allowed.', line, current.id);
