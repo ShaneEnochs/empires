@@ -19,7 +19,7 @@ for (const [operator, value, expected] of [
     const condition = story.passages[0]!.choices[0]!.condition!;
     assert.deepEqual(condition, { variable: 'influence', operator, value });
     const game = new Game(story);
-    assert.equal(evaluateCondition(condition, game.state.variables), expected);
+    assert.equal(evaluateCondition(condition, game.state), expected);
     assert.deepEqual(game.availableChoices.map(c => c.label), expected ? ['Conditional', 'Fallback'] : ['Fallback']);
   });
 }
@@ -48,7 +48,7 @@ test('reuses string-literal escapes and permits brackets, arrows and operator-li
   const value = 'guild [if x] -> ] "quoted"\\path && !=';
   const literal = JSON.stringify(value);
   const story = parseStory(source(`[if faction == ${literal}]`).replace('*var faction "guild"', `*var faction ${literal}`));
-  assert.equal(story.passages[0]?.choices[0]?.condition?.value, value);
+  assert.deepEqual(story.passages[0]?.choices[0]?.condition, { variable: 'faction', operator: '==', value });
   assert.equal(new Game(story).availableChoices.length, 2);
 });
 
@@ -226,6 +226,6 @@ test('conditions and available choice views are immutable data, not mutable runt
 });
 
 test('equality is strict, conditions do not coerce values, and missing own variables fail closed', () => {
-  assert.equal(evaluateCondition({ variable: 'value', operator: '==', value: 4 }, { value: '4' }), false);
-  assert.equal(evaluateCondition({ variable: 'constructor', operator: '!=', value: 4 }, {}), false);
+  assert.equal(evaluateCondition({ variable: 'value', operator: '==', value: 4 }, { passageId: 'start', variables: { value: '4' }, journal: [], skills: [] }), false);
+  assert.equal(evaluateCondition({ variable: 'constructor', operator: '!=', value: 4 }, { passageId: 'start', variables: {}, journal: [], skills: [] }), false);
 });

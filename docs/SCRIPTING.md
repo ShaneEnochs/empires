@@ -8,9 +8,11 @@ data; it does not execute JavaScript or the reference engine's language.
 
 ```text
 *var influence 0
+*skill diplomacy "Diplomacy"
 *var honor 5
 *var loyal false
 *var character_name "Unknown"
+*skill composure "Composure"
 
 *chapter Prologue
 
@@ -18,6 +20,7 @@ data; it does not execute JavaScript or the reference engine's language.
 *title The City Gate
 *set character_name "Alexander"
 *add influence 1
+*grant_skill composure
 *journal arrived "${character_name} reached the city with influence ${influence}."
 
 At dawn, you arrive outside the city walls.
@@ -35,6 +38,7 @@ Your name is ${character_name}. Your influence is ${influence}.
 *add influence 2
 *add honor -1
 *set loyal true
+*grant_skill diplomacy
 *journal met_messenger "You spoke to the messenger."
 
 The messenger lowers their voice.
@@ -49,38 +53,54 @@ Your loyalty is ${loyal}.
 *passage council
 *title The Council Chamber
 *add influence -0.5
+*revoke_skill composure
 *journal met_council "You entered the council with influence ${influence}."
 
 The council members turn toward you as you enter.
 
 Influence: ${influence}. Honor: ${honor}. Loyal: ${loyal}.
+
+*show_if has_skill diplomacy
+Your exchange with the messenger helps you choose your words.
+
+*show_if lacks_skill diplomacy
+Without diplomatic training, you face the council unaided.
 ```
 
 The first passage starts the story. The player can go directly to `council`
 (influence `0.5`, honor `5`, loyal `false`) or via `messenger` and Continue
 (influence `2.5`, honor `4`, loyal `true`). The council is terminal: there are no
-further actions or automatic fall-through. Refreshing starts a new game; variables
-and recorded journal events persist between passages, not across page reloads.
+further actions or automatic fall-through. Refreshing starts a new game; variables,
+recorded journal events, and acquired skills persist between passages, not across
+page reloads.
 The Journal button groups events in first-recorded chapter order; the messenger
 route has an extra event. Stored text keeps its original resolved values.
+Both routes acquire Composure at the gate and lose it at the council. Only the
+messenger route acquires Diplomacy, changing the council's visible prose. The
+Skills button lists current acquisitions by display name, in acquisition order.
 
 ## Supported syntax
 
 | Construct | Rule |
 | --- | --- |
-| `*var name literal` | Declares one variable and its initial value before the first passage. Names must be unique. |
+| `*var name literal` | Declares one variable and its initial value before all chapters/passages. Names must be unique. |
+| `*skill id "Display Name"` | Defines immutable skill metadata in the same initial section as variables. Skill IDs must be unique; names must be nonempty JSON strings. |
 | `*chapter Label` | Top-level nonempty literal label for subsequent passages; each declaration needs a following passage. Default: `Prologue`. |
 | `*passage id` | Begins a passage with a unique stable ID matching `[a-z][a-z0-9_-]*`. The first passage is the start. |
 | `*title text` | Exactly one nonempty literal title per passage, before navigation. Place it immediately after the header. |
 | `*set name literal` | Replaces a declared variable with a literal of the same type. Only after the title and before any narrative. |
 | `*add name number` | Adds a numeric literal to a declared numeric variable. Same placement as `*set`. |
 | `*journal event_id "Entry text"` | Records an event once by a story-wide unique ID. Interpolation uses candidate variables at that point. Same placement as `*set`. |
+| `*grant_skill id` | Acquires a declared skill if absent. Same placement as `*set`. |
+| `*revoke_skill id` | Removes a declared skill if present. Same placement as `*set`. |
 | Narrative text | At least one unconditional paragraph per passage. Nonblank consecutive lines join with spaces; blank lines separate paragraphs. |
 | `*show_if name operator literal` | At a paragraph boundary after the title/effects, conditions only the paragraph starting on the immediately following source line. |
+| `*show_if has_skill id` / `*show_if lacks_skill id` | Conditions the next paragraph on possession/absence of a declared skill, with the same paragraph boundaries. |
 | `${name}` | In narrative only, displays the variable's post-entry value as text. |
 | `*choice` | Takes no arguments; starts one or more flat choice lines. Must conclude the passage. |
 | `#Label -> destination_id` | Inside a choice block, a nonempty literal label and explicit existing destination. Exactly one `->` separator. |
 | `#Label -> destination_id [if name operator literal]` | Optional single typed condition, evaluated against the committed post-entry state. The block must include an unconditional choice. |
+| `#Label -> destination_id [if has_skill id]` / `[if lacks_skill id]` | Optional skill condition, using the same evaluator and requiring an unconditional fallback. |
 | `*continue destination_id` | One explicit Continue destination, mutually exclusive with choices. Must conclude the passage. |
 
 A passage ends at the next `*passage`, a `*chapter` after a valid passage, or EOF. Terminal passages have neither
@@ -99,7 +119,7 @@ string decoding or interpolation. Reusing a label later is permitted.
 A chapter declaration can finish a valid preceding passage, including one with
 choices or Continue. It cannot rescue missing titles/prose, empty choices, or
 pending conditional prose. Every declaration must have at least one passage
-before another chapter or EOF. Variables must precede chapters, and prose/effects
+before another chapter or EOF. Variables and skills must precede chapters, and prose/effects
 cannot appear between a declaration and its next passage header. Chapters belong
 to immutable passage definitions, not a mutable global current chapter; player
 navigation order never changes them.
@@ -121,7 +141,7 @@ Each first recording appends `{ id, chapter, text }` to `GameState.journal` in
 effect order. Re-entry runs ordinary variable effects but skips recorded event
 IDs, retaining their original chapter and text. New games start with an empty
 journal before initial effects, which may immediately record entries. All effects
-are atomic: failure rolls back every candidate append and variable change. Failed
+are atomic: failure rolls back every candidate append, variable change, and skill change. Failed
 attempts leave no hidden deduplication history.
 
 The Journal button toggles a read-only section without navigation or effects.
@@ -130,6 +150,89 @@ recording order. Later events in an earlier chapter join its existing group.
 An open journal updates after successful navigation. Empty journals display
 “No journal entries yet.” Arrays and entries are frozen, and chapter headings
 and recorded text use `textContent`.
+
+## Skills
+
+Define skills before the first chapter or passage using `*skill id "Display Name"`.
+Definitions may interleave with `*var` declarations. IDs match
+`[a-z][a-z0-9_-]*`, are case-sensitive, and must be unique even if never used.
+Skill IDs occupy a separate namespace from variables, passages, and journal
+events: `*var diplomacy 0` and `*skill diplomacy "Diplomacy"` may coexist.
+Explicit skill commands/conditions distinguish them.
+
+Names use the same double-quoted JSON string literals as variables, including
+`\"`, `\\`, `\n`, and `\u2665` escapes. They must contain non-whitespace text after
+decoding; single quotes, unquoted names, trailing content, and malformed escapes
+are invalid. Duplicate display names are allowed because IDs establish identity.
+Names remain literal, without `${...}` interpolation, and are rendered as text.
+Definitions contain only ID and name and belong to immutable `Story.skills`.
+Definitions inside passages or between chapters are errors.
+
+Acquire and remove skills with `*grant_skill id` and `*revoke_skill id`. Both
+require declared IDs and appear after the title, before the first narrative
+paragraph. They may interleave with `*set`, `*add`, and `*journal`. They cannot
+appear inside prose, conditional paragraphs, choice blocks, or after navigation,
+and cannot be conditional. Effects execute in source order on each legitimate
+entry, including initial entry and later returns.
+
+New games start with no acquired skills before initial effects. A grant appends
+an absent ID; a repeated grant does nothing. Revocation removes a present ID;
+revoking an absent skill does nothing. Revoking and regranting puts the ID at the
+end of acquisition order, including within the same passage. Acquired IDs live
+only in the unique, frozen, JSON-serializable `GameState.skills` array. No levels,
+experience, purchasing, rarity, categories, cooldowns, bonuses, or trees exist.
+
+Use `has_skill id` or `lacks_skill id` wherever a condition is supported:
+
+```text
+*skill swordsmanship "Swordsmanship"
+
+*passage training
+*title Training
+*grant_skill swordsmanship
+
+Your training is complete.
+
+*show_if has_skill swordsmanship
+You recognize the instructor's fighting stance.
+
+*choice
+  #Demonstrate your swordsmanship -> rest [if has_skill swordsmanship]
+  #Leave -> rest
+
+*passage rest
+*title Rest
+*revoke_skill swordsmanship
+
+This short exercise ends your temporary training.
+
+*show_if lacks_skill swordsmanship
+You can return to acquire the skill again.
+
+*continue training
+```
+
+The shared condition parser/evaluator checks committed skills **after all entry
+effects**. A grant or revocation immediately changes visible paragraphs and
+available choices. No comparison values, levels, logical operators, parentheses,
+compound conditions, or nested blocks are supported. Unknown skills are errors
+even in unreachable passages or hidden conditions. Conditional choices still
+need an unconditional fallback; navigation enforces the same eligibility, and
+any eligible choice permits its shared destination. Continue remains ordinary
+unconditional navigation.
+
+Skills participate in atomic entry with variables and journal events. An overflow
+anywhere in the effects rejects the entire candidate: no skill acquisition,
+revocation, journal append, variable change, or new passage ID commits. Earlier
+states and other games stay unchanged. Initial entry follows the same rule.
+Reads, condition checks, and rendering never execute skill effects.
+
+The native Skills button opens/closes an accessible section independently of
+Journal, with `aria-expanded` reflecting its visibility. Names come from static
+definitions and IDs from current state, in acquisition order; no UI copy of
+acquired skills exists. Empty lists show “No skills acquired yet.” Open sections
+update after navigation, including removal. Toggling either control changes no
+gameplay state. Skill names use `textContent`, so HTML-like names remain inert.
 
 ## Variables and literal values
 
@@ -186,7 +289,7 @@ This excerpt assumes each destination is defined elsewhere in the same file.
 The title request is available because entry raises influence from 4 to 5 before
 conditions are checked. The unconditional Leave action is the required fallback.
 
-Each condition is exactly one declared variable, one operator, and one literal:
+A variable condition is exactly one declared variable, one operator, and one literal:
 
 | Operators | Operand types |
 | --- | --- |
@@ -253,6 +356,8 @@ paragraph. The guards' paragraph is hidden. The surrounding ordinary paragraphs
 are unconditional. Strings work too, for example `*show_if faction == "merchant"`
 when `faction` has been declared. All six operators use the same typed rules,
 finite literals, and parser/evaluator as choice conditions.
+The skill forms `*show_if has_skill id` and `*show_if lacks_skill id` use that
+same parser/evaluator and all the paragraph boundary rules below.
 
 Boundary rules:
 
@@ -273,7 +378,7 @@ Boundary rules:
   all conditions initially pass. No fallback text is generated automatically.
 
 `game.passage.paragraphs` stores immutable `{ text, condition? }` records.
-`game.visibleParagraphs` filters them using committed post-entry variables, just
+`game.visibleParagraphs` filters them using committed post-entry variables and skills, just
 as `game.availableChoices` filters actions. The browser uses this runtime view;
 hidden paragraphs create no elements or spacing. Visibility does not alter state,
 rerun effects, or change navigation. Legitimate re-entry applies its effects once
@@ -316,7 +421,8 @@ effects once again; merely reading or rerendering it does not.
 
 Every entry is atomic. An overflow in any addition rejects the whole transition,
 even if a later effect would repair the value. Previous state and all its values
-remain intact. A failed initial entry does not start a game. No effect reads the
+remain intact, including acquired skills and journal entries. A failed initial
+entry does not start a game. No effect reads the
 browser UI or performs external actions.
 
 ## Interpolation and literal content
@@ -331,7 +437,7 @@ unreachable passages. Immutable source text keeps its placeholders.
 Interpolation is a single read-only substitution pass. If a variable contains
 `<em>${other}</em>`, that entire string is displayed as literal text; it does not
 execute HTML or recursively interpolate `other`. Titles, choice labels,
-chapter labels, and variable/condition literals never interpolate; `${unknown}`
+chapter labels, skill display names, and variable/condition literals never interpolate; `${unknown}`
 there remains literal text. Journal templates resolve once when first recorded.
 All display content uses `textContent`, so HTML and JavaScript are never executed.
 Markdown and other inline syntax stay literal as well.
@@ -366,7 +472,10 @@ passage references are valid, and all destinations are checked before play.
 | Missing `*title` or two titles | Supply exactly one nonempty title. |
 | A title with no narrative | Add at least one nonblank paragraph. |
 | Empty chapter or no following passage | Supply a nonempty label and at least one passage per declaration. |
-| Variables after `*chapter` | Move all variables before chapter metadata. |
+| Variables or skills after `*chapter` | Move all definitions before chapter metadata. |
+| Duplicate skill ID or empty skill name | Use a unique skill ID and a non-whitespace double-quoted name. |
+| `*grant_skill unknown` or `has_skill unknown` | Define that skill in the initial metadata section. |
+| `has_skill diplomacy >= 1` | Skills are binary; use only `has_skill diplomacy` or `lacks_skill diplomacy`. |
 | Duplicate journal event ID | Use one unique ID per authored journal effect; runtime re-entry deduplicates it. |
 | `*journal event Text` | Supply a double-quoted string and declared interpolation references. |
 | `*var count 0` inside a passage | Move declarations to the beginning of the file. |
@@ -392,9 +501,10 @@ referring actions. No partially validated story can initialize a game.
 
 ## Future functionality, not current syntax
 
-Character attributes/UI, arithmetic expressions, basic skills, inventory
-quantities and character creation remain future work. Chapters and the journal
-are implemented; journal data must be included in the future single checkpoint.
+Character attributes/UI, arithmetic expressions, inventory
+quantities and character creation remain future work. Chapters, the journal,
+and binary skills are implemented; journal and acquired-skill data must be
+included in the future single checkpoint. Definitions stay in static `Story` metadata.
 
 The saving/death roadmap is documentation only: one persistent automatic
 checkpoint, future author-controlled `*checkpoint` and `*death`, Try Again on
@@ -402,7 +512,7 @@ death passages, Continue Game on reopening, and confirmed New Game. The first ne
 game must establish an initial checkpoint. Authored checkpoints replace it;
 death must not save dead state over it. Try Again restores complete pre-passage
 state and enters that passage with effects applied exactly once, including current
-variables/journal and future skills, inventory, and character-creation data. Continue Game resumes
+variables/journal/skills and future inventory and character-creation data. Continue Game resumes
 the latest checkpoint; New Game confirms before overwriting progress.
 
 There will be no traditional Undo, choice-history stack, manual rewind, Return to

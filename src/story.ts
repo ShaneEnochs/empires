@@ -1,5 +1,5 @@
 import { interpolate } from './interpolate';
-import type { Choice, Condition, NarrativeParagraph, Passage, PassageEffect, Story, Variables, VariableValue } from './types';
+import type { Choice, Condition, NarrativeParagraph, Passage, PassageEffect, SkillDefinition, Story, Variables, VariableValue } from './types';
 
 function syntaxError(message: string, line: number, passageId?: string): Error {
   return new Error(`Line ${line}${passageId ? `, passage "${passageId}"` : ''}: ${message}`);
@@ -25,12 +25,25 @@ function literal(value: string, line: number, passageId?: string): VariableValue
   throw syntaxError('Expected a finite number, true, false, or a double-quoted string literal.', line, passageId);
 }
 
-function parseCondition(source: string, variables: Variables, line: number, passageId: string): Condition {
+function knownSkill(value: string, skills: readonly SkillDefinition[], line: number, passageId?: string): string {
+  const skillId = id(value, 'Skill ID', line, passageId);
+  if (!skills.some(skill => skill.id === skillId)) throw syntaxError(`Unknown skill "${skillId}".`, line, passageId);
+  return skillId;
+}
+
+function parseCondition(source: string, variables: Variables, skills: readonly SkillDefinition[], line: number, passageId: string): Condition {
   const parts = /^(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(source);
-  if (!parts) throw syntaxError('Expected variable operator literal with ==, !=, >, >=, <, or <=.', line, passageId);
+  if (!parts) {
+    const skill = /^(has_skill|lacks_skill)\s+(\S+)$/.exec(source);
+    if (skill) {
+      const skillId = knownSkill(skill[2]!, skills, line, passageId);
+      return Object.freeze({ operator: skill[1] as 'has_skill' | 'lacks_skill', skillId });
+    }
+    throw syntaxError('Expected variable operator literal (==, !=, >, >=, <, <=), has_skill id, or lacks_skill id.', line, passageId);
+  }
   const variable = id(parts[1]!, 'Condition variable', line, passageId);
   if (!Object.hasOwn(variables, variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, passageId);
-  const operator = parts[2] as Condition['operator'];
+  const operator = parts[2] as Exclude<Condition['operator'], 'has_skill' | 'lacks_skill'>;
   const value = literal(parts[3]!.trim(), line, passageId);
   if (typeof variables[variable] !== typeof value) {
     throw syntaxError('Condition operands must have compatible types.', line, passageId);
@@ -48,6 +61,7 @@ export function parseStory(source: string): Story {
   let chapter = 'Prologue';
   let pendingChapterLine: number | undefined;
   const initialVariables: Record<string, VariableValue> = {};
+  const skills: SkillDefinition[] = [];
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
     id: string; chapter: string; line: number; title?: string; paragraphs: NarrativeParagraph[];
@@ -131,22 +145,35 @@ export function parseStory(source: string): Story {
         if (!current || current.title === undefined || action !== undefined || paragraph.length > 0) {
           throw syntaxError('*show_if must be at a paragraph boundary after the title and effects, before navigation.', line, current?.id);
         }
-        paragraphCondition = parseCondition(argument, initialVariables, line, current.id);
+        paragraphCondition = parseCondition(argument, initialVariables, skills, line, current.id);
         showIfLine = line;
         continue;
       }
-      if (directive === '*var' || directive === '*set' || directive === '*add' || directive === '*journal') {
-        if (directive === '*var' && (current || passages.length > 0 || pendingChapterLine !== undefined)) {
-          throw syntaxError('*var declarations must precede the first passage and all chapter declarations.', line, current?.id);
+      if (directive === '*grant_skill' || directive === '*revoke_skill') {
+        if (!current || current.title === undefined || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined) {
+          throw syntaxError('Effects must appear after *title and before the first narrative paragraph.', line, current?.id);
         }
-        if (directive !== '*var' && (!current || current.title === undefined || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined)) {
+        const skillId = knownSkill(argument, skills, line, current.id);
+        current.effects.push(Object.freeze({ kind: directive === '*grant_skill' ? 'grant_skill' : 'revoke_skill', skillId }));
+        continue;
+      }
+      if (directive === '*var' || directive === '*skill' || directive === '*set' || directive === '*add' || directive === '*journal') {
+        const declaration = directive === '*var' || directive === '*skill';
+        if (declaration && (current || passages.length > 0 || pendingChapterLine !== undefined)) {
+          throw syntaxError(`${directive} declarations must precede the first passage and all chapter declarations.`, line, current?.id);
+        }
+        if (!declaration && (!current || current.title === undefined || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined)) {
           throw syntaxError('Effects must appear after *title and before the first narrative paragraph.', line, current?.id);
         }
         const parts = /^(\S+)\s+(.+)$/.exec(argument);
-        if (!parts) throw syntaxError(`${directive} requires a variable name and literal value.`, line, current?.id);
-        const variable = id(parts[1]!, directive === '*journal' ? 'Journal event ID' : 'Variable name', line, current?.id);
+        if (!parts) throw syntaxError(`${directive} requires an identifier and literal value.`, line, current?.id);
+        const variable = id(parts[1]!, directive === '*journal' ? 'Journal event ID' : directive === '*skill' ? 'Skill ID' : 'Variable name', line, current?.id);
         const value = literal(parts[2]!, line, current?.id);
-        if (directive === '*journal') {
+        if (directive === '*skill') {
+          if (typeof value !== 'string' || value.trim() === '') throw syntaxError('*skill requires a nonempty double-quoted display name.', line);
+          if (skills.some(skill => skill.id === variable)) throw syntaxError(`Duplicate skill ID "${variable}".`, line);
+          skills.push(Object.freeze({ id: variable, name: value }));
+        } else if (directive === '*journal') {
           if (typeof value !== 'string') throw syntaxError('*journal requires a double-quoted string literal.', line, current?.id);
           if (journalIds.has(variable)) throw syntaxError(`Duplicate journal event ID "${variable}".`, line, current?.id);
           try { interpolate(value, initialVariables); } catch (error) {
@@ -222,8 +249,8 @@ export function parseStory(source: string): Story {
       let condition: Condition | undefined;
       if (bracket !== -1) {
         const wrapper = /^\[if\s+(.+)\]$/.exec(destination.slice(bracket));
-        if (!wrapper) throw syntaxError('Expected a single [if variable operator literal] suffix.', line, current.id);
-        condition = parseCondition(wrapper[1]!, initialVariables, line, current.id);
+        if (!wrapper) throw syntaxError('Expected a single [if condition] suffix.', line, current.id);
+        condition = parseCondition(wrapper[1]!, initialVariables, skills, line, current.id);
       }
       current.choices.push(Object.freeze({ label, destinationId, ...(condition === undefined ? {} : { condition }) }));
       references.push({ destinationId, passageId: current.id, line });
@@ -246,5 +273,5 @@ export function parseStory(source: string): Story {
       throw syntaxError(`Missing destination "${reference.destinationId}".`, reference.line, reference.passageId);
     }
   }
-  return Object.freeze({ startId: first.id, initialVariables: Object.freeze(initialVariables), passages: Object.freeze(passages) });
+  return Object.freeze({ startId: first.id, initialVariables: Object.freeze(initialVariables), skills: Object.freeze(skills), passages: Object.freeze(passages) });
 }

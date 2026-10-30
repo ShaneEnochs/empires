@@ -17,8 +17,11 @@ or **gate → council**, with different influence, honor, and loyalty values.
 The messenger's Continue explicitly targets `council`; the council is terminal.
 The Journal button shows recorded events grouped by chapter. The messenger route
 records an extra event; journal text keeps the values present when recorded.
-Variables and journal entries persist across passages in the current game. Refreshing starts
-a new game from the story's initial values; there is no saved progress.
+The Skills button lists acquired skills in acquisition order. Both routes start
+with Composure, which is revoked at the council. Speaking to the messenger grants
+Diplomacy and changes the council's visible prose.
+Variables, journal entries, and acquired skills persist across passages.
+Refreshing starts a new game from the story's initial values; there is no saved progress.
 
 ```sh
 npm test          # parsing, validation, state effects, interpolation, navigation
@@ -38,6 +41,7 @@ plain-text format:
 
 ```text
 *var influence 4
+*skill diplomacy "Diplomacy"
 *var loyal false
 *var character_name "Unknown"
 
@@ -62,6 +66,7 @@ They open the council doors.
 *passage messenger
 *title A Quiet Warning
 *set loyal true
+*grant_skill diplomacy
 *journal met_messenger "You spoke to the messenger."
 
 Loyal: ${loyal}.
@@ -75,17 +80,21 @@ Loyal: ${loyal}.
 *journal met_council "You entered the council chamber."
 
 The council awaits your answer.
+
+*show_if has_skill diplomacy
+You recognize the diplomatic opening.
 ```
 
 Blank lines separate paragraphs; consecutive prose lines join with spaces. The
 first passage starts the story. Choices and `*continue id` navigate to explicit
-stable IDs. Every variable must be declared before the first passage. Values are
-finite numbers, booleans, or double-quoted strings; `*set` preserves the declared
+stable IDs. Declare variables and skills before all chapters and passages; these
+declarations may be interleaved. Variable values are finite numbers, booleans,
+or double-quoted strings; `*set` preserves the declared
 type, and `*add` only accepts numeric variables and numeric literals. Effects
 must follow the title and precede all narrative.
 
 `*chapter Label` assigns literal static chapter metadata to subsequent passages;
-the default is `Prologue`. Chapters must follow all variable declarations, and
+the default is `Prologue`. Chapters must follow all variable/skill declarations, and
 each declaration needs a following passage. `*journal event_id "Text"` is an
 entry effect with a story-wide unique ID. Its interpolation uses candidate
 variables at that point in effect order. The resolved text and passage chapter
@@ -97,11 +106,32 @@ Journal section changes no gameplay state. Chapter groups follow first-recorded
 order, with events in recording order within each group; an open journal updates
 after navigation. Empty journals show “No journal entries yet.”
 
+`*skill id "Display Name"` defines immutable story metadata. IDs use
+`[a-z][a-z0-9_-]*`, are unique among skills, and may match variable IDs. Names use
+double-quoted JSON strings and must be nonempty after trimming; duplicate names
+are allowed. Names remain literal text, without interpolation.
+`*grant_skill id` and `*revoke_skill id` are entry effects referencing declared
+skills. Grants append an absent ID; repeated grants and revoking an absent skill
+are harmless. Revoking then regranting moves the skill to the end of acquisition
+order. All effects share the same placement and execute in source order.
+
+Only acquired IDs live in the frozen, JSON-serializable `GameState.skills` array.
+New games start empty before initial effects. Entry clones skills along with
+variables and journal; any failure commits none of their changes. The future
+single checkpoint must preserve all three. The Skills section derives names from
+story definitions and IDs from current state, updates after navigation, and
+shows “No skills acquired yet.” when empty. Its button changes no gameplay state.
+
 Choices may have one optional `[if variable operator literal]` suffix. Operators
 are `==`, `!=`, `>`, `>=`, `<`, and `<=`; equality supports matching primitive
 types, while ordering requires numbers. In the example above entry raises
 influence from 4 to 5, making the audience choice available. A conditional block
 must include an unconditional fallback, such as meeting the messenger.
+
+Skills use `[if has_skill diplomacy]` or `[if lacks_skill diplomacy]`, with no
+comparison operator or value. The same forms work as `*show_if has_skill diplomacy`
+and `*show_if lacks_skill diplomacy`. They use the shared condition evaluator
+after entry grants/revocations, including runtime navigation enforcement.
 
 `passage.choices` contains all authored choices. The read-only
 `Game.availableChoices` view filters them against committed state after entry
@@ -130,7 +160,7 @@ and reports errors with source lines and passage IDs. See the
 
 ## Planned future work (not implemented)
 
-Character attributes/UI, arithmetic expressions, basic skills, inventory
+Character attributes/UI, arithmetic expressions, inventory
 quantities and character creation remain future work.
 The saving/death roadmap is one automatic persistent checkpoint, future
 author-controlled `*checkpoint`/`*death` directives, and Try Again on death
@@ -148,3 +178,5 @@ Excluded unless requirements explicitly change: random mechanics, glossary,
 shops, skill purchasing, manual saves, save slots, import/export, procedures,
 subroutines, loops, and plugin systems. No UI redesign, storage, database, or
 backend was added. System Awakening remains untouched reference material.
+Skills are binary only: no levels, experience, purchasing, rarity, categories,
+cooldowns, passive bonuses, or progression trees.

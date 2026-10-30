@@ -25,6 +25,13 @@ libraries. Use the existing checkout; no frontend framework is needed.
 - The Journal control is presentation only: viewing/grouping entries must never
   trigger entry effects, navigation, or gameplay changes. Keep recorded chapter
   and text values intact and include the complete journal in the future checkpoint.
+- Skill definitions are immutable `Story.skills` metadata containing only IDs and
+  display names. Acquired IDs belong only to `GameState.skills`: a unique,
+  acquisition-ordered, frozen JSON array. Clone it for entry candidates so mixed
+  skill, journal, and variable effects commit atomically. Skill IDs and variable
+  IDs have separate namespaces; use the existing condition parser/evaluator for
+  explicit `has_skill`/`lacks_skill` checks. The Skills control is presentation
+  only; the future checkpoint must preserve acquired IDs, not duplicate definitions.
 - Passage IDs are authored, unique, and stable. Never derive them from order,
   titles, prose, timestamps, or random values. Preserve IDs for navigation and
   future checkpoint compatibility.
@@ -52,20 +59,21 @@ libraries. Use the existing checkout; no frontend framework is needed.
 
 ## Planned features, only when requested
 
-Character attributes/UI; expressions; basic
-skills; basic inventory with quantities;
+Character attributes/UI; expressions; basic inventory with quantities;
 character creation; one persistent automatic checkpoint; author-controlled
 `*checkpoint` and `*death`; Try Again on death passages; Continue Game; and
 confirmed New Game. None of this roadmap is implemented yet. The first new game
 must establish an initial checkpoint; authored checkpoints replace it. Death
 shows authored prose without saving dead state over the checkpoint. Try Again
-restores all gameplay state, including current variables/journal and future
-skills, inventory, and character-creation data. There are no manual save slots
+restores all gameplay state, including current variables/journal/skills and future
+inventory and character-creation data. There are no manual save slots
 or rewind controls.
 Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
 are implemented, as are single typed conditions on choices and narrative
-paragraphs, chapter metadata, and the chapter-organized journal. Keep these small
-without expanding into a general evaluator or event framework.
+paragraphs, chapter metadata, the chapter-organized journal, and binary skills.
+Skills have no levels, experience, purchasing, rarity, cooldowns, passive bonuses,
+or progression trees. Keep these small without expanding into a general evaluator
+or event framework.
 
 Unless a future task explicitly changes the requirements, exclude random
 mechanics, glossary systems, shops, skill purchasing, manual saving, save slots,
