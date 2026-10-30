@@ -1,19 +1,27 @@
 # Story authoring
 
-Write UTF-8 plain text in `src/example.story`. This is the only supported
-story-authoring format. The parser builds immutable passage data for the existing
-runtime; it does not execute code or the reference engine's scripting language.
+Write UTF-8 text in `src/example.story`, the only supported authoring format.
+The parser validates a complete story before play. It produces immutable passage
+data; it does not execute JavaScript or the reference engine's language.
 
 ## Complete example
 
 ```text
+*var influence 0
+*var honor 5
+*var loyal false
+*var character_name "Unknown"
+
 *passage city_gate
 *title The City Gate
+*set character_name "Alexander"
+*add influence 1
 
 At dawn, you arrive outside the city walls.
 
 The guards stand beneath the raised portcullis.
 A messenger waits beside the entrance.
+Your name is ${character_name}. Your influence is ${influence}.
 
 *choice
   #Speak to the messenger -> messenger
@@ -21,98 +29,171 @@ A messenger waits beside the entrance.
 
 *passage messenger
 *title A Quiet Warning
+*add influence 2
+*add honor -1
+*set loyal true
 
 The messenger lowers their voice.
 
 "The council has been waiting for you."
+Your loyalty is ${loyal}.
 
 *continue council
 
 *passage council
 *title The Council Chamber
+*add influence -0.5
 
 The council members turn toward you as you enter.
 
-An empty chair stands at the head of the table.
+Influence: ${influence}. Honor: ${honor}. Loyal: ${loyal}.
 ```
 
-This story starts at `city_gate`. The player can go directly to `council`, or
-visit `messenger` and press Continue to reach `council`. The council is terminal:
-no choices or Continue button are displayed. There is no automatic fall-through.
+The first passage starts the story. The player can go directly to `council`
+(influence `0.5`, honor `5`, loyal `false`) or via `messenger` and Continue
+(influence `2.5`, honor `4`, loyal `true`). The council is terminal: there are no
+further actions or automatic fall-through. Refreshing starts a new game; variables
+persist between passages in the current game, not across page reloads.
 
 ## Supported syntax
 
 | Construct | Rule |
 | --- | --- |
-| `*passage id` | Begins a passage; IDs are unique and match `[a-z][a-z0-9_-]*`. The first passage is the starting passage. |
-| `*title text` | Exactly one nonempty display title per passage, before navigation. Conventionally placed just after the header. |
-| Narrative text | At least one paragraph per passage. Consecutive nonblank source lines join with single spaces between lines. Blank lines separate paragraphs. |
-| `*choice` | Takes no arguments; introduces one or more flat choice lines. Must conclude the passage. |
-| `#Label -> destination_id` | Inside a choice block, defines a nonempty label and a valid existing destination. Exactly one `->` separator is required. |
-| `*continue destination_id` | One explicit Continue destination; cannot coexist with `*choice`. Must conclude the passage. |
+| `*var name literal` | Declares one variable and its initial value before the first passage. Names must be unique. |
+| `*passage id` | Begins a passage with a unique stable ID matching `[a-z][a-z0-9_-]*`. The first passage is the start. |
+| `*title text` | Exactly one nonempty literal title per passage, before navigation. Place it immediately after the header. |
+| `*set name literal` | Replaces a declared variable with a literal of the same type. Only after the title and before any narrative. |
+| `*add name number` | Adds a numeric literal to a declared numeric variable. Same placement as `*set`. |
+| Narrative text | At least one paragraph per passage. Nonblank consecutive lines join with spaces; blank lines separate paragraphs. |
+| `${name}` | In narrative only, displays the variable's post-entry value as text. |
+| `*choice` | Takes no arguments; starts one or more flat choice lines. Must conclude the passage. |
+| `#Label -> destination_id` | Inside a choice block, a nonempty literal label and explicit existing destination. Exactly one `->` separator. |
+| `*continue destination_id` | One explicit Continue destination, mutually exclusive with choices. Must conclude the passage. |
 
-A passage ends at the next `*passage` or the end of the file. Terminal passages
-have neither `*choice` nor `*continue`. After a navigation directive only blank
-lines, choice lines (within `*choice`), or the next passage may follow. Additional
-prose, titles, directives, duplicate navigation blocks, and mixing choices with
-Continue are errors. Choices cannot contain nested choice blocks or commands.
+A passage ends at the next `*passage` or EOF. Terminal passages have neither
+choices nor Continue. After navigation, only blank lines, choices inside the
+current `*choice` block, or a new passage are allowed. Additional prose, titles,
+effects, duplicate action blocks, or nested choices are errors.
 
-Leading and trailing whitespace is removed from source lines. Indentation is
-optional and has no nesting semantics; all choices are peers. Whitespace around
-`->` is optional. A label cannot contain another `->`. Paragraphs retain internal
-spacing within each source line. Blank lines before the first passage and at the
-end are harmless. LF, CRLF, and CR line endings and a leading UTF-8 BOM are accepted.
+## Variables and literal values
 
-Directives are case-sensitive. Lines beginning with `*` are reserved for the
-supported directives; unknown ones are errors. Outside a choice block, `#` is
-literal narrative text, so Markdown headings are displayed as text. There is no
-comment syntax: `*comment` is unsupported, and `#` does not hide prose. Inline
-HTML, Markdown, JavaScript, and expressions are never interpreted. Titles and
-choice labels are also literal text, rendered with `textContent`. For example,
-`<em>Welcome</em>` and `${gold}` appear exactly as written.
+Declare every variable before the first passage; declarations cannot appear
+inside passages. Names are case-sensitive and follow the same lowercase ASCII
+identifier grammar as passage IDs. `influence`, `chapter_1`, and `honor-total` are
+valid; `Influence`, `1honor`, and names containing spaces are not. A variable name
+and a passage ID may be identical: they are separate kinds of identifier.
 
-## Stable identifiers and validation
+Supported literals:
 
-Use an ID such as `city_gate` or `chapter_1-council` and keep it when editing
-prose, changing a title, or moving a passage. IDs are never derived from titles,
-array positions, or random values. Moving the first passage changes the starting
-location; reordering other passages does not affect navigation.
+- **Numbers:** finite JSON-style numbers, including `0`, `-1`, `0.25`, `-0.5`,
+  and `1e3`. Use a leading digit for decimals. No leading `+`, leading zeroes
+  such as `01`, hexadecimal, `NaN`, or infinities. Arithmetic uses normal
+  JavaScript floating-point precision; numeric overflow fails passage entry.
+- **Booleans:** exactly `true` or `false`.
+- **Strings:** double-quoted text, including the empty string `""`. Standard JSON
+  string escapes work: `\"`, `\\`, `\n`, and `\u2665`, for example. Single quotes,
+  unquoted names, raw multiline strings, and trailing content are invalid.
 
-Changing an ID changes passage identity. Update every reference when an ID must
-change; future checkpoint compatibility will rely on these stable identifiers.
-Checkpoint saving is not implemented yet.
+Arrays, objects, `null`, and custom values are unsupported. `*set` cannot change
+an established type: assigning `0.5` to an initially integer variable works;
+assigning `"0.5"` or `true` to it does not. `*add` requires both a numeric variable
+and a numeric literal. `*set count other_count`, `*add count 1 + 2`, and
+`*set count ${other_count}` are errors. No arithmetic expressions, variable
+operands, interpolation in assignments, or general evaluator are implemented.
+A quoted string such as `"${other_count}"` is just a literal string.
 
-The entire story is validated before a game starts, including destinations in
-unreachable passages. Forward references are supported. Parsing either returns
-one complete immutable `Story` or throws; invalid late passages cannot partially
-initialize a game. Errors include a one-based source line and a passage ID when
-available. A missing title points to the passage header; a missing destination
-points to the referring action.
+Effects run once, in source order, on entry. For example:
+
+```text
+*var count 0
+
+*passage arrival
+*title Arrival
+*add count 2
+*set count 10
+*add count -0.25
+
+Count: ${count}.
+```
+
+This displays `Count: 9.75.`. Effects must be after `*title` and before the first
+narrative line, even if blank lines separate the sections. They cannot appear
+between paragraphs, inside choice blocks, or after Continue. Initial entry uses
+the same rules as navigation. A legitimate later return to a passage applies its
+effects once again; merely reading or rerendering it does not.
+
+Every entry is atomic. An overflow in any addition rejects the whole transition,
+even if a later effect would repair the value. Previous state and all its values
+remain intact. A failed initial entry does not start a game. No effect reads the
+browser UI or performs external actions.
+
+## Interpolation and literal content
+
+Narrative `${name}` placeholders use the current values after all entry effects.
+Booleans display as `true`/`false`, numbers as their normal string form, and strings
+as their contents without quotes. Placeholders must fit on one source line and
+contain exactly a declared name, without spaces or expressions. Unknown names,
+`${count + 1}`, and unclosed `${count` are validation errors, including in
+unreachable passages. Immutable source text keeps its placeholders.
+
+Interpolation is a single read-only substitution pass. If a variable contains
+`<em>${other}</em>`, that entire string is displayed as literal text; it does not
+execute HTML or recursively interpolate `other`. Titles, choice labels, and
+quoted literals never interpolate; `${unknown}` there remains literal text.
+All display content uses `textContent`, so HTML and JavaScript are never executed.
+Markdown and other inline syntax stay literal as well.
+
+## Whitespace and stable IDs
+
+Source lines lose leading/trailing whitespace; internal spacing is retained.
+Consecutive narrative lines join with one space between lines. Indentation does
+not imply nesting; all choices are peers. Whitespace around `->` is optional,
+and labels cannot contain another `->`. Blank lines around passages are harmless.
+LF, CRLF, CR, and a leading UTF-8 BOM are accepted.
+
+Directives are case-sensitive. Lines beginning with `*` are reserved for supported
+directives; unknown ones are errors. Outside choice blocks, `#` is literal prose,
+so Markdown headings appear as text. There is no comment syntax: `*comment` is
+unsupported and `#` never hides narrative. Inline directive-looking text is not
+executed.
+
+Keep stable passage IDs when editing prose, changing titles, or moving passages.
+Moving the first passage changes where play begins; moving other passages does
+not affect navigation. Changing an ID changes passage identity, so update every
+reference. Future checkpoint compatibility will rely on these IDs. Forward
+passage references are valid, and all destinations are checked before play.
 
 ## Common errors
 
 | Invalid input | Fix |
 | --- | --- |
-| `*passage City Gate` | Use a unique ID such as `city_gate`, with lowercase letters, digits, underscores, or hyphens; begin with a letter. |
-| A second `*passage city_gate` | Give it a different stable ID; duplicate IDs are rejected even with different titles. |
+| Duplicate `*passage city_gate` | Give each passage a unique stable ID. |
+| `*passage City Gate` | Use `city_gate`, matching the identifier grammar. |
 | Missing `*title` or two titles | Supply exactly one nonempty title. |
 | A title with no narrative | Add at least one nonblank paragraph. |
-| `#Go to council` inside `*choice` | Add the explicit arrow and destination: `#Go to council -> council`. |
-| `# -> council` | Give the choice a nonempty label. |
-| `*choice` with no following choices | Add at least one choice line. |
-| An action referring to `unknown_hall` | Define that passage or correct the destination ID. |
-| Prose after `*continue council` | Move it before Continue, or into a new destination passage. |
-| `*continue` after a choice block | Use choices or Continue, never both in one passage. |
-| `*if`, `*set`, `*comment`, or nested `*choice` | These are unsupported; do not use them as commands. |
+| `*var count 0` inside a passage | Move declarations to the beginning of the file. |
+| `*set missing 1` or `${missing}` in narrative | Declare that variable first. |
+| `*set count "two"` for a number | Keep the declared type. |
+| `*add loyal 1` for a boolean | Only add numeric literals to numeric variables. |
+| Effects after narrative or navigation | Move them between the title and first paragraph. |
+| `#Go to council` inside a choice block | Use `#Go to council -> council`. |
+| `# -> council` or an empty `*choice` | Provide at least one nonempty label with an explicit destination. |
+| An action to `unknown_hall` | Define that passage or correct the destination. |
+| Continue after choices | Use either choices or Continue in that passage. |
+| `*if`, `*comment`, or nested `*choice` | These commands are unsupported. |
 
-## Planned functionality, not supported syntax
+Errors include one-based source lines and passage IDs when available. Missing
+titles point to their passage headers; missing destinations point to their
+referring actions. No partially validated story can initialize a game.
 
-Character attributes and variables, arithmetic and conditional choices, basic
-skills, inventory quantities, chapter-organized journal entries, character
-creation, session-only Undo, one persistent automatic author-defined checkpoint,
-Continue Game, and confirmed New Game require future specifications and explicit
-implementation tasks. There are no placeholder commands for these features.
+## Future functionality, not current syntax
 
-Random mechanics, glossary systems, shops, skill purchasing, manual saving, save
-slots, import/export, procedures, subroutines, loops, and plugin systems remain
-excluded unless a future task explicitly changes the requirements.
+Character attributes/UI, conditional choices/narrative, arithmetic expressions,
+basic skills, inventory quantities, chapter journals, character creation, recent
+session Undo, one automatic persistent author-defined checkpoint, Continue Game,
+and confirmed New Game require future requests. There are no placeholder
+commands or storage implementations for these features.
+
+Random mechanics, glossary, shops, skill purchasing, manual saves, save slots,
+import/export, procedures, subroutines, loops, and plugin systems remain excluded
+unless a future task explicitly changes the requirements.

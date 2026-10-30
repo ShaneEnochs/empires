@@ -12,6 +12,11 @@ libraries. Use the existing checkout; no frontend framework is needed.
   destination; there is no automatic execution of subsequent passages.
 - `Game` owns one `GameState`. All present and future gameplay state belongs
   there. Rendering reads state and must never cause gameplay changes.
+- Entry effects run once in source order on a private candidate state; commit
+  only when every effect succeeds. Initial entry and navigation share this path.
+  Never apply effects from rendering, getters, or interpolation. Keep declarations,
+  effects, and exposed variable records immutable; preserve declared types and
+  finite numeric values.
 - Passage IDs are authored, unique, and stable. Never derive them from order,
   titles, prose, timestamps, or random values. Preserve IDs for navigation and
   future checkpoint compatibility.
@@ -31,11 +36,13 @@ libraries. Use the existing checkout; no frontend framework is needed.
 
 ## Planned features, only when requested
 
-Character attributes and variables; arithmetic and conditional choices; basic
+Character attributes/UI; expressions and conditional choices; basic
 skills; basic inventory with quantities; journal entries organized by chapter;
 character creation; Undo for recent choices in the current session; one
 persistent automatic author-defined checkpoint; Continue Game; and confirmed
 New Game. These are plans, not currently supported commands or gameplay systems.
+Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
+are implemented; keep them small without expanding into a general evaluator.
 
 Unless a future task explicitly changes the requirements, exclude random
 mechanics, glossary systems, shops, skill purchasing, manual saving, save slots,

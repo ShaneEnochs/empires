@@ -1,58 +1,52 @@
 # Passage engine
 
-## Current execution model
+## Story data and validation
 
-`parseStory` reads a complete `.story` text file and returns the same frozen
-`Story`, `Passage`, and `Choice` data model used by the runtime. The small parser
-recognizes passage headers, one title per passage, plain-text paragraphs, choices,
-and Continue. It joins consecutive prose lines with spaces and flushes paragraphs
-on blank lines. It does not produce executable instructions or evaluate prose.
+`parseStory` reads the single `.story` authoring format into immutable `Story`,
+`Passage`, and `Choice` data. It validates the entire file before `new Game` can
+run. Source locations remain parser-local for errors; there is no instruction
+pointer, call stack, command registry, or runtime scripting language.
 
-IDs are authored identifiers matching `[a-z][a-z0-9_-]*`; they never depend on
-titles or text. The first passage supplies `Story.startId`; all later navigation
-uses explicit IDs. Moving the first header changes where play begins, while
-reordering other passages leaves navigation unchanged.
+Variable declarations appear before the first passage. Immutable
+`Story.initialVariables` records each name's initial primitive value and thus its
+fixed type. Names and passage IDs share `[a-z][a-z0-9_-]*`. IDs are stable authored
+identifiers, never derived from titles, prose, or random values. The first passage
+supplies `startId`; moving it changes the starting location. All later navigation
+uses explicit destination IDs, independent of definition order.
 
-The parser retains source locations while collecting passages and validates all
-references after reading the file, so forward references work. All destinations,
-including those in unreachable passages, must exist. Duplicate IDs, missing or
-duplicate titles, empty prose or choice blocks, malformed actions, additional
-content after navigation, and unsupported directives are errors. Validation
-throws with source lines and passage IDs where available, or returns a complete,
-deeply frozen story. No partial result is exposed to `new Game`. Source locations
-are parser-local and do not add fields to passage data or gameplay state.
+Each passage has one title, ordered literal entry effects, paragraph strings,
+and either choices, Continue, or neither. The parser joins consecutive prose
+lines with spaces and separates paragraphs on blank lines. Effects must follow
+`*title` and precede all narrative. Navigation must conclude the passage.
 
-Text is the only authoring format; the old JSON example/parser was removed.
-There is no format registry or abstract parser framework. Identifier and
-destination rules each have a single validation path in `src/story.ts`.
-
-`Game` privately owns one `GameState`. It starts at `Story.startId`. An action
-calls `navigate(destinationId)`, which verifies that the current passage offers
-that destination, verifies the passage exists, and replaces the state. Rejected
-navigation leaves state untouched. There is no fall-through to the next passage,
-automatic traversal, instruction pointer, call stack, or background execution.
-Entering a passage currently means selecting its content; there are no entry
-effects to execute yet. The same story and action sequence produce the same
-state.
-
-The browser reads the selected passage and replaces the displayed heading,
-paragraphs, and actions. It uses `textContent`, native buttons, and heading focus
-after navigation. Rendering never executes a passage or mutates `GameState`.
-Continue is one ordinary explicit navigation action. No actions means the
-passage is terminal. Prose has no executable semantics.
+The parser rejects duplicate IDs/declarations, malformed literals, undeclared
+variables, type changes, invalid interpolation, missing/duplicate titles, empty
+prose/choice blocks, misplaced effects, malformed actions, unsupported directives,
+and missing destinations, including in unreachable passages. Forward passage
+references work; variables must already be declared. Errors identify source lines
+and passage IDs when available. Validation either throws or returns a complete
+frozen story; invalid late passages cannot partially initialize gameplay.
 
 ## Core interfaces
 
 The definitions live in `src/types.ts`:
 
 ```ts
+type VariableValue = number | boolean | string;
+type Variables = Readonly<Record<string, VariableValue>>;
+type PassageEffect =
+  | { readonly kind: 'set'; readonly variable: string; readonly value: VariableValue }
+  | { readonly kind: 'add'; readonly variable: string; readonly value: number };
+
 interface GameState {
   readonly passageId: string;
+  readonly variables: Variables;
 }
 
 interface Passage {
   readonly id: string;
   readonly title: string;
+  readonly effects: readonly PassageEffect[];
   readonly text: readonly string[];
   readonly choices: readonly Choice[];
   readonly continueTo?: string;
@@ -65,6 +59,7 @@ interface Choice {
 
 interface Story {
   readonly startId: string;
+  readonly initialVariables: Variables;
   readonly passages: readonly Passage[];
 }
 
@@ -73,68 +68,93 @@ interface GameSnapshot {
 }
 ```
 
-`GameState` contains only the active passage ID today. Future gameplay fields
-belong here, not in DOM elements, passage definitions, or separate mutable stores.
-The current state object is frozen and exposed as read-only. Validated story
-data is also frozen; state and content have separate responsibilities.
+`Game` owns one `GameState`; all runtime gameplay values belong here. Story
+metadata only defines initial values and effects. There are no separate mutable
+variable registries. Both the exposed state and its variable record are frozen.
+Each successful entry owns a fresh record, so previous states and other games
+cannot change when the current game progresses. Values are primitives, so copying
+the record copies all variable data. Story metadata, effects, choices, text arrays,
+and their containing definitions are frozen as well.
 
-## Proposed snapshot boundary (not implemented)
+## Deterministic entry and the future snapshot boundary
 
-`GameSnapshot` is a type only. There is no snapshot creation, history, restoration,
-serialization, storage, or checkpoint marker in this stage.
+Startup and ordinary navigation share the private `Game.enterPassage` path:
 
-When entry effects are introduced, use this single entry sequence:
+1. `navigate` validates that the current passage offers the requested destination.
+   Startup uses the validated `Story.startId` instead of an outgoing action.
+2. Resolve the destination, then create `next` with its `passageId` and a fresh
+   copy of the input variables. Startup's input is `Story.initialVariables`;
+   navigation's input is the current state's variables.
+3. **This candidate, before any effects, is the future pre-passage snapshot
+   boundary.** A `GameSnapshot` will eventually own a copy of this input state.
+4. Apply the destination's `effects` exactly once in source order. `set` replaces
+   a value with a literal of the same declared type. `add` adds a numeric literal
+   to a numeric variable. Each addition must produce a finite value, even if a
+   later command would replace it. There are no expressions or external effects.
+5. Freeze the completed variable record and state, then return it. Only a
+   successful return replaces `Game.currentState`. An error discards the candidate
+   entirely; earlier effects from that attempt never affect the current state.
+6. Render using the committed state. No rendering or property reads execute entry
+   effects. A later legitimate navigation back to a passage is a new entry and
+   applies its effects once again; it does not reset all variables to defaults.
 
-1. Validate the explicit destination and the active action.
-2. Prepare a candidate `GameState` with `passageId` set to the destination and all
-   other gameplay fields copied from the current state.
-3. Deep-copy that candidate into a `GameSnapshot` **before** applying any
-   destination entry effects. The snapshot's ID identifies the passage to enter,
-   and its gameplay values are the inputs to that passage.
-4. Apply the destination's deterministic effects once, commit the resulting
-   `GameState`, then render it. A failed entry must not partially commit state.
+For example, `add count 2`, `set count 10`, `add count -0.25` produces `9.75`.
+Finite operands can still overflow at runtime. That failure leaves the original
+state object, passage ID, and all values unchanged. The browser keeps the current
+passage displayed with a text error; a valid alternate action remains usable.
+If initial entry fails, no game becomes available to the UI.
 
-Initial entry uses the same boundary with initial gameplay values. Future Undo
-will retain passage-entry snapshots in memory, and the one automatic checkpoint
-will retain one author-selected entry snapshot. Restoring either installs its
-pre-entry state, executes the identified passage once, then renders. Never replay
-effects over a post-entry snapshot, and never execute effects just to rerender.
-Future snapshots must own deep copies of nested gameplay data; TypeScript
-`readonly` alone is insufficient for that. Storage schema/version policy is
-deliberately deferred until persistence is implemented.
+Execution depends only on validated passage data and input state. It does not
+read DOM state, clocks, randomness, storage, or remote services. Identical input
+states and destinations produce identical results. Numeric arithmetic uses
+JavaScript finite floating-point numbers, with their normal rounding behavior.
 
-## Scope boundaries
+`GameSnapshot` remains a type-only proposal. There is no snapshot capture,
+history, restoration, serialization, checkpoint marker, or storage implementation.
+Future session Undo and the single automatic author-defined checkpoint must reuse
+this same pre-entry representation. Restoring either will install its pre-entry
+state and enter the identified passage once; it must not replay effects over a
+post-entry snapshot. If future gameplay adds nested mutable data, snapshots and
+candidate states must copy it deeply. Storage/version policy is deferred.
 
-Implemented behavior is text authoring, content validation, explicit navigation,
-and basic browser rendering. There is no gameplay expression evaluator or runtime
-command interpreter. `Game`, `GameState`, and the rendering architecture remain
-unchanged by the authoring-format migration.
-Ordinary TypeScript iteration used to validate/render data is not a story-language
-loop or runtime control-flow feature.
+## Rendering and interpolation
 
-Future work, only when requested: character attributes and variables, arithmetic
-and conditional choices, basic skills, item quantities, chapter-organized journal
-entries, character creation, Undo for recent session choices, one persistent
-automatic author-defined checkpoint, Continue Game from that checkpoint, and
-confirmed New Game. None of these gameplay systems is implemented here. In-story
-Continue navigation is the only Continue behavior currently implemented.
+Passage text retains `${name}` placeholders in immutable definitions. The pure
+`interpolate` helper validates references during parsing and resolves them during
+rendering using post-entry `GameState.variables`. It does one substitution pass:
+inserted string values are not parsed again, even if they contain `${...}`, HTML,
+or JavaScript-like text. Unclosed placeholders, expressions, and undeclared names
+in narrative are rejected before play. A placeholder must fit on one source line.
 
-Excluded: glossary, randomness, shops, skill purchasing, save slots, manual saves,
-import/export, nested procedure calls, subroutines, loops, complex UI styling,
-and a plugin system. Do not grow a framework for these features. The reference
-repository's engine, save, undo, interpreter, and UI architecture are not used.
+Only narrative paragraphs interpolate. Titles, choice labels, and quoted string
+literals remain literal, including placeholder-looking text. Native headings,
+paragraphs, and buttons still use `textContent`. The renderer moves focus to the
+new heading after navigation, never changes state, and never executes effects.
+Continue remains an ordinary explicit action; no actions means a terminal
+passage. There is no automatic passage traversal.
 
-## Verification
+## Scope and verification
 
-`npm test` exercises text parsing, paragraphs, literal content, source errors,
-stable IDs across content edits/reordering, duplicate and missing destination
-rejection, title/action validation, immutable data, atomic initialization,
-deterministic navigation, and state ownership. `npm run build` checks all
-source/tests with strict TypeScript and builds the static browser application.
-The browser should support both routes in the example using mouse or keyboard,
-move focus to each new heading, and stop at the council without saving any data.
+Implemented: primitive variables, literal `set`/`add` entry effects, narrative
+interpolation, text authoring/validation, explicit navigation, and basic rendering.
+There is no general expression evaluator, runtime interpreter loop, event bus,
+plugin architecture, frontend framework, or state-management dependency. Ordinary
+TypeScript iteration over data is not a story-language loop.
 
-`.github/workflows/ci.yml` runs `npm ci`, `npm test`, and `npm run build` on Node.js
-22 for pull requests targeting `main` and pushes to `main`. It grants only
-`contents: read`. Each command's failure fails the job. There is no deployment,
-publishing, release automation, or automatic merging.
+Only when requested: character attributes/UI, expressions and conditional choices,
+basic skills, inventory quantities, chapter-organized journal entries, character
+creation, recent session Undo, one persistent automatic author-defined checkpoint,
+Continue Game, and confirmed New Game. These systems are not implemented here.
+Random mechanics, glossary, shops, skill purchasing, manual saves, save slots,
+import/export, procedures, subroutines, loops, and plugin systems remain excluded.
+System Awakening remains reference only; its engine architecture is not imported.
+
+`npm test` covers parsing and navigation guarantees, declaration/effect validation,
+exactly-once entry, re-entry, source order, independent state, immutable exposed
+data, interpolation, and failed transitions. `npm run build` checks source/tests
+with strict TypeScript and builds the browser application. Browser checks should
+exercise both example routes, keyboard Continue, safe interpolation, and errors.
+
+`.github/workflows/ci.yml` continues to run `npm ci`, `npm test`, and `npm run build`
+on Node.js 22 for pull requests targeting `main` and pushes to `main`, with only
+`contents: read`. It does not deploy, publish, or automatically merge anything.

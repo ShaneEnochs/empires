@@ -1,4 +1,5 @@
-import type { Choice, Passage, Story } from './types';
+import { interpolate } from './interpolate';
+import type { Choice, Passage, PassageEffect, Story, VariableValue } from './types';
 
 function syntaxError(message: string, line: number, passageId?: string): Error {
   return new Error(`Line ${line}${passageId ? `, passage "${passageId}"` : ''}: ${message}`);
@@ -11,14 +12,28 @@ function id(value: string, context: string, line: number, passageId?: string): s
   return value;
 }
 
+function literal(value: string, line: number, passageId?: string): VariableValue {
+  if (value === 'true' || value === 'false') return value === 'true';
+  if (/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(value)) {
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+    throw syntaxError('Numeric literals must be finite.', line, passageId);
+  }
+  if (value.startsWith('"')) {
+    try { return JSON.parse(value) as string; } catch { /* Report the source location below. */ }
+  }
+  throw syntaxError('Expected a finite number, true, false, or a double-quoted string literal.', line, passageId);
+}
+
 /** Parse and validate the entire story before any passage can be entered. */
 export function parseStory(source: string): Story {
   const passages: Passage[] = [];
   const ids = new Set<string>();
+  const initialVariables: Record<string, VariableValue> = {};
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
     id: string; line: number; title?: string; text: string[];
-    choices: Choice[]; continueTo?: string;
+    choices: Choice[]; effects: PassageEffect[]; continueTo?: string;
   } | undefined;
   let paragraph: string[] = [];
   let action: 'choice' | 'continue' | undefined;
@@ -43,6 +58,7 @@ export function parseStory(source: string): Story {
     }
     passages.push(Object.freeze({
       id: current.id, title: current.title, text: Object.freeze(current.text),
+      effects: Object.freeze(current.effects),
       choices: Object.freeze(current.choices),
       ...(current.continueTo === undefined ? {} : { continueTo: current.continueTo }),
     }));
@@ -60,12 +76,42 @@ export function parseStory(source: string): Story {
     if (text.startsWith('*')) {
       const directive = text.split(/\s/, 1)[0]!;
       const argument = text.slice(directive.length).trim();
+      if (directive === '*var' || directive === '*set' || directive === '*add') {
+        if (directive === '*var' && current) {
+          throw syntaxError('*var declarations must precede the first passage.', line, current.id);
+        }
+        if (directive !== '*var' && (!current || current.title === undefined || current.text.length > 0 || paragraph.length > 0 || action !== undefined)) {
+          throw syntaxError('Effects must appear after *title and before the first narrative paragraph.', line, current?.id);
+        }
+        const parts = /^(\S+)\s+(.+)$/.exec(argument);
+        if (!parts) throw syntaxError(`${directive} requires a variable name and literal value.`, line, current?.id);
+        const variable = id(parts[1]!, 'Variable name', line, current?.id);
+        const value = literal(parts[2]!, line, current?.id);
+        if (directive === '*var') {
+          if (Object.hasOwn(initialVariables, variable)) throw syntaxError(`Duplicate variable "${variable}".`, line);
+          initialVariables[variable] = value;
+        } else {
+          if (!Object.hasOwn(initialVariables, variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, current?.id);
+          if (directive === '*add') {
+            if (typeof initialVariables[variable] !== 'number' || typeof value !== 'number') {
+              throw syntaxError('*add requires a numeric variable and numeric literal.', line, current?.id);
+            }
+            current!.effects.push(Object.freeze({ kind: 'add', variable, value }));
+          } else {
+            if (typeof initialVariables[variable] !== typeof value) {
+              throw syntaxError(`*set must preserve the declared type of "${variable}".`, line, current?.id);
+            }
+            current!.effects.push(Object.freeze({ kind: 'set', variable, value }));
+          }
+        }
+        continue;
+      }
       if (directive === '*passage') {
         finishPassage();
         const passageId = id(argument, 'Passage ID', line);
         if (ids.has(passageId)) throw syntaxError(`Duplicate passage ID "${passageId}".`, line, passageId);
         ids.add(passageId);
-        current = { id: passageId, line, text: [], choices: [] };
+        current = { id: passageId, line, text: [], choices: [], effects: [] };
         action = undefined;
         continue;
       }
@@ -107,6 +153,9 @@ export function parseStory(source: string): Story {
     } else if (action === 'continue') {
       throw syntaxError('Continue must conclude the passage; no further prose or choices are allowed.', line, current.id);
     } else {
+      try { interpolate(text, initialVariables); } catch (error) {
+        throw syntaxError((error as Error).message, line, current.id);
+      }
       paragraph.push(text);
     }
   }
@@ -119,5 +168,5 @@ export function parseStory(source: string): Story {
       throw syntaxError(`Missing destination "${reference.destinationId}".`, reference.line, reference.passageId);
     }
   }
-  return Object.freeze({ startId: first.id, passages: Object.freeze(passages) });
+  return Object.freeze({ startId: first.id, initialVariables: Object.freeze(initialVariables), passages: Object.freeze(passages) });
 }

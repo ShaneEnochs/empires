@@ -1,11 +1,10 @@
-import type { GameState, Passage, Story } from './types';
+import type { GameState, Passage, Story, Variables } from './types';
 
 export class Game {
   private currentState: GameState;
 
   constructor(private readonly story: Story) {
-    this.currentState = Object.freeze({ passageId: story.startId });
-    this.findPassage(story.startId);
+    this.currentState = this.enterPassage(story.startId, story.initialVariables);
   }
 
   get state(): GameState {
@@ -24,8 +23,26 @@ export class Game {
     if (!allowed) {
       throw new Error(`Passage "${current.id}" has no action to "${destinationId}".`);
     }
-    this.findPassage(destinationId);
-    this.currentState = Object.freeze({ passageId: destinationId });
+    this.currentState = this.enterPassage(destinationId, this.currentState.variables);
+  }
+
+  private enterPassage(passageId: string, input: Variables): GameState {
+    const passage = this.findPassage(passageId);
+    // Future pre-passage snapshots belong at this boundary, before any effect.
+    const next = { passageId, variables: { ...input } };
+    for (const effect of passage.effects) {
+      if (effect.kind === 'set') {
+        next.variables[effect.variable] = effect.value;
+      } else {
+        const before = next.variables[effect.variable];
+        if (typeof before !== 'number') throw new Error(`Passage "${passageId}": *add requires a numeric variable.`);
+        const value = before + effect.value;
+        if (!Number.isFinite(value)) throw new Error(`Passage "${passageId}": *add on "${effect.variable}" produced a non-finite number.`);
+        next.variables[effect.variable] = value;
+      }
+    }
+    Object.freeze(next.variables);
+    return Object.freeze(next);
   }
 
   private findPassage(id: string): Passage {
