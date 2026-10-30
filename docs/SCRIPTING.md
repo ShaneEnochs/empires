@@ -64,7 +64,8 @@ persist between passages in the current game, not across page reloads.
 | `*title text` | Exactly one nonempty literal title per passage, before navigation. Place it immediately after the header. |
 | `*set name literal` | Replaces a declared variable with a literal of the same type. Only after the title and before any narrative. |
 | `*add name number` | Adds a numeric literal to a declared numeric variable. Same placement as `*set`. |
-| Narrative text | At least one paragraph per passage. Nonblank consecutive lines join with spaces; blank lines separate paragraphs. |
+| Narrative text | At least one unconditional paragraph per passage. Nonblank consecutive lines join with spaces; blank lines separate paragraphs. |
+| `*show_if name operator literal` | At a paragraph boundary after the title/effects, conditions only the paragraph starting on the immediately following source line. |
 | `${name}` | In narrative only, displays the variable's post-entry value as text. |
 | `*choice` | Takes no arguments; starts one or more flat choice lines. Must conclude the passage. |
 | `#Label -> destination_id` | Inside a choice block, a nonempty literal label and explicit existing destination. Exactly one `->` separator. |
@@ -160,12 +161,80 @@ The runtime also enforces conditions when navigating; bypassing a hidden button
 cannot change state. If choices share a destination, any eligible one permits it.
 
 Unsupported: variable-to-variable comparisons, arithmetic, parentheses, logical
-operators, multiple conditions, conditional narrative, nested `*if`, and `*else`.
+operators, multiple conditions, nested `*if`, and `*else`.
 For example, `[if influence >= other]`, `[if influence + 1 >= 5]`, and
 `[if influence >= 5 && loyal == true]` are errors. Type mismatches such as
 `[if loyal == 0]`, ordered strings such as `[if faction > "guild"]`, non-finite
 numbers, missing operands/brackets, extra suffixes, and invalid operators are also
 rejected with passage/source-line errors before gameplay can start.
+
+## Conditional narrative
+
+`*show_if` uses exactly the same condition grammar and comparison semantics as
+choices, without the `[if ...]` brackets. It applies exclusively to the next
+paragraph:
+
+```text
+*var influence 4
+*var loyal false
+
+*passage court
+*title The Court
+*add influence 1
+
+The king studies your arrival.
+
+*show_if influence >= 5
+The king recognizes your achievements.
+He welcomes you into his court.
+
+Everyone awaits your answer.
+
+*show_if loyal == true
+The guards recognize your oath.
+```
+
+Entry raises influence to 5, so both lines in the king's welcome form one visible
+paragraph. The guards' paragraph is hidden. The surrounding ordinary paragraphs
+are unconditional. Strings work too, for example `*show_if faction == "merchant"`
+when `faction` has been declared. All six operators use the same typed rules,
+finite literals, and parser/evaluator as choice conditions.
+
+Boundary rules:
+
+- Put `*show_if` after the passage title and all entry effects, before choices
+  or Continue. If prose precedes it, a blank line must separate that paragraph
+  from the directive; it cannot split consecutive lines of existing prose.
+- The next physical source line must begin nonblank narrative prose. A blank
+  line, EOF, another `*show_if`, or any other directive there is an error.
+- Consecutive prose lines join with spaces and share the condition. A blank
+  line ends that paragraph and resets visibility to unconditional for subsequent
+  ordinary prose. Another `*show_if` requires a separate paragraph boundary.
+- Navigation, the next passage, or EOF can also conclude the final paragraph
+  normally. There is no closing command, nested block, `*else`, or `*endif`.
+- Conditions cannot wrap `*set`, `*add`, choices, Continue, or other commands.
+  Effects after narrative remain invalid. `*show_if` is also invalid before a
+  title, inside a choice block, or after Continue.
+- Every passage needs at least one unconditional narrative paragraph, even if
+  all conditions initially pass. No fallback text is generated automatically.
+
+`game.passage.paragraphs` stores immutable `{ text, condition? }` records.
+`game.visibleParagraphs` filters them using committed post-entry variables, just
+as `game.availableChoices` filters actions. The browser uses this runtime view;
+hidden paragraphs create no elements or spacing. Visibility does not alter state,
+rerun effects, or change navigation. Legitimate re-entry applies its effects once
+and then derives visibility from the resulting state.
+
+Visible conditional prose supports `${name}` interpolation with that same state.
+Placeholders remain in authored records, substitution is single-pass, and display
+uses `textContent`. HTML-like inserted strings stay literal. All interpolation
+references and conditions are validated before play, including hidden paragraphs;
+a false condition cannot conceal an invalid variable reference.
+
+Malformed conditions, undeclared variables, incompatible types, misplaced
+directives, empty conditional paragraphs, and passages with no unconditional
+prose produce source-line/passage errors. There are no logical operators,
+arithmetic expressions, variable-to-variable comparisons, or conditional effects.
 
 ## Entry effects
 
@@ -251,6 +320,9 @@ passage references are valid, and all destinations are checked before play.
 | `[if influence >= other]` | Compare with a literal, not another variable. |
 | A conditional block with no unconditional option | Add a fallback choice. |
 | A condition before `->` or malformed brackets | Put exactly one valid `[if name operator literal]` suffix after the destination. |
+| A blank line or command immediately after `*show_if` | Start prose on the very next source line. |
+| `*show_if` between prose lines | End the previous paragraph with a blank line first. |
+| A passage containing only conditional prose | Add at least one unconditional narrative paragraph. |
 | `*if`, `*comment`, or nested `*choice` | These commands are unsupported. |
 
 Errors include one-based source lines and passage IDs when available. Missing
@@ -259,11 +331,24 @@ referring actions. No partially validated story can initialize a game.
 
 ## Future functionality, not current syntax
 
-Character attributes/UI, conditional narrative, arithmetic expressions,
-basic skills, inventory quantities, chapter journals, character creation, recent
-session Undo, one automatic persistent author-defined checkpoint, Continue Game,
-and confirmed New Game require future requests. There are no placeholder
-commands or storage implementations for these features.
+Character attributes/UI, arithmetic expressions, basic skills, inventory
+quantities, chapter journals, and character creation remain future work.
+
+The saving/death roadmap is documentation only: one persistent automatic
+checkpoint, future author-controlled `*checkpoint` and `*death`, Try Again on
+death passages, Continue Game on reopening, and confirmed New Game. The first new
+game must establish an initial checkpoint. Authored checkpoints replace it;
+death must not save dead state over it. Try Again restores complete pre-passage
+state and enters that passage with effects applied exactly once, including future
+skills, inventory, journal, and character-creation data. Continue Game resumes
+the latest checkpoint; New Game confirms before overwriting progress.
+
+There will be no traditional Undo, choice-history stack, manual rewind, Return to
+Checkpoint control, manual saves, or save slots. These future directives and
+actions are **not supported syntax or UI yet**; no persistence, death handling,
+checkpoint capture/restoration, title-screen changes, or Try Again is implemented.
+See `docs/ENGINE.md` for the checkpoint boundary. Current `*continue id` remains
+ordinary navigation.
 
 Random mechanics, glossary, shops, skill purchasing, manual saves, save slots,
 import/export, procedures, subroutines, loops, and plugin systems remain excluded

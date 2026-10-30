@@ -25,7 +25,7 @@ try {
     heading.textContent = passage.title;
     heading.tabIndex = -1;
 
-    const paragraphs = passage.text.map(text => {
+    const paragraphs = game.visibleParagraphs.map(({ text }) => {
       const paragraph = document.createElement('p');
       paragraph.textContent = interpolate(text, game.state.variables);
       return paragraph;

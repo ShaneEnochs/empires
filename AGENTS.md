@@ -20,9 +20,10 @@ libraries. Use the existing checkout; no frontend framework is needed.
 - Passage IDs are authored, unique, and stable. Never derive them from order,
   titles, prose, timestamps, or random values. Preserve IDs for navigation and
   future checkpoint compatibility.
-- Future session Undo and automatic checkpoint saving must share one consistent
-  pre-passage `GameSnapshot` representation. Preserve the boundary documented in
-  `docs/ENGINE.md` when implementing those features.
+- Preserve the pre-passage `GameSnapshot` boundary for the future single persistent
+  checkpoint. Restoration must enter its passage and apply effects exactly once.
+  Do not add traditional Undo, a history stack, manual rewind, or a player-facing
+  Return to Checkpoint command.
 - Implement new features only when explicitly requested. Do not replace working
   features with elaborate abstractions without a demonstrated benefit. Keep one
   authoring format; avoid parser frameworks and hypothetical extension layers.
@@ -34,7 +35,10 @@ libraries. Use the existing checkout; no frontend framework is needed.
 - Use `Game.availableChoices` for display and enforce the same eligibility inside
   navigation. Conditions are immutable data evaluated against committed state;
   eligibility checks must never mutate state or repeat entry effects. Conditional
-  blocks require an unconditional fallback.
+  choice blocks require an unconditional fallback. Use `Game.visibleParagraphs`
+  for narrative; choices and paragraphs share one condition parser/evaluator.
+  Every passage must have unconditional prose. `*show_if` marks one paragraph,
+  never commands or nested blocks, and visibility must remain read-only.
 - System Awakening is reference material only. Do not modify it, copy its engine,
   or reuse its save, undo, interpreter, or UI architecture.
 
@@ -42,12 +46,16 @@ libraries. Use the existing checkout; no frontend framework is needed.
 
 Character attributes/UI; expressions; basic
 skills; basic inventory with quantities; journal entries organized by chapter;
-character creation; Undo for recent choices in the current session; one
-persistent automatic author-defined checkpoint; Continue Game; and confirmed
-New Game. These are plans, not currently supported commands or gameplay systems.
+character creation; one persistent automatic checkpoint; author-controlled
+`*checkpoint` and `*death`; Try Again on death passages; Continue Game; and
+confirmed New Game. None of this roadmap is implemented yet. The first new game
+must establish an initial checkpoint; authored checkpoints replace it. Death
+shows authored prose without saving dead state over the checkpoint. Try Again
+restores all gameplay state, including future skills, inventory, journal, and
+character-creation data. There are no manual save slots or rewind controls.
 Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
-are implemented, as are single typed conditions on choices. Keep these small
-without expanding into a general evaluator.
+are implemented, as are single typed conditions on choices and narrative
+paragraphs. Keep these small without expanding into a general evaluator.
 
 Unless a future task explicitly changes the requirements, exclude random
 mechanics, glossary systems, shops, skill purchasing, manual saving, save slots,

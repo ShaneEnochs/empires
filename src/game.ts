@@ -1,5 +1,5 @@
 import { evaluateCondition } from './condition';
-import type { Choice, GameState, Passage, Story, Variables } from './types';
+import type { Choice, GameState, NarrativeParagraph, Passage, Story, Variables } from './types';
 
 export class Game {
   private currentState: GameState;
@@ -19,6 +19,11 @@ export class Game {
   get availableChoices(): readonly Choice[] {
     return Object.freeze(this.passage.choices.filter(choice =>
       choice.condition === undefined || evaluateCondition(choice.condition, this.currentState.variables)));
+  }
+
+  get visibleParagraphs(): readonly NarrativeParagraph[] {
+    return Object.freeze(this.passage.paragraphs.filter(paragraph =>
+      paragraph.condition === undefined || evaluateCondition(paragraph.condition, this.currentState.variables)));
   }
 
   /** One explicit action enters one passage; there is no automatic traversal. */

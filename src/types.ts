@@ -5,21 +5,26 @@ export type PassageEffect =
   | { readonly kind: 'set'; readonly variable: string; readonly value: VariableValue }
   | { readonly kind: 'add'; readonly variable: string; readonly value: number };
 
-export type ChoiceCondition =
+export type Condition =
   | { readonly variable: string; readonly operator: '==' | '!='; readonly value: VariableValue }
   | { readonly variable: string; readonly operator: '>' | '>=' | '<' | '<='; readonly value: number };
 
 export interface Choice {
   readonly label: string;
   readonly destinationId: string;
-  readonly condition?: ChoiceCondition;
+  readonly condition?: Condition;
+}
+
+export interface NarrativeParagraph {
+  readonly text: string;
+  readonly condition?: Condition;
 }
 
 export interface Passage {
   readonly id: string;
   readonly title: string;
   readonly effects: readonly PassageEffect[];
-  readonly text: readonly string[];
+  readonly paragraphs: readonly NarrativeParagraph[];
   readonly choices: readonly Choice[];
   readonly continueTo?: string;
 }
