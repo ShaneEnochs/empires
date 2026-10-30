@@ -68,7 +68,7 @@ test('rejects all assignment type changes while allowing integer/decimal changes
   for (const [initial, value] of [['0', 'true'], ['0', '"1"'], ['false', '0'], ['false', '"true"'], ['"name"', 'true'], ['"name"', '1']]) {
     assert.throws(() => parseStory(storyWithEffects(`*var value ${initial}`, `*set value ${value}`)), /preserve the declared type/);
   }
-  assert.equal(parseStory(storyWithEffects('*var count 0', '*set count 0.5')).passages[0]?.effects[0]?.value, 0.5);
+  assert.deepEqual(parseStory(storyWithEffects('*var count 0', '*set count 0.5')).passages[0]?.effects[0], { kind: 'set', variable: 'count', value: 0.5 });
 });
 
 test('*add requires both a numeric variable and a numeric literal', () => {
@@ -126,7 +126,7 @@ test('titles, choice labels and string literals do not interpolate', () => {
   assert.equal(story.initialVariables.name, '${missing}');
   assert.equal(story.passages[0]?.title, '${missing}');
   assert.equal(story.passages[0]?.choices[0]?.label, '${missing}');
-  assert.equal(story.passages[0]?.effects[0]?.value, '${still_missing}');
+  assert.deepEqual(story.passages[0]?.effects[0], { kind: 'set', variable: 'name', value: '${still_missing}' });
 });
 
 test('declarations, effect lists and individual effects cannot be mutated by consumers', () => {
