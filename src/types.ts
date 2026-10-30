@@ -3,7 +3,14 @@ export type Variables = Readonly<Record<string, VariableValue>>;
 
 export type PassageEffect =
   | { readonly kind: 'set'; readonly variable: string; readonly value: VariableValue }
-  | { readonly kind: 'add'; readonly variable: string; readonly value: number };
+  | { readonly kind: 'add'; readonly variable: string; readonly value: number }
+  | { readonly kind: 'journal'; readonly id: string; readonly text: string };
+
+export interface JournalEntry {
+  readonly id: string;
+  readonly chapter: string;
+  readonly text: string;
+}
 
 export type Condition =
   | { readonly variable: string; readonly operator: '==' | '!='; readonly value: VariableValue }
@@ -22,6 +29,7 @@ export interface NarrativeParagraph {
 
 export interface Passage {
   readonly id: string;
+  readonly chapter: string;
   readonly title: string;
   readonly effects: readonly PassageEffect[];
   readonly paragraphs: readonly NarrativeParagraph[];
@@ -39,6 +47,7 @@ export interface Story {
 export interface GameState {
   readonly passageId: string;
   readonly variables: Variables;
+  readonly journal: readonly JournalEntry[];
 }
 
 /** Proposed future contract only: state at the destination, before entry effects. */

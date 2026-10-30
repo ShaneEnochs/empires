@@ -44,10 +44,13 @@ function parseCondition(source: string, variables: Variables, line: number, pass
 export function parseStory(source: string): Story {
   const passages: Passage[] = [];
   const ids = new Set<string>();
+  const journalIds = new Set<string>();
+  let chapter = 'Prologue';
+  let pendingChapterLine: number | undefined;
   const initialVariables: Record<string, VariableValue> = {};
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
-    id: string; line: number; title?: string; paragraphs: NarrativeParagraph[];
+    id: string; chapter: string; line: number; title?: string; paragraphs: NarrativeParagraph[];
     choices: Choice[]; effects: PassageEffect[]; continueTo?: string;
   } | undefined;
   let paragraph: string[] = [];
@@ -90,7 +93,7 @@ export function parseStory(source: string): Story {
       throw syntaxError('A conditional choice block requires at least one unconditional choice.', actionLine, current.id);
     }
     passages.push(Object.freeze({
-      id: current.id, title: current.title, paragraphs: Object.freeze(current.paragraphs),
+      id: current.id, chapter: current.chapter, title: current.title, paragraphs: Object.freeze(current.paragraphs),
       effects: Object.freeze(current.effects),
       choices: Object.freeze(current.choices),
       ...(current.continueTo === undefined ? {} : { continueTo: current.continueTo }),
@@ -112,6 +115,18 @@ export function parseStory(source: string): Story {
     if (text.startsWith('*')) {
       const directive = text.split(/\s/, 1)[0]!;
       const argument = text.slice(directive.length).trim();
+      if (directive === '*chapter') {
+        if (pendingChapterLine !== undefined) {
+          throw syntaxError('Each *chapter must be followed by at least one passage.', pendingChapterLine);
+        }
+        if (argument === '') throw syntaxError('*chapter requires a nonempty label.', line);
+        finishPassage();
+        current = undefined;
+        action = undefined;
+        chapter = argument;
+        pendingChapterLine = line;
+        continue;
+      }
       if (directive === '*show_if') {
         if (!current || current.title === undefined || action !== undefined || paragraph.length > 0) {
           throw syntaxError('*show_if must be at a paragraph boundary after the title and effects, before navigation.', line, current?.id);
@@ -120,18 +135,26 @@ export function parseStory(source: string): Story {
         showIfLine = line;
         continue;
       }
-      if (directive === '*var' || directive === '*set' || directive === '*add') {
-        if (directive === '*var' && current) {
-          throw syntaxError('*var declarations must precede the first passage.', line, current.id);
+      if (directive === '*var' || directive === '*set' || directive === '*add' || directive === '*journal') {
+        if (directive === '*var' && (current || passages.length > 0 || pendingChapterLine !== undefined)) {
+          throw syntaxError('*var declarations must precede the first passage and all chapter declarations.', line, current?.id);
         }
         if (directive !== '*var' && (!current || current.title === undefined || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined)) {
           throw syntaxError('Effects must appear after *title and before the first narrative paragraph.', line, current?.id);
         }
         const parts = /^(\S+)\s+(.+)$/.exec(argument);
         if (!parts) throw syntaxError(`${directive} requires a variable name and literal value.`, line, current?.id);
-        const variable = id(parts[1]!, 'Variable name', line, current?.id);
+        const variable = id(parts[1]!, directive === '*journal' ? 'Journal event ID' : 'Variable name', line, current?.id);
         const value = literal(parts[2]!, line, current?.id);
-        if (directive === '*var') {
+        if (directive === '*journal') {
+          if (typeof value !== 'string') throw syntaxError('*journal requires a double-quoted string literal.', line, current?.id);
+          if (journalIds.has(variable)) throw syntaxError(`Duplicate journal event ID "${variable}".`, line, current?.id);
+          try { interpolate(value, initialVariables); } catch (error) {
+            throw syntaxError((error as Error).message, line, current?.id);
+          }
+          journalIds.add(variable);
+          current!.effects.push(Object.freeze({ kind: 'journal', id: variable, text: value }));
+        } else if (directive === '*var') {
           if (Object.hasOwn(initialVariables, variable)) throw syntaxError(`Duplicate variable "${variable}".`, line);
           initialVariables[variable] = value;
         } else {
@@ -155,7 +178,8 @@ export function parseStory(source: string): Story {
         const passageId = id(argument, 'Passage ID', line);
         if (ids.has(passageId)) throw syntaxError(`Duplicate passage ID "${passageId}".`, line, passageId);
         ids.add(passageId);
-        current = { id: passageId, line, paragraphs: [], choices: [], effects: [] };
+        current = { id: passageId, chapter, line, paragraphs: [], choices: [], effects: [] };
+        pendingChapterLine = undefined;
         action = undefined;
         continue;
       }
@@ -212,6 +236,7 @@ export function parseStory(source: string): Story {
       paragraph.push(text);
     }
   }
+  if (pendingChapterLine !== undefined) throw syntaxError('Each *chapter must be followed by at least one passage.', pendingChapterLine);
   finishPassage();
 
   const first = passages[0];

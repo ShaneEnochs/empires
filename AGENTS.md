@@ -17,6 +17,14 @@ libraries. Use the existing checkout; no frontend framework is needed.
   Never apply effects from rendering, getters, or interpolation. Keep declarations,
   effects, and exposed variable records immutable; preserve declared types and
   finite numeric values.
+- Chapter labels are static immutable passage metadata, never an independent
+  mutable current-chapter state. Journal events belong only to `GameState.journal`.
+  Apply them in entry-effect order, resolve text once when first recorded, and
+  deduplicate by stable event ID. Copy the journal array for candidates and freeze
+  entries; failed entry must commit neither variables nor journal changes.
+- The Journal control is presentation only: viewing/grouping entries must never
+  trigger entry effects, navigation, or gameplay changes. Keep recorded chapter
+  and text values intact and include the complete journal in the future checkpoint.
 - Passage IDs are authored, unique, and stable. Never derive them from order,
   titles, prose, timestamps, or random values. Preserve IDs for navigation and
   future checkpoint compatibility.
@@ -45,17 +53,19 @@ libraries. Use the existing checkout; no frontend framework is needed.
 ## Planned features, only when requested
 
 Character attributes/UI; expressions; basic
-skills; basic inventory with quantities; journal entries organized by chapter;
+skills; basic inventory with quantities;
 character creation; one persistent automatic checkpoint; author-controlled
 `*checkpoint` and `*death`; Try Again on death passages; Continue Game; and
 confirmed New Game. None of this roadmap is implemented yet. The first new game
 must establish an initial checkpoint; authored checkpoints replace it. Death
 shows authored prose without saving dead state over the checkpoint. Try Again
-restores all gameplay state, including future skills, inventory, journal, and
-character-creation data. There are no manual save slots or rewind controls.
+restores all gameplay state, including current variables/journal and future
+skills, inventory, and character-creation data. There are no manual save slots
+or rewind controls.
 Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
 are implemented, as are single typed conditions on choices and narrative
-paragraphs. Keep these small without expanding into a general evaluator.
+paragraphs, chapter metadata, and the chapter-organized journal. Keep these small
+without expanding into a general evaluator or event framework.
 
 Unless a future task explicitly changes the requirements, exclude random
 mechanics, glossary systems, shops, skill purchasing, manual saving, save slots,

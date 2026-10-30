@@ -15,7 +15,9 @@ npm run dev
 Open the address printed by Vite. The example offers **gate → messenger → council**
 or **gate → council**, with different influence, honor, and loyalty values.
 The messenger's Continue explicitly targets `council`; the council is terminal.
-Variables persist across passage entries in the current game. Refreshing starts
+The Journal button shows recorded events grouped by chapter. The messenger route
+records an extra event; journal text keeps the values present when recorded.
+Variables and journal entries persist across passages in the current game. Refreshing starts
 a new game from the story's initial values; there is no saved progress.
 
 ```sh
@@ -39,10 +41,13 @@ plain-text format:
 *var loyal false
 *var character_name "Unknown"
 
+*chapter Prologue
+
 *passage gate
 *title The City Gate
 *set character_name "Alexander"
 *add influence 1
+*journal arrived "${character_name} arrived with influence ${influence}."
 
 Welcome, ${character_name}. Your influence is ${influence}.
 
@@ -57,13 +62,17 @@ They open the council doors.
 *passage messenger
 *title A Quiet Warning
 *set loyal true
+*journal met_messenger "You spoke to the messenger."
 
 Loyal: ${loyal}.
 
 *continue council
 
+*chapter Chapter One
+
 *passage council
 *title The Council
+*journal met_council "You entered the council chamber."
 
 The council awaits your answer.
 ```
@@ -74,6 +83,19 @@ stable IDs. Every variable must be declared before the first passage. Values are
 finite numbers, booleans, or double-quoted strings; `*set` preserves the declared
 type, and `*add` only accepts numeric variables and numeric literals. Effects
 must follow the title and precede all narrative.
+
+`*chapter Label` assigns literal static chapter metadata to subsequent passages;
+the default is `Prologue`. Chapters must follow all variable declarations, and
+each declaration needs a following passage. `*journal event_id "Text"` is an
+entry effect with a story-wide unique ID. Its interpolation uses candidate
+variables at that point in effect order. The resolved text and passage chapter
+are recorded once; re-entry never duplicates or rewrites the event.
+
+Recorded entries live in the frozen `GameState.journal`, participate in atomic
+entry, and will be part of the future single checkpoint. Opening or closing the
+Journal section changes no gameplay state. Chapter groups follow first-recorded
+order, with events in recording order within each group; an open journal updates
+after navigation. Empty journals show “No journal entries yet.”
 
 Choices may have one optional `[if variable operator literal]` suffix. Operators
 are `==`, `!=`, `>`, `>=`, `<`, and `<=`; equality supports matching primitive
@@ -109,7 +131,7 @@ and reports errors with source lines and passage IDs. See the
 ## Planned future work (not implemented)
 
 Character attributes/UI, arithmetic expressions, basic skills, inventory
-quantities, chapter-organized journals, and character creation remain future work.
+quantities and character creation remain future work.
 The saving/death roadmap is one automatic persistent checkpoint, future
 author-controlled `*checkpoint`/`*death` directives, and Try Again on death
 passages. A new game must establish an initial checkpoint; authored checkpoints

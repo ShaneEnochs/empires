@@ -12,10 +12,13 @@ data; it does not execute JavaScript or the reference engine's language.
 *var loyal false
 *var character_name "Unknown"
 
+*chapter Prologue
+
 *passage city_gate
 *title The City Gate
 *set character_name "Alexander"
 *add influence 1
+*journal arrived "${character_name} reached the city with influence ${influence}."
 
 At dawn, you arrive outside the city walls.
 
@@ -32,6 +35,7 @@ Your name is ${character_name}. Your influence is ${influence}.
 *add influence 2
 *add honor -1
 *set loyal true
+*journal met_messenger "You spoke to the messenger."
 
 The messenger lowers their voice.
 
@@ -40,9 +44,12 @@ Your loyalty is ${loyal}.
 
 *continue council
 
+*chapter Chapter One
+
 *passage council
 *title The Council Chamber
 *add influence -0.5
+*journal met_council "You entered the council with influence ${influence}."
 
 The council members turn toward you as you enter.
 
@@ -53,17 +60,21 @@ The first passage starts the story. The player can go directly to `council`
 (influence `0.5`, honor `5`, loyal `false`) or via `messenger` and Continue
 (influence `2.5`, honor `4`, loyal `true`). The council is terminal: there are no
 further actions or automatic fall-through. Refreshing starts a new game; variables
-persist between passages in the current game, not across page reloads.
+and recorded journal events persist between passages, not across page reloads.
+The Journal button groups events in first-recorded chapter order; the messenger
+route has an extra event. Stored text keeps its original resolved values.
 
 ## Supported syntax
 
 | Construct | Rule |
 | --- | --- |
 | `*var name literal` | Declares one variable and its initial value before the first passage. Names must be unique. |
+| `*chapter Label` | Top-level nonempty literal label for subsequent passages; each declaration needs a following passage. Default: `Prologue`. |
 | `*passage id` | Begins a passage with a unique stable ID matching `[a-z][a-z0-9_-]*`. The first passage is the start. |
 | `*title text` | Exactly one nonempty literal title per passage, before navigation. Place it immediately after the header. |
 | `*set name literal` | Replaces a declared variable with a literal of the same type. Only after the title and before any narrative. |
 | `*add name number` | Adds a numeric literal to a declared numeric variable. Same placement as `*set`. |
+| `*journal event_id "Entry text"` | Records an event once by a story-wide unique ID. Interpolation uses candidate variables at that point. Same placement as `*set`. |
 | Narrative text | At least one unconditional paragraph per passage. Nonblank consecutive lines join with spaces; blank lines separate paragraphs. |
 | `*show_if name operator literal` | At a paragraph boundary after the title/effects, conditions only the paragraph starting on the immediately following source line. |
 | `${name}` | In narrative only, displays the variable's post-entry value as text. |
@@ -72,14 +83,57 @@ persist between passages in the current game, not across page reloads.
 | `#Label -> destination_id [if name operator literal]` | Optional single typed condition, evaluated against the committed post-entry state. The block must include an unconditional choice. |
 | `*continue destination_id` | One explicit Continue destination, mutually exclusive with choices. Must conclude the passage. |
 
-A passage ends at the next `*passage` or EOF. Terminal passages have neither
+A passage ends at the next `*passage`, a `*chapter` after a valid passage, or EOF. Terminal passages have neither
 choices nor Continue. After navigation, only blank lines, choices inside the
-current `*choice` block, or a new passage are allowed. Additional prose, titles,
+current `*choice` block, or a new chapter/passage are allowed. Additional prose, titles,
 effects, duplicate action blocks, or nested choices are errors.
+
+## Chapters and journal events
+
+`*chapter Label` is a top-level authoring declaration. Its literal label applies
+to the next passage and all subsequent passages until another declaration.
+Before any declaration, passages belong to `Prologue`. Labels are nonempty text
+with outer whitespace trimmed; quotes and `${...}` remain literal, without
+string decoding or interpolation. Reusing a label later is permitted.
+
+A chapter declaration can finish a valid preceding passage, including one with
+choices or Continue. It cannot rescue missing titles/prose, empty choices, or
+pending conditional prose. Every declaration must have at least one passage
+before another chapter or EOF. Variables must precede chapters, and prose/effects
+cannot appear between a declaration and its next passage header. Chapters belong
+to immutable passage definitions, not a mutable global current chapter; player
+navigation order never changes them.
+
+`*journal event_id "Entry text"` is an entry effect after the title and before
+all prose. Event IDs match `[a-z][a-z0-9_-]*` and must be unique throughout the
+story, including unreachable or mutually exclusive passages. They may match
+passage/variable names because those are separate namespaces. Different IDs may
+have identical text. Keep event IDs stable when editing text.
+
+Entry text uses the existing double-quoted string rules, including escapes and
+empty strings. Interpolation references must be declared and well formed. Text
+resolves once, from candidate variables at that exact effect position. Later
+`*set`/`*add` effects cannot rewrite it. Inserted strings are never interpreted as
+HTML, code, or another template. Journal commands cannot be conditional or appear
+inside prose, choices, or after Continue.
+
+Each first recording appends `{ id, chapter, text }` to `GameState.journal` in
+effect order. Re-entry runs ordinary variable effects but skips recorded event
+IDs, retaining their original chapter and text. New games start with an empty
+journal before initial effects, which may immediately record entries. All effects
+are atomic: failure rolls back every candidate append and variable change. Failed
+attempts leave no hidden deduplication history.
+
+The Journal button toggles a read-only section without navigation or effects.
+Chapter groups appear in first-recorded order; entries within a group retain
+recording order. Later events in an earlier chapter join its existing group.
+An open journal updates after successful navigation. Empty journals display
+“No journal entries yet.” Arrays and entries are frozen, and chapter headings
+and recorded text use `textContent`.
 
 ## Variables and literal values
 
-Declare every variable before the first passage; declarations cannot appear
+Declare every variable before all chapters and passages; declarations cannot appear
 inside passages. Names are case-sensitive and follow the same lowercase ASCII
 identifier grammar as passage IDs. `influence`, `chapter_1`, and `honor-total` are
 valid; `Influence`, `1honor`, and names containing spaces are not. A variable name
@@ -246,13 +300,15 @@ Effects run once, in source order, on entry. For example:
 *passage arrival
 *title Arrival
 *add count 2
+*journal first_gain "Count first rose to ${count}."
 *set count 10
 *add count -0.25
 
 Count: ${count}.
 ```
 
-This displays `Count: 9.75.`. Effects must be after `*title` and before the first
+This displays `Count: 9.75.`, while the journal retains `Count first rose to 2.`.
+Effects must be after `*title` and before the first
 narrative line, even if blank lines separate the sections. They cannot appear
 between paragraphs, inside choice blocks, or after Continue. Initial entry uses
 the same rules as navigation. A legitimate later return to a passage applies its
@@ -274,8 +330,9 @@ unreachable passages. Immutable source text keeps its placeholders.
 
 Interpolation is a single read-only substitution pass. If a variable contains
 `<em>${other}</em>`, that entire string is displayed as literal text; it does not
-execute HTML or recursively interpolate `other`. Titles, choice labels, and
-quoted literals never interpolate; `${unknown}` there remains literal text.
+execute HTML or recursively interpolate `other`. Titles, choice labels,
+chapter labels, and variable/condition literals never interpolate; `${unknown}`
+there remains literal text. Journal templates resolve once when first recorded.
 All display content uses `textContent`, so HTML and JavaScript are never executed.
 Markdown and other inline syntax stay literal as well.
 
@@ -308,6 +365,10 @@ passage references are valid, and all destinations are checked before play.
 | `*passage City Gate` | Use `city_gate`, matching the identifier grammar. |
 | Missing `*title` or two titles | Supply exactly one nonempty title. |
 | A title with no narrative | Add at least one nonblank paragraph. |
+| Empty chapter or no following passage | Supply a nonempty label and at least one passage per declaration. |
+| Variables after `*chapter` | Move all variables before chapter metadata. |
+| Duplicate journal event ID | Use one unique ID per authored journal effect; runtime re-entry deduplicates it. |
+| `*journal event Text` | Supply a double-quoted string and declared interpolation references. |
 | `*var count 0` inside a passage | Move declarations to the beginning of the file. |
 | `*set missing 1` or `${missing}` in narrative | Declare that variable first. |
 | `*set count "two"` for a number | Keep the declared type. |
@@ -332,15 +393,16 @@ referring actions. No partially validated story can initialize a game.
 ## Future functionality, not current syntax
 
 Character attributes/UI, arithmetic expressions, basic skills, inventory
-quantities, chapter journals, and character creation remain future work.
+quantities and character creation remain future work. Chapters and the journal
+are implemented; journal data must be included in the future single checkpoint.
 
 The saving/death roadmap is documentation only: one persistent automatic
 checkpoint, future author-controlled `*checkpoint` and `*death`, Try Again on
 death passages, Continue Game on reopening, and confirmed New Game. The first new
 game must establish an initial checkpoint. Authored checkpoints replace it;
 death must not save dead state over it. Try Again restores complete pre-passage
-state and enters that passage with effects applied exactly once, including future
-skills, inventory, journal, and character-creation data. Continue Game resumes
+state and enters that passage with effects applied exactly once, including current
+variables/journal and future skills, inventory, and character-creation data. Continue Game resumes
 the latest checkpoint; New Game confirms before overwriting progress.
 
 There will be no traditional Undo, choice-history stack, manual rewind, Return to
