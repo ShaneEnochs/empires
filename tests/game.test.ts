@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import { Game } from '../src/game';
 import { parseStory } from '../src/story';
 
-const story = parseStory(readFileSync(new URL('../src/example.story.json', import.meta.url), 'utf8'));
+const source = readFileSync(new URL('../src/example.story', import.meta.url), 'utf8');
+const story = parseStory(source);
 
 test('enters the authored starting passage', () => {
   const game = new Game(story);
@@ -31,13 +32,30 @@ test('can follow the alternative direct route', () => {
 });
 
 test('navigation uses IDs even when passage definitions are reordered', () => {
-  const reordered = parseStory(JSON.stringify({ ...story, passages: [...story.passages].reverse() }));
+  const passages = source.trim().split(/\n(?=\*passage )/);
+  const reordered = parseStory([passages[0], passages[2], passages[1]].join('\n\n'));
   const game = new Game(reordered);
   assert.equal(game.passage.id, 'gate');
   game.navigate('messenger');
   assert.equal(game.passage.id, 'messenger');
   game.navigate('council');
   assert.equal(game.passage.id, 'council');
+});
+
+test('a malformed later passage prevents game initialization altogether', () => {
+  let game: Game | undefined;
+  assert.throws(() => {
+    game = new Game(parseStory(`${source}\n*passage broken\nThis passage has no title.`));
+  }, /passage "broken": .*exactly one \*title/);
+  assert.equal(game, undefined);
+});
+
+test('an undefined destination in a later passage prevents game initialization', () => {
+  let game: Game | undefined;
+  assert.throws(() => {
+    game = new Game(parseStory(`${source}\n*passage broken\n*title Broken\nText.\n*continue missing`));
+  }, /passage "broken": Missing destination/);
+  assert.equal(game, undefined);
 });
 
 test('rejects a nonexistent destination without changing state', () => {

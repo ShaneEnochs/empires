@@ -1,12 +1,30 @@
-# Engine foundation
+# Passage engine
 
 ## Current execution model
 
-`parseStory` validates a complete JSON story and returns frozen data. IDs are
-authored identifiers; they never depend on file order, titles, or text. All choice
-and Continue destinations, including those in unreachable passages, must exist
-before a game starts. The parser rejects unknown fields and malformed data rather
-than trying to interpret it.
+`parseStory` reads a complete `.story` text file and returns the same frozen
+`Story`, `Passage`, and `Choice` data model used by the runtime. The small parser
+recognizes passage headers, one title per passage, plain-text paragraphs, choices,
+and Continue. It joins consecutive prose lines with spaces and flushes paragraphs
+on blank lines. It does not produce executable instructions or evaluate prose.
+
+IDs are authored identifiers matching `[a-z][a-z0-9_-]*`; they never depend on
+titles or text. The first passage supplies `Story.startId`; all later navigation
+uses explicit IDs. Moving the first header changes where play begins, while
+reordering other passages leaves navigation unchanged.
+
+The parser retains source locations while collecting passages and validates all
+references after reading the file, so forward references work. All destinations,
+including those in unreachable passages, must exist. Duplicate IDs, missing or
+duplicate titles, empty prose or choice blocks, malformed actions, additional
+content after navigation, and unsupported directives are errors. Validation
+throws with source lines and passage IDs where available, or returns a complete,
+deeply frozen story. No partial result is exposed to `new Game`. Source locations
+are parser-local and do not add fields to passage data or gameplay state.
+
+Text is the only authoring format; the old JSON example/parser was removed.
+There is no format registry or abstract parser framework. Identifier and
+destination rules each have a single validation path in `src/story.ts`.
 
 `Game` privately owns one `GameState`. It starts at `Story.startId`. An action
 calls `navigate(destinationId)`, which verifies that the current passage offers
@@ -87,16 +105,19 @@ deliberately deferred until persistence is implemented.
 
 ## Scope boundaries
 
-This stage implements content validation, explicit navigation, and basic browser
-rendering only. There is no general expression evaluator or command interpreter.
+Implemented behavior is text authoring, content validation, explicit navigation,
+and basic browser rendering. There is no gameplay expression evaluator or runtime
+command interpreter. `Game`, `GameState`, and the rendering architecture remain
+unchanged by the authoring-format migration.
 Ordinary TypeScript iteration used to validate/render data is not a story-language
 loop or runtime control-flow feature.
 
-Future work: variables and conditions, simple skills, item quantities, journal,
-character creation, session-only Undo, one automatic author-defined checkpoint,
-title-screen Continue from that checkpoint, and confirmed New Game. None of
-these gameplay systems is implemented here. In-story Continue navigation is the
-only Continue behavior currently implemented.
+Future work, only when requested: character attributes and variables, arithmetic
+and conditional choices, basic skills, item quantities, chapter-organized journal
+entries, character creation, Undo for recent session choices, one persistent
+automatic author-defined checkpoint, Continue Game from that checkpoint, and
+confirmed New Game. None of these gameplay systems is implemented here. In-story
+Continue navigation is the only Continue behavior currently implemented.
 
 Excluded: glossary, randomness, shops, skill purchasing, save slots, manual saves,
 import/export, nested procedure calls, subroutines, loops, complex UI styling,
@@ -105,9 +126,15 @@ repository's engine, save, undo, interpreter, and UI architecture are not used.
 
 ## Verification
 
-`npm test` exercises parsing, stable IDs across content edits/reordering,
-duplicate and missing destination rejection, action validation, deterministic
-navigation, and state ownership. `npm run build` checks all source/tests with
-strict TypeScript and builds the static browser application. The browser should
-support both routes in the example using mouse or keyboard, move focus to each
-new heading, and stop at the council without saving any data.
+`npm test` exercises text parsing, paragraphs, literal content, source errors,
+stable IDs across content edits/reordering, duplicate and missing destination
+rejection, title/action validation, immutable data, atomic initialization,
+deterministic navigation, and state ownership. `npm run build` checks all
+source/tests with strict TypeScript and builds the static browser application.
+The browser should support both routes in the example using mouse or keyboard,
+move focus to each new heading, and stop at the council without saving any data.
+
+`.github/workflows/ci.yml` runs `npm ci`, `npm test`, and `npm run build` on Node.js
+22 for pull requests targeting `main` and pushes to `main`. It grants only
+`contents: read`. Each command's failure fails the job. There is no deployment,
+publishing, release automation, or automatic merging.

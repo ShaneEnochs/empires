@@ -1,6 +1,6 @@
 import { Game } from './game';
 import { parseStory } from './story';
-import exampleStory from './example.story.json?raw';
+import exampleStory from './example.story?raw';
 import './style.css';
 
 const container = document.querySelector<HTMLElement>('#app');
