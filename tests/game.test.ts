@@ -9,7 +9,9 @@ const story = parseStory(source);
 
 test('enters the authored starting passage', () => {
   const game = new Game(story);
-  assert.deepEqual(game.state, { passageId: 'gate' });
+  assert.deepEqual(game.state, {
+    passageId: 'gate', variables: { influence: 1, honor: 5, loyal: false, character_name: 'Alexander' },
+  });
   assert.equal(game.passage.id, 'gate');
 });
 
@@ -32,8 +34,10 @@ test('can follow the alternative direct route', () => {
 });
 
 test('navigation uses IDs even when passage definitions are reordered', () => {
-  const passages = source.trim().split(/\n(?=\*passage )/);
-  const reordered = parseStory([passages[0], passages[2], passages[1]].join('\n\n'));
+  const header = source.indexOf('*passage ');
+  const declarations = source.slice(0, header);
+  const passages = source.slice(header).trim().split(/\n(?=\*passage )/);
+  const reordered = parseStory(declarations + [passages[0], passages[2], passages[1]].join('\n\n'));
   const game = new Game(reordered);
   assert.equal(game.passage.id, 'gate');
   game.navigate('messenger');

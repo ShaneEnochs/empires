@@ -139,11 +139,15 @@ test('rejects prose or further directives after choices and Continue', () => {
   invalid(`${end}\n*continue end\n*continue end`, /must conclude the passage/);
 });
 
-for (const directive of ['*random', '*if flag', '*set gold 1', '*comment hidden', '*call setup', '*while true', '*choice_nested', '*passagex wrong']) {
+for (const directive of ['*random', '*if flag', '*comment hidden', '*call setup', '*while true', '*choice_nested', '*passagex wrong']) {
   test(`rejects an unsupported directive: ${directive}`, () => {
     invalid(`${end}\n${directive}`, /Line 4, passage "end": Unsupported directive/);
   });
 }
+
+test('rejects a *set command after narrative, even though *set is now supported', () => {
+  invalid(`${end}\n*set gold 1`, /Line 4, passage "end": Effects must appear after \*title and before the first narrative paragraph/);
+});
 
 test('blank lines and indentation in a flat choice list do not change its meaning', () => {
   const story = parseStory(`*passage intro\n*title Intro\nText.\n*choice\n\n  #First -> end\n\n\t#Second->end\n\n${end}`);
@@ -152,7 +156,7 @@ test('blank lines and indentation in a flat choice list do not change its meanin
 
 test('preserves literal HTML, Markdown, JavaScript, expressions, titles, and choice labels', () => {
   const literal = '<script>alert(1)</script> **bold** [link](url) ${gold} {window.alert(1)}';
-  const story = parseStory(`*passage intro\n*title ${literal}\n${literal}\n\n# A literal Markdown heading\n*choice\n#${literal} -> end\n${end}`);
+  const story = parseStory(`*var gold 0\n*passage intro\n*title ${literal}\n${literal}\n\n# A literal Markdown heading\n*choice\n#${literal} -> end\n${end}`);
   assert.equal(story.passages[0]?.title, literal);
   assert.deepEqual(story.passages[0]?.text, [literal, '# A literal Markdown heading']);
   assert.equal(story.passages[0]?.choices[0]?.label, literal);
