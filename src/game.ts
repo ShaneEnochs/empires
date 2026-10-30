@@ -6,7 +6,7 @@ export class Game {
   private currentState: GameState;
 
   constructor(private readonly story: Story) {
-    this.currentState = this.enterPassage({ passageId: story.startId, variables: story.initialVariables, journal: [], skills: [] });
+    this.currentState = this.enterPassage({ passageId: story.startId, variables: story.initialVariables, journal: [], skills: [], inventory: {} });
   }
 
   get state(): GameState {
@@ -42,7 +42,10 @@ export class Game {
     const { passageId } = input;
     const passage = this.findPassage(passageId);
     // Future pre-passage snapshots belong at this boundary, before any effect.
-    const next = { passageId, variables: { ...input.variables }, journal: [...input.journal], skills: [...input.skills] };
+    const next = {
+      passageId, variables: { ...input.variables }, journal: [...input.journal],
+      skills: [...input.skills], inventory: { ...input.inventory },
+    };
     for (const effect of passage.effects) {
       if (effect.kind === 'set') {
         next.variables[effect.variable] = effect.value;
@@ -60,14 +63,26 @@ export class Game {
         }
       } else if (effect.kind === 'grant_skill') {
         if (!next.skills.includes(effect.skillId)) next.skills.push(effect.skillId);
-      } else {
+      } else if (effect.kind === 'revoke_skill') {
         const index = next.skills.indexOf(effect.skillId);
         if (index !== -1) next.skills.splice(index, 1);
+      } else if ('itemId' in effect) {
+        const before = Object.hasOwn(next.inventory, effect.itemId) ? next.inventory[effect.itemId]! : 0;
+        if (effect.kind === 'remove_item' && before < effect.quantity) {
+          throw new Error(`Passage "${passageId}": insufficient inventory for "${effect.itemId}"; cannot remove ${effect.quantity} from ${before}.`);
+        }
+        const quantity = effect.kind === 'add_item' ? before + effect.quantity : before - effect.quantity;
+        if (!Number.isSafeInteger(quantity) || quantity < 0) {
+          throw new Error(`Passage "${passageId}": item quantity for "${effect.itemId}" must remain a nonnegative safe integer.`);
+        }
+        if (quantity === 0) delete next.inventory[effect.itemId];
+        else next.inventory[effect.itemId] = quantity;
       }
     }
     Object.freeze(next.variables);
     Object.freeze(next.journal);
     Object.freeze(next.skills);
+    Object.freeze(next.inventory);
     return Object.freeze(next);
   }
 

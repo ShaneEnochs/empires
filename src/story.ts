@@ -1,5 +1,5 @@
 import { interpolate } from './interpolate';
-import type { Choice, Condition, NarrativeParagraph, Passage, PassageEffect, SkillDefinition, Story, Variables, VariableValue } from './types';
+import type { Choice, ComparisonOperator, Condition, ItemDefinition, NarrativeParagraph, Passage, PassageEffect, SkillDefinition, Story, Variables, VariableValue } from './types';
 
 function syntaxError(message: string, line: number, passageId?: string): Error {
   return new Error(`Line ${line}${passageId ? `, passage "${passageId}"` : ''}: ${message}`);
@@ -31,7 +31,27 @@ function knownSkill(value: string, skills: readonly SkillDefinition[], line: num
   return skillId;
 }
 
-function parseCondition(source: string, variables: Variables, skills: readonly SkillDefinition[], line: number, passageId: string): Condition {
+function knownItem(value: string, items: readonly ItemDefinition[], line: number, passageId?: string): string {
+  const itemId = id(value, 'Item ID', line, passageId);
+  if (!items.some(item => item.id === itemId)) throw syntaxError(`Unknown item "${itemId}".`, line, passageId);
+  return itemId;
+}
+
+function quantityLiteral(source: string, allowZero: boolean, line: number, passageId?: string): number {
+  const quantity = /^(?:0|[1-9]\d*)$/.test(source) ? Number(source) : NaN;
+  if (!Number.isSafeInteger(quantity) || quantity < (allowZero ? 0 : 1)) {
+    throw syntaxError(`Item quantities must be ${allowZero ? 'nonnegative' : 'positive'} safe integer literals in decimal digits.`, line, passageId);
+  }
+  return quantity;
+}
+
+function parseCondition(source: string, variables: Variables, skills: readonly SkillDefinition[], items: readonly ItemDefinition[], line: number, passageId: string): Condition {
+  const count = /^item_count\s+(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(source);
+  if (count) {
+    const itemId = knownItem(count[1]!, items, line, passageId);
+    const value = quantityLiteral(count[3]!.trim(), true, line, passageId);
+    return Object.freeze({ operator: count[2] as ComparisonOperator, itemId, value });
+  }
   const parts = /^(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(source);
   if (!parts) {
     const skill = /^(has_skill|lacks_skill)\s+(\S+)$/.exec(source);
@@ -39,11 +59,16 @@ function parseCondition(source: string, variables: Variables, skills: readonly S
       const skillId = knownSkill(skill[2]!, skills, line, passageId);
       return Object.freeze({ operator: skill[1] as 'has_skill' | 'lacks_skill', skillId });
     }
-    throw syntaxError('Expected variable operator literal (==, !=, >, >=, <, <=), has_skill id, or lacks_skill id.', line, passageId);
+    const item = /^(has_item|lacks_item)\s+(\S+)$/.exec(source);
+    if (item) {
+      const itemId = knownItem(item[2]!, items, line, passageId);
+      return Object.freeze({ operator: item[1] as 'has_item' | 'lacks_item', itemId });
+    }
+    throw syntaxError('Expected a variable comparison, has_skill/lacks_skill id, has_item/lacks_item id, or item_count id comparison.', line, passageId);
   }
   const variable = id(parts[1]!, 'Condition variable', line, passageId);
   if (!Object.hasOwn(variables, variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, passageId);
-  const operator = parts[2] as Exclude<Condition['operator'], 'has_skill' | 'lacks_skill'>;
+  const operator = parts[2] as ComparisonOperator;
   const value = literal(parts[3]!.trim(), line, passageId);
   if (typeof variables[variable] !== typeof value) {
     throw syntaxError('Condition operands must have compatible types.', line, passageId);
@@ -62,6 +87,7 @@ export function parseStory(source: string): Story {
   let pendingChapterLine: number | undefined;
   const initialVariables: Record<string, VariableValue> = {};
   const skills: SkillDefinition[] = [];
+  const items: ItemDefinition[] = [];
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
     id: string; chapter: string; line: number; title?: string; paragraphs: NarrativeParagraph[];
@@ -145,7 +171,7 @@ export function parseStory(source: string): Story {
         if (!current || current.title === undefined || action !== undefined || paragraph.length > 0) {
           throw syntaxError('*show_if must be at a paragraph boundary after the title and effects, before navigation.', line, current?.id);
         }
-        paragraphCondition = parseCondition(argument, initialVariables, skills, line, current.id);
+        paragraphCondition = parseCondition(argument, initialVariables, skills, items, line, current.id);
         showIfLine = line;
         continue;
       }
@@ -157,8 +183,19 @@ export function parseStory(source: string): Story {
         current.effects.push(Object.freeze({ kind: directive === '*grant_skill' ? 'grant_skill' : 'revoke_skill', skillId }));
         continue;
       }
-      if (directive === '*var' || directive === '*skill' || directive === '*set' || directive === '*add' || directive === '*journal') {
-        const declaration = directive === '*var' || directive === '*skill';
+      if (directive === '*add_item' || directive === '*remove_item') {
+        if (!current || current.title === undefined || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined) {
+          throw syntaxError('Effects must appear after *title and before the first narrative paragraph.', line, current?.id);
+        }
+        const parts = /^(\S+)\s+(\S+)$/.exec(argument);
+        if (!parts) throw syntaxError(`${directive} requires an item ID and quantity.`, line, current.id);
+        const itemId = knownItem(parts[1]!, items, line, current.id);
+        const quantity = quantityLiteral(parts[2]!, false, line, current.id);
+        current.effects.push(Object.freeze({ kind: directive === '*add_item' ? 'add_item' : 'remove_item', itemId, quantity }));
+        continue;
+      }
+      if (directive === '*var' || directive === '*skill' || directive === '*item' || directive === '*set' || directive === '*add' || directive === '*journal') {
+        const declaration = directive === '*var' || directive === '*skill' || directive === '*item';
         if (declaration && (current || passages.length > 0 || pendingChapterLine !== undefined)) {
           throw syntaxError(`${directive} declarations must precede the first passage and all chapter declarations.`, line, current?.id);
         }
@@ -167,9 +204,14 @@ export function parseStory(source: string): Story {
         }
         const parts = /^(\S+)\s+(.+)$/.exec(argument);
         if (!parts) throw syntaxError(`${directive} requires an identifier and literal value.`, line, current?.id);
-        const variable = id(parts[1]!, directive === '*journal' ? 'Journal event ID' : directive === '*skill' ? 'Skill ID' : 'Variable name', line, current?.id);
+        const context = directive === '*journal' ? 'Journal event ID' : directive === '*skill' ? 'Skill ID' : directive === '*item' ? 'Item ID' : 'Variable name';
+        const variable = id(parts[1]!, context, line, current?.id);
         const value = literal(parts[2]!, line, current?.id);
-        if (directive === '*skill') {
+        if (directive === '*item') {
+          if (typeof value !== 'string' || value.trim() === '') throw syntaxError('*item requires a nonempty double-quoted display name.', line);
+          if (items.some(item => item.id === variable)) throw syntaxError(`Duplicate item ID "${variable}".`, line);
+          items.push(Object.freeze({ id: variable, name: value }));
+        } else if (directive === '*skill') {
           if (typeof value !== 'string' || value.trim() === '') throw syntaxError('*skill requires a nonempty double-quoted display name.', line);
           if (skills.some(skill => skill.id === variable)) throw syntaxError(`Duplicate skill ID "${variable}".`, line);
           skills.push(Object.freeze({ id: variable, name: value }));
@@ -250,7 +292,7 @@ export function parseStory(source: string): Story {
       if (bracket !== -1) {
         const wrapper = /^\[if\s+(.+)\]$/.exec(destination.slice(bracket));
         if (!wrapper) throw syntaxError('Expected a single [if condition] suffix.', line, current.id);
-        condition = parseCondition(wrapper[1]!, initialVariables, skills, line, current.id);
+        condition = parseCondition(wrapper[1]!, initialVariables, skills, items, line, current.id);
       }
       current.choices.push(Object.freeze({ label, destinationId, ...(condition === undefined ? {} : { condition }) }));
       references.push({ destinationId, passageId: current.id, line });
@@ -273,5 +315,5 @@ export function parseStory(source: string): Story {
       throw syntaxError(`Missing destination "${reference.destinationId}".`, reference.line, reference.passageId);
     }
   }
-  return Object.freeze({ startId: first.id, initialVariables: Object.freeze(initialVariables), skills: Object.freeze(skills), passages: Object.freeze(passages) });
+  return Object.freeze({ startId: first.id, initialVariables: Object.freeze(initialVariables), skills: Object.freeze(skills), items: Object.freeze(items), passages: Object.freeze(passages) });
 }

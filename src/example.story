@@ -1,9 +1,11 @@
 *var influence 0
 *skill diplomacy "Diplomacy"
+*item gold_coin "Gold Coin"
 *var honor 5
 *var loyal false
 *var character_name "Unknown"
 *skill composure "Composure"
+*item gate_token "Gate Token"
 
 *chapter Prologue
 
@@ -12,9 +14,12 @@
 *set character_name "Alexander"
 *add influence 1
 *grant_skill composure
+*add_item gold_coin 10
+*add_item gate_token 1
 *journal arrived_city "${character_name} reached the city with influence ${influence}."
 
 At dawn, you reach a city whose banners have outlasted its kings.
+The guard issues a gate token to carry to the council.
 
 A messenger waits beside the open gate.
 Beyond them, a bell calls the council to order.
@@ -30,9 +35,11 @@ Your name is ${character_name}. Your influence is ${influence}.
 *add honor -1
 *set loyal true
 *grant_skill diplomacy
+*add_item gold_coin 2
 *journal met_messenger "The messenger accepted your oath. Influence: ${influence}."
 
 The messenger lowers their voice. 'The council needs a ruler. First, they need someone who will listen.'
+They press two gold coins into your palm.
 
 They step aside, leaving the road to the council hall clear.
 Your influence is ${influence}, and your loyalty is ${loyal}.
@@ -45,9 +52,12 @@ Your influence is ${influence}, and your loyalty is ${loyal}.
 *title The Empty Chair
 *add influence -0.5
 *revoke_skill composure
+*remove_item gold_coin 5
+*remove_item gate_token 1
 *journal met_council "You reached the council with influence ${influence}."
 
 Inside the council hall, an empty chair stands at the head of the table.
+The clerk collects your gate token and the five-coin entry fee.
 
 Every voice falls silent as you enter. Your story is only beginning.
 Influence: ${influence}. Honor: ${honor}. Loyal: ${loyal}.
@@ -57,3 +67,9 @@ Your exchange with the messenger helps you choose your words.
 
 *show_if lacks_skill diplomacy
 Without diplomatic training, you face the council unaided.
+
+*show_if has_item gold_coin
+The coins remaining in your purse offer a small reassurance.
+
+*show_if item_count gold_coin >= 7
+The messenger's extra coins remain after the entry fee.

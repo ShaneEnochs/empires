@@ -99,6 +99,43 @@ try {
     if (!skillsSection.hidden) renderSkills();
   });
 
+  const inventoryButton = document.createElement('button');
+  inventoryButton.type = 'button';
+  inventoryButton.textContent = 'Inventory';
+  inventoryButton.setAttribute('aria-controls', 'inventory');
+  inventoryButton.setAttribute('aria-expanded', 'false');
+  const inventorySection = document.createElement('section');
+  inventorySection.id = 'inventory';
+  inventorySection.hidden = true;
+  inventorySection.setAttribute('aria-labelledby', 'inventory-heading');
+
+  function renderInventory(): void {
+    const heading = document.createElement('h2');
+    heading.id = 'inventory-heading';
+    heading.textContent = 'Inventory';
+    inventorySection.replaceChildren(heading);
+    const entries = Object.entries(game.state.inventory);
+    if (entries.length === 0) {
+      const empty = document.createElement('p');
+      empty.textContent = 'No items in inventory.';
+      inventorySection.append(empty);
+      return;
+    }
+    const list = document.createElement('ul');
+    for (const [id, quantity] of entries) {
+      const item = document.createElement('li');
+      item.textContent = `${story.items.find(item => item.id === id)!.name} × ${quantity}`;
+      list.append(item);
+    }
+    inventorySection.append(list);
+  }
+
+  inventoryButton.addEventListener('click', () => {
+    inventorySection.hidden = !inventorySection.hidden;
+    inventoryButton.setAttribute('aria-expanded', String(!inventorySection.hidden));
+    if (!inventorySection.hidden) renderInventory();
+  });
+
   function render(): void {
     const passage = game.passage;
     const heading = document.createElement('h1');
@@ -132,9 +169,10 @@ try {
     for (const choice of game.availableChoices) addAction(choice.label, choice.destinationId);
     if (passage.continueTo !== undefined) addAction('Continue', passage.continueTo);
 
-    root.replaceChildren(heading, ...paragraphs, actions, journalButton, skillsButton, journalSection, skillsSection);
+    root.replaceChildren(heading, ...paragraphs, actions, journalButton, skillsButton, inventoryButton, journalSection, skillsSection, inventorySection);
     renderJournal();
     renderSkills();
+    renderInventory();
     heading.focus();
   }
 

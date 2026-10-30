@@ -226,6 +226,6 @@ test('conditions and available choice views are immutable data, not mutable runt
 });
 
 test('equality is strict, conditions do not coerce values, and missing own variables fail closed', () => {
-  assert.equal(evaluateCondition({ variable: 'value', operator: '==', value: 4 }, { passageId: 'start', variables: { value: '4' }, journal: [], skills: [] }), false);
-  assert.equal(evaluateCondition({ variable: 'constructor', operator: '!=', value: 4 }, { passageId: 'start', variables: {}, journal: [], skills: [] }), false);
+  assert.equal(evaluateCondition({ variable: 'value', operator: '==', value: 4 }, { passageId: 'start', variables: { value: '4' }, journal: [], skills: [], inventory: {} }), false);
+  assert.equal(evaluateCondition({ variable: 'constructor', operator: '!=', value: 4 }, { passageId: 'start', variables: {}, journal: [], skills: [], inventory: {} }), false);
 });

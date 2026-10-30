@@ -3,8 +3,8 @@
 ## Validated story data
 
 `parseStory` reads one `.story` authoring format into a complete immutable `Story`
-before `new Game` can run. The story contains `initialVariables`, `skills`,
-`startId`, and `passages`. Variable and skill declarations may be interleaved
+before `new Game` can run. The story contains `initialVariables`, `skills`, `items`,
+`startId`, and `passages`. Variable, skill, and item declarations may be interleaved
 before all chapters and passages. Primitive variable initial values establish
 fixed types. Variable names and stable passage IDs share
 `[a-z][a-z0-9_-]*`. IDs are authored, never derived from titles, text, or randomness.
@@ -16,10 +16,14 @@ in place of the old `Passage.text` string array. `ChoiceCondition` was renamed
 `Condition` because both paragraphs and choices use exactly the same data:
 
 ```ts
+type ComparisonOperator = '==' | '!=' | '>' | '>=' | '<' | '<=';
+
 type Condition =
   | { readonly variable: string; readonly operator: '==' | '!='; readonly value: VariableValue }
   | { readonly variable: string; readonly operator: '>' | '>=' | '<' | '<='; readonly value: number }
-  | { readonly operator: 'has_skill' | 'lacks_skill'; readonly skillId: string };
+  | { readonly operator: 'has_skill' | 'lacks_skill'; readonly skillId: string }
+  | { readonly operator: 'has_item' | 'lacks_item'; readonly itemId: string }
+  | { readonly operator: ComparisonOperator; readonly itemId: string; readonly value: number };
 
 interface NarrativeParagraph {
   readonly text: string;
@@ -36,7 +40,7 @@ separate content registries.
 and is copied into each following passage until another declaration. A chapter
 can close a valid previous passage, but cannot bypass missing titles, prose,
 choices, or a pending `*show_if`. Every declaration needs a following passage,
-and variable/skill declarations must come before chapters and the first passage.
+and variable/skill/item declarations must come before chapters and the first passage.
 Labels are nonempty literal text, not interpolated values; repeated labels are
 allowed. There is no mutable runtime `currentChapter`, so navigation order cannot
 change a passage's chapter affiliation.
@@ -52,7 +56,12 @@ variables, mismatched types, malformed literals, non-finite values, compound
 conditions, logical operators, parentheses, and arithmetic expressions. Skill
 conditions validate declared skill IDs, with no numeric values or comparisons.
 The shared `evaluateCondition` receives committed `GameState` and reads either
-its variables or acquired skills. Ordinary variable comparisons remain unchanged.
+its variables, acquired skills, or inventory. Ordinary variable comparisons remain
+unchanged, including variable IDs named after condition keywords and optional
+whitespace around their operators. Item checks use `has_item id`, `lacks_item id`,
+or `item_count id operator quantity`, sharing the existing six comparisons.
+Item quantities use nonnegative safe integer decimal literals; absence is zero.
+Unknown items and invalid operands are rejected before play.
 
 `*show_if` attaches a condition only to the next narrative paragraph. It must
 follow the title and any entry effects at a paragraph boundary. The next physical
@@ -73,11 +82,12 @@ available. Invalid late content cannot partially initialize a game.
 ## State ownership and deterministic entry
 
 `Game` owns one frozen `GameState` with `passageId`, a frozen `variables` record,
-a frozen `journal` array, and a frozen `skills` array of acquired IDs.
+a frozen `journal` array, a frozen `skills` array of acquired IDs, and a frozen
+`inventory` record of owned item quantities.
 Each frozen `JournalEntry` contains only `id`,
 `chapter`, and resolved `text` strings. `Story.initialVariables` is metadata,
 never mutable runtime state. Candidates copy the primitive variable record,
-journal array, and acquired-skill array; existing frozen journal entries can
+journal array, acquired-skill array, and inventory record; existing frozen journal entries can
 safely be shared. No deep-cloning framework or separate state manager is needed.
 Earlier states and other games cannot change when one game progresses.
 
@@ -86,11 +96,12 @@ Startup and navigation share the existing private `Game.enterPassage` path:
 1. Validate an eligible outgoing action against current committed state, or use
    the validated start ID for initial entry.
 2. Resolve the destination and copy the complete input state into a candidate
-   `next`, with a new variable record, journal array, and acquired-skill array.
-   Initial input uses story variable declarations and empty journal/skills arrays;
+   `next`, with a new variable record, journal array, acquired-skill array, and inventory.
+   Initial input uses story variable declarations, empty journal/skills arrays,
+   and an empty inventory record;
    ordinary input uses current state.
 3. **This candidate before effects is the future pre-passage checkpoint boundary.**
-4. Apply `set`/`add`/`journal`/`grant_skill`/`revoke_skill` effects once, in source
+4. Apply `set`/`add`/`journal`/`grant_skill`/`revoke_skill`/`add_item`/`remove_item` effects once, in source
    order. Assignments preserve types, and every addition must produce a finite
    number. Arithmetic uses normal
    JavaScript floating-point precision. A new journal event resolves its template
@@ -105,7 +116,7 @@ Execution never reads DOM state, clocks, randomness, storage, or remote services
 Identical inputs and destinations produce identical results. Failed navigation
 or numeric overflow leaves the complete current state unchanged. The browser
 keeps the current passage and displays a text error; a failed initial entry
-cannot expose a partially started game. Mixed skill, journal, and variable effects
+cannot expose a partially started game. Mixed inventory, skill, journal, and variable effects
 roll back together, regardless of their order.
 
 ## Binary skills
@@ -129,6 +140,45 @@ Only the candidate array is changed during entry. Previously committed arrays
 are never mutated, and the new array is frozen before exposure. Reads, conditions,
 and rendering cannot execute effects. No registry, manager, or mutable eligibility
 cache exists. Skills have no numerical values or additional metadata.
+
+## Inventory quantities
+
+`ItemDefinition` contains only `id` and `name`. `Story.items` and its definitions
+are frozen static metadata, separate from gameplay state. `*item id "Name"`
+uses the existing ID and JSON-string parsers, requires a non-whitespace name,
+and rejects duplicate IDs, including unused definitions. Duplicate names are
+allowed. Items, skills, and variables have separate namespaces; metadata may
+interleave only before all chapters/passages. Names remain literal text.
+
+`Inventory = Readonly<Record<string, number>>` stores only owned quantities in
+`GameState.inventory`. New games start empty before initial effects. Values are
+positive safe integers; zero properties are deleted. Item IDs begin with letters,
+so normal object insertion order matches acquisition order. Updating a quantity
+retains its position; removal followed by reacquisition appends at the end.
+Every quantity read uses `Object.hasOwn`, preventing inherited properties such
+as `constructor` from counting as items. Definitions remain in `Story` and are
+never duplicated in state. No Map, Set, manager, or mutable registry is needed.
+
+`*add_item id quantity` and `*remove_item id quantity` share entry-effect placement
+and source order. Parsing requires a declared ID and a positive safe integer
+written in decimal digits, without signs, leading zeros, decimal points, exponent
+notation, variables, or expressions. The same literal parser allows zero for
+`item_count` comparisons. `Number.MAX_SAFE_INTEGER` is the inclusive limit.
+
+Each entry candidate spreads the inventory into its own record. Runtime removal
+requires sufficient quantity; additions must remain safe integers. Checks occur
+after each operation: an invalid intermediate result fails even if a later effect
+would repair it. At zero the property is deleted. Only a fully successful entry
+freezes and exposes the candidate inventory. Insufficient removal, quantity
+overflow, or a variable failure discards all candidate fields, including prior
+item changes, skill changes, and journal appends. Repeated failures leave no
+hidden state; valid alternatives and successful retries remain possible.
+
+Item conditions use this same committed record after all entry effects. An absent
+or inherited-only item counts as zero. Possession means at least one, absence
+means zero; numerical comparisons never read the ordinary variable record.
+The shared evaluator uses the existing comparison switch. Reads and rendering
+never execute item effects or change eligibility.
 
 ## Journal recording
 
@@ -154,7 +204,7 @@ record events normally because failed attempts leave no hidden deduplication sta
 `game.passage.paragraphs` and `.choices` retain all authored content in source
 order. `game.visibleParagraphs` and `game.availableChoices` return fresh frozen
 filtered arrays. Both use the same pure `evaluateCondition` function and current
-committed variables and acquired skills, after entry effects. They do not cache
+committed variables, acquired skills, and inventory, after entry effects. They do not cache
 visibility, change state, or repeat effects. Re-entry recomputes both views from
 its new state.
 
@@ -178,6 +228,15 @@ immutable `Story.skills` using current acquired IDs in acquisition order. There
 is no UI copy of acquired-skill state. Empty lists show “No skills acquired yet.”
 An open section refreshes after navigation, including revocations. Toggling either
 Skills or Journal never changes gameplay state; skill names use `textContent`.
+
+Inventory uses the same native expandable-section pattern beside Journal and
+Skills, with a labeled heading, `aria-controls`, `aria-expanded`, and keyboard
+access. `Object.entries(game.state.inventory)` determines insertion order and
+quantities; immutable item definitions supply names. Only positive quantities
+exist in committed state. List entries use `textContent` for `Name × quantity`;
+empty inventory shows “No items in inventory.” An open section updates after
+navigation, including deletions. Toggling any section affects presentation only;
+there is no UI inventory state or renderer-specific condition logic.
 
 Paragraph records preserve `${name}` placeholders. The pure `interpolate` helper
 validates references during parsing and substitutes current post-entry values
@@ -221,31 +280,35 @@ The permanent design is:
 
 Storage/version policy is deferred. In-story Continue currently just navigates
 to its authored ID, and refreshing currently starts over. This roadmap introduces
-no saving or death behavior in the current implementation. The complete journal
-and acquired skills are already part of `GameState` and must be preserved by
-that future checkpoint. Static skill definitions remain in `Story`.
+no saving or death behavior in the current implementation. The complete journal,
+acquired skills, and inventory are already part of `GameState` and must be
+preserved by that future checkpoint. Static skill/item definitions remain in `Story`.
 
 ## Scope and verification
 
 Implemented: typed variables, literal entry effects, conditional choices,
 one-paragraph conditional narrative, chapter metadata, journal recording/viewing,
 binary skill definitions/acquisition/revocation/viewing, interpolation, validated text authoring,
+item definitions/quantities/conditions and inventory viewing,
 explicit navigation, and basic rendering. No dependencies or visual redesign are
 needed. Ordinary TypeScript iteration over data is not a story-language loop.
 
-Character attributes/UI, arithmetic expressions, inventory,
+Character attributes/UI, arithmetic expressions,
 character creation, and the saving/death roadmap require future tasks. Randomness,
 glossary, shops, skill purchasing, manual saves, save slots, import/export,
 procedures, subroutines, loops, and plugin systems remain excluded. System
 Awakening is reference only and its engine architecture is not imported.
 Skill levels, experience, purchasing, rarity, categories, cooldowns, passive
 bonuses, and progression trees are excluded.
+Inventory excludes shops, buying/selling systems, equipment, crafting, weight,
+capacity, rarity, durability, categories, descriptions, and passive effects.
 
 `npm test` covers parsing, shared comparisons, paragraph boundaries, visibility
 and eligibility after effects/re-entry, interpolation, immutability, exactly-once
 execution, navigation, chapter metadata, journal ordering/deduplication,
 record-time interpolation, skill metadata/conditions/acquisition order/revocation,
-nested immutability, and mixed-effect atomic failure. `npm run build` checks source/tests
+nested immutability, item literal validation, own-property safety, quantity limits,
+insertion order, and mixed-effect atomic failure. `npm run build` checks source/tests
 with strict TypeScript and builds the app. Browser checks cover hidden content,
 rerendering, keyboard navigation, and inert HTML-like interpolation.
 

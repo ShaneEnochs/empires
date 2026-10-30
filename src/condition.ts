@@ -6,9 +6,14 @@ export function evaluateCondition(condition: Condition, state: GameState): boole
     const acquired = state.skills.includes(condition.skillId);
     return condition.operator === 'has_skill' ? acquired : !acquired;
   }
-  const { variables } = state;
-  if (!Object.hasOwn(variables, condition.variable)) return false;
-  const actual = variables[condition.variable];
+  if ('itemId' in condition && !('value' in condition)) {
+    const owned = Object.hasOwn(state.inventory, condition.itemId) && state.inventory[condition.itemId]! > 0;
+    return condition.operator === 'has_item' ? owned : !owned;
+  }
+  if ('variable' in condition && !Object.hasOwn(state.variables, condition.variable)) return false;
+  const actual = 'itemId' in condition
+    ? (Object.hasOwn(state.inventory, condition.itemId) ? state.inventory[condition.itemId]! : 0)
+    : state.variables[condition.variable];
   switch (condition.operator) {
     case '==': return actual === condition.value;
     case '!=': return actual !== condition.value;
