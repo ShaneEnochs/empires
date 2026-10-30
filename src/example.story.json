@@ -1,0 +1,36 @@
+{
+  "startId": "gate",
+  "passages": [
+    {
+      "id": "gate",
+      "title": "The City Gate",
+      "text": [
+        "At dawn, you reach a city whose banners have outlasted its kings.",
+        "A messenger waits beside the open gate. Beyond them, a bell calls the council to order."
+      ],
+      "choices": [
+        { "label": "Speak to the messenger", "destinationId": "messenger" },
+        { "label": "Go straight to the council", "destinationId": "council" }
+      ]
+    },
+    {
+      "id": "messenger",
+      "title": "A Quiet Warning",
+      "text": [
+        "The messenger lowers their voice. 'The council needs a ruler. First, they need someone who will listen.'",
+        "They step aside, leaving the road to the council hall clear."
+      ],
+      "choices": [],
+      "continueTo": "council"
+    },
+    {
+      "id": "council",
+      "title": "The Empty Chair",
+      "text": [
+        "Inside the council hall, an empty chair stands at the head of the table.",
+        "Every voice falls silent as you enter. Your story is only beginning."
+      ],
+      "choices": []
+    }
+  ]
+}

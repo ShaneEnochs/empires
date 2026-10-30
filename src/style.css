@@ -1,0 +1,13 @@
+:root {
+  font-family: Georgia, serif;
+  line-height: 1.6;
+  color: #20282b;
+  background: #faf9f6;
+}
+
+body { margin: 0; }
+main { max-width: 42rem; margin: 3rem auto; padding: 0 1.25rem; }
+h1 { line-height: 1.2; }
+nav { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+button { font: inherit; padding: 0.5rem 1rem; cursor: pointer; }
+:focus-visible { outline: 3px solid #245b8a; outline-offset: 3px; }
