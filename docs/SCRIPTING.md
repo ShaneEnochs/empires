@@ -108,6 +108,7 @@ messenger route and five on the direct route. Neither route can underflow.
 | `*chapter Label` | Top-level nonempty literal label for subsequent passages; each declaration needs a following passage. Default: `Prologue`. |
 | `*passage id` | Begins a passage with a unique stable ID matching `[a-z][a-z0-9_-]*`. The first passage is the start. |
 | `*title text` | Exactly one nonempty literal title per passage, before navigation. Place it immediately after the header. |
+| `*checkpoint` | No arguments; static passage metadata immediately after the title and before all effects/prose, at most once. Successful entry captures a replacement checkpoint before effects. |
 | `*set name literal` | Replaces a declared variable with a literal of the same type. Only after the title and before any narrative. |
 | `*add name number` | Adds a numeric literal to a declared numeric variable. Same placement as `*set`. |
 | `*journal event_id "Entry text"` | Records an event once by a story-wide unique ID. Interpolation uses candidate variables at that point. Same placement as `*set`. |
@@ -176,6 +177,71 @@ recording order. Later events in an earlier chapter join its existing group.
 An open journal updates after successful navigation. Empty journals display
 “No journal entries yet.” Arrays and entries are frozen, and chapter headings
 and recorded text use `textContent`.
+
+## Checkpoints
+
+`*checkpoint` marks a passage as an automatic checkpoint. Put it immediately
+after `*title` as the next nonblank directive, before every entry effect and all
+prose. It has no arguments and may appear only once per passage. It is immutable
+passage metadata, not an effect or a conditional command. It cannot appear in
+choices, conditional prose, input actions, or after another effect. A marked
+passage may otherwise have choices, Continue, text input, or no concluding action.
+Whole-story parsing rejects invalid usage with source-line/passage context.
+
+```text
+*var influence 0
+*item gold_coin "Gold Coin"
+
+*passage camp
+*title The Camp
+*checkpoint
+*add influence 2
+*add_item gold_coin 10
+*journal rested "You rested at camp."
+
+You arrive at a safe place to rest.
+
+*continue next_day
+
+*passage next_day
+*title The Next Day
+*add influence 1
+*remove_item gold_coin 1
+
+You set out again.
+```
+
+Every new game automatically establishes one checkpoint at the starting passage,
+before its entry effects, even without a marker. Starting effects then run once;
+an explicit start marker does not run them again. Failed startup exposes no game
+or checkpoint. Successful entry to a marked passage replaces the checkpoint with
+its complete **pre-entry** state. Re-entry captures a fresh snapshot even when
+the passage ID is unchanged. Unmarked passages and state inspection do not replace it.
+
+The snapshot contains all variables (including names), journal entries with their
+original chapters/text/order, acquired skills in order, inventory quantities and
+insertion order, and the destination ID. It excludes story definitions, visible
+paragraphs/choices, form drafts, callbacks, and history. All nested data is copied
+and frozen. Failed entry commits neither candidate state nor a new checkpoint.
+
+The engine-only `game.checkpoint` getter exposes `{ state: GameState }`.
+`game.restoreCheckpoint()` validates and re-enters that saved passage, executing
+effects once and preserving the checkpoint itself. Repeating restoration does
+not accumulate effects. In the example, restoring camp always yields influence
+2, ten coins, and one journal event, even after visiting `next_day`.
+`new Game(story, { checkpoint: data })` validates snapshot data and enters its
+destination directly, without first executing the starting passage.
+
+Validation rejects malformed structure, missing/extra fields, wrong variable
+names/types or non-finite numbers, unknown/duplicate journal or skill IDs, wrong
+journal origin chapters, unknown items, invalid quantities, and inherited or
+accessor data. It does not invent defaults or repair quantities. It checks against
+current story definitions; persistent versioning/compatibility belongs to Stage 7B.
+
+Stage 7A is in memory only. There is no restore command in the story language,
+player-facing checkpoint return, persistence, or saved progress across refreshes.
+The engine APIs are foundations for future Continue Game and Try Again, not
+current UI controls.
 
 ## Skills
 
@@ -298,7 +364,7 @@ must be valid even if a later effect would repair it. The private candidate has
 its own inventory record: failure discards all inventory, variable, journal, skill,
 and passage-ID changes, including on initial entry or repeated attempts. Earlier
 states and other games remain unchanged. Inventory is JSON-serializable and will
-be preserved by the future single checkpoint without a separate recovery system.
+be preserved by the single checkpoint without a separate recovery system.
 
 All existing condition locations support `has_item id`, `lacks_item id`, and
 `item_count id operator quantity`. Counts use the same six operators as variables:
@@ -441,6 +507,7 @@ What name will you use on your journey?
 
 *passage choose_background
 *title Your Background
+*checkpoint
 *journal introduced "The hero is named ${character_name}."
 
 Welcome, ${character_name}. Choose your background.
@@ -481,11 +548,11 @@ submission. Opening Journal, Skills, or Inventory does not change or submit it.
 Rendering and state reads never resubmit text. All display content uses
 `textContent`; HTML-like input remains inert.
 
-The future checkpoint at a submitted destination must contain the accepted name
-before destination effects, so restoration there must not ask for it again.
-A checkpoint that actually starts at an input passage instead displays its form
-and permits a fresh submission. This stage adds no persistence, restoration,
-input history, or Undo. Only one text field is supported: no numeric input,
+The checkpoint at the marked input destination contains the accepted name before
+its effects, so engine restoration there does not ask for it again. A checkpoint
+that starts at a genuine input passage instead offers its form when rendered and
+permits a fresh submission. Stage 7A implements in-memory restoration only, with
+no persistence, input history, or Undo. Only one text field is supported: no numeric input,
 multi-field forms, point-buy, portraits, visual customization, or character sheet.
 
 ## Conditional choices
@@ -689,7 +756,8 @@ executed.
 Keep stable passage IDs when editing prose, changing titles, or moving passages.
 Moving the first passage changes where play begins; moving other passages does
 not affect navigation. Changing an ID changes passage identity, so update every
-reference. Future checkpoint compatibility will rely on these IDs. Forward
+reference. Checkpoint restoration relies on these IDs; persistent release policy
+is deferred to Stage 7B. Forward
 passage references are valid, and all destinations are checked before play.
 
 ## Common errors
@@ -699,6 +767,7 @@ passage references are valid, and all destinations are checked before play.
 | Duplicate `*passage city_gate` | Give each passage a unique stable ID. |
 | `*passage City Gate` | Use `city_gate`, matching the identifier grammar. |
 | Missing `*title` or two titles | Supply exactly one nonempty title. |
+| `*checkpoint` with arguments, twice, or after effects/prose | Place one no-argument marker immediately after the title. |
 | A title with no narrative | Add at least one nonblank paragraph. |
 | Empty chapter or no following passage | Supply a nonempty label and at least one passage per declaration. |
 | Variables, skills, or items after `*chapter` | Move all definitions before chapter metadata. |
@@ -738,25 +807,27 @@ referring actions. No partially validated story can initialize a game.
 ## Future functionality, not current syntax
 
 Character attributes/UI and arithmetic expressions remain
-future work. Chapters, the journal, binary skills, inventory quantities, and
-text input for story-driven character creation are implemented. Variables,
-journal, acquired skills, and inventory must all be included in the future single
-checkpoint. Definitions stay in static `Story` metadata.
+future work. Chapters, the journal, binary skills, inventory quantities,
+text input for story-driven character creation, and Stage 7A in-memory checkpoints
+are implemented. Snapshots include complete variables, journal, skills, and
+inventory; definitions stay in static `Story` metadata.
 
-The saving/death roadmap is documentation only: one persistent automatic
-checkpoint, future author-controlled `*checkpoint` and `*death`, Try Again on
-death passages, Continue Game on reopening, and confirmed New Game. The first new
-game must establish an initial checkpoint. Authored checkpoints replace it;
-death must not save dead state over it. Try Again restores complete pre-passage
-state and enters that passage with effects applied exactly once, including current
-variables (with character names/background attributes), journal, skills, and
-inventory. Continue Game resumes
-the latest checkpoint; New Game confirms before overwriting progress.
+The remaining roadmap is:
+
+1. **Stage 7B:** persistent saving, Continue Game, and confirmed New Game, with
+   storage keys, persistent versioning, and compatibility policy.
+2. **Stage 7C:** `*death` and Try Again restoring the latest checkpoint. Death must
+   not save dead state over it; Try Again uses the existing pre-entry restore path.
+3. **Stage 8:** interface improvements and end-to-end testing.
+
+Continue Game will resume the single checkpoint when reopening, and New Game
+will confirm before replacing saved progress. These features remain unimplemented.
 
 There will be no traditional Undo, choice-history stack, manual rewind, Return to
-Checkpoint control, manual saves, or save slots. These future directives and
-actions are **not supported syntax or UI yet**; no persistence, death handling,
-checkpoint capture/restoration, title-screen changes, or Try Again is implemented.
+Checkpoint control, manual saves, or save slots. Future `*death`, Try Again,
+Continue Game, and New Game are **not supported syntax or UI yet**.
+The Stage 7A `*checkpoint` marker and engine recovery API are supported in memory.
+No persistence, death handling, title-screen changes, or Try Again is implemented.
 See `docs/ENGINE.md` for the checkpoint boundary. Current `*continue id` remains
 ordinary navigation.
 

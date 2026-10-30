@@ -90,7 +90,7 @@ export function parseStory(source: string): Story {
   const items: ItemDefinition[] = [];
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
-    id: string; chapter: string; line: number; title?: string; paragraphs: NarrativeParagraph[];
+    id: string; chapter: string; line: number; title?: string; checkpoint?: true; paragraphs: NarrativeParagraph[];
     choices: Choice[]; effects: PassageEffect[]; continueTo?: string; textInput?: TextInputAction;
   } | undefined;
   let paragraph: string[] = [];
@@ -136,6 +136,7 @@ export function parseStory(source: string): Story {
       id: current.id, chapter: current.chapter, title: current.title, paragraphs: Object.freeze(current.paragraphs),
       effects: Object.freeze(current.effects),
       choices: Object.freeze(current.choices),
+      ...(current.checkpoint === undefined ? {} : { checkpoint: current.checkpoint }),
       ...(current.continueTo === undefined ? {} : { continueTo: current.continueTo }),
       ...(current.textInput === undefined ? {} : { textInput: current.textInput }),
     }));
@@ -166,6 +167,15 @@ export function parseStory(source: string): Story {
         action = undefined;
         chapter = argument;
         pendingChapterLine = line;
+        continue;
+      }
+      if (directive === '*checkpoint') {
+        if (argument !== '') throw syntaxError('*checkpoint takes no arguments.', line, current?.id);
+        if (current?.checkpoint) throw syntaxError('*checkpoint may appear at most once per passage.', line, current.id);
+        if (!current || current.title === undefined || current.effects.length > 0 || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined) {
+          throw syntaxError('*checkpoint must immediately follow *title, before entry effects and narrative.', line, current?.id);
+        }
+        current.checkpoint = true;
         continue;
       }
       if (directive === '*show_if') {

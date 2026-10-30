@@ -10,7 +10,8 @@ fixed types. Variable names and stable passage IDs share
 `[a-z][a-z0-9_-]*`. IDs are authored, never derived from titles, text, or randomness.
 The first passage is the start; all later navigation uses explicit destinations.
 
-A `Passage` contains its ID, static `chapter`, title, ordered literal effects, `paragraphs`, choices,
+A `Passage` contains its ID, static `chapter`, title, optional `checkpoint: true`
+designation, ordered literal effects, `paragraphs`, choices,
 and optional Continue destination or `textInput` action. A passage has exactly
 one concluding category: choices, Continue, text input, or terminal. Each paragraph has one uniform record,
 in place of the old `Passage.text` string array. `ChoiceCondition` was renamed
@@ -107,7 +108,7 @@ Startup and navigation share the existing private `Game.enterPassage` path:
    ordinary input uses current state.
    For text submission, the accepted text is already in the candidate variables
    before this copy and boundary; no destination effect runs beforehand.
-3. **This candidate before effects is the future pre-passage checkpoint boundary.**
+3. **This candidate before effects is the pre-entry checkpoint boundary.**
 4. Apply `set`/`add`/`journal`/`grant_skill`/`revoke_skill`/`add_item`/`remove_item` effects once, in source
    order. Assignments preserve types, and every addition must produce a finite
    number. Arithmetic uses normal
@@ -116,6 +117,8 @@ Startup and navigation share the existing private `Game.enterPassage` path:
    with the passage's static chapter. There is no expression interpreter.
 5. Freeze and return the completed candidate; only a successful return commits
    it. A failure discards all candidate changes, including earlier effects.
+   Normal navigation/submission also commits a prepared pre-entry snapshot if the
+   destination is marked `*checkpoint`; failures preserve the previous checkpoint.
 6. Render the committed state. Reads and rendering never apply effects. A later
    legitimate re-entry is a new entry and applies its effects once again.
 
@@ -313,44 +316,91 @@ several actions share a destination, one eligible action suffices. Continue is
 unconditional. Terminal passages have no actions. There is no implicit traversal,
 instruction pointer, call stack, command registry, or nested scripting system.
 
-## Saving and death roadmap — not implemented
+## In-memory checkpoint capture and restoration
 
-`GameSnapshot` remains a type-only proposal containing `state: GameState` for one
-future automatically maintained persistent checkpoint. No capture, restoration,
-serialization, storage, checkpoint/death directives, title-screen changes, or
-Try Again action exists yet.
+Stage 7A implements exactly one checkpoint owned by `Game`. Its read-only
+`checkpoint` getter returns a frozen `GameSnapshot` containing only
+`state: GameState`. That state describes the destination **before entry effects**:
+passage ID, every primitive variable, the complete ordered journal with original
+IDs/chapters/resolved text, acquired skills in acquisition order, and inventory
+quantities in record insertion order. Explicit copies freeze all records, arrays,
+and journal entries. Snapshots contain no story definitions, derived views, DOM,
+form drafts, callbacks, or previous snapshots. There is no history stack.
 
-The permanent design is:
+`*checkpoint` is static `Passage.checkpoint` metadata, not a `PassageEffect`.
+The no-argument directive must be the next nonblank directive after `*title`,
+before any effects/prose, and may appear only once. All concluding action
+categories are permitted. Invalid placement/arguments are line-numbered parsing
+errors, including in unreachable passages and conditional/input/choice blocks.
 
-- A first new game must establish an initial checkpoint at a stable pre-passage
-  boundary, so death is recoverable before any authored checkpoint.
-- Future author-controlled `*checkpoint` replaces the previous checkpoint. There
-  is only one checkpoint, with no manual saving or multiple slots.
-- Future `*death` displays authored narrative and a Try Again action. It must
-  never overwrite the checkpoint with dead state.
-- Try Again restores the complete pre-passage input state, enters the checkpoint
-  passage, and applies its effects exactly once. Do not replay effects over a
-  post-entry snapshot. Future nested gameplay data must be copied deeply.
-- The checkpoint must eventually contain variables, skills, inventory, journal
-  entries, and character identity/attributes already stored in variables. Visibility and eligibility remain derived
-  views, not stored gameplay state.
-- Continue Game on reopening resumes the latest checkpoint. New Game requires
-  confirmation before overwriting progress.
-- Traditional Undo, choice-history stacks, manual rewind, and a player-accessible
-  Return to Checkpoint command are not part of this design.
+New-game construction prepares an initial snapshot from story defaults and the
+start ID, then enters the start passage once. Both state and initial checkpoint
+become available only after successful entry. An explicit marker on the start
+passage does not add another entry or checkpoint. There is always one checkpoint
+after successful initialization, even if the story has no authored markers.
 
-Storage/version policy is deferred. In-story Continue currently just navigates
-to its authored ID, and refreshing currently starts over. This roadmap introduces
-no saving or death behavior in the current implementation. The complete journal,
-acquired skills, and inventory are already part of `GameState` and must be
-preserved by that future checkpoint. Static skill/item definitions remain in `Story`.
+For ordinary navigation and text submission, `transition` prepares a new frozen
+pre-entry snapshot only if the destination is marked. It calls the existing
+`enterPassage` effect path on an independent candidate, then commits state and
+checkpoint together after success. Every legitimate marked re-entry replaces
+the snapshot, even if its ID matches the previous one. Ordinary passages, reads,
+visibility checks, interpolation, and rendering never capture. Any failure
+preserves both previously committed state and checkpoint.
 
-Text submission preserves this boundary: the destination's pre-entry state already
-contains accepted text. Restoring a checkpoint there must enter that destination
-without prompting or resubmitting the name; its effects execute once as usual.
-Restoring a checkpoint at an actual input passage instead displays that passage's
-form and permits a fresh explicit submission. No historical input record or
-special character recovery logic is needed, and none is implemented now.
+`restoreCheckpoint()` validates/copies the saved pre-entry state and enters its
+destination through `enterPassage`. It commits only successful gameplay state
+and preserves the checkpoint object itself. It deliberately does not use normal
+checkpoint-replacement logic. Repeated restoration produces identical state,
+without accumulating effects, journal entries, skills, or inventory. It needs no
+outgoing choice from the current passage and performs no reverse operations.
+
+`new Game(story, { checkpoint: data })` accepts unknown snapshot data, validates
+it, and enters the saved destination directly. It never initializes the starting
+passage first, replays earlier choices, or reconstructs history. Failed validation
+or saved entry exposes no partially initialized game. Later mutation of the raw
+input data cannot affect the copied/frozen checkpoint or state.
+
+`validateSnapshot` is a schema-specific validator/copier, not a serialization
+framework. It requires JSON-shaped plain records (ordinary or null prototype)
+and dense native arrays with own enumerable data properties. Accessors, symbols,
+hidden/extra fields, inherited data, and exotic containers are rejected without
+executing accessor callbacks. The snapshot has exactly `state`, and state has
+exactly `passageId`, `variables`, `journal`, `skills`, and `inventory`.
+
+Validation requires an existing passage, exact declared variable names and
+matching primitive types, finite numbers, unique declared journal event IDs with
+their source passages' chapters and string text, unique declared skill IDs, and
+declared inventory IDs with positive safe integer quantities. Own-property checks
+handle names such as `constructor`. Recorded journal text is retained as resolved
+data, never re-interpolated; ordinary string variables are not revalidated as
+player submissions. Invalid data is rejected, never repaired or defaulted.
+Validation uses current story definitions, without proving historical reachability
+or adding a persistent format/version policy.
+
+Text submission supplies the accepted name before snapshot capture and destination
+effects. Restoring that destination preserves the name and does not prompt again;
+journal effects execute once in their usual order. Restoring a genuine input
+passage instead makes its input action available when rendered. Unsubmitted form
+drafts are never gameplay state or checkpoint data.
+
+These are engine operations only. No player-facing return control or automatic
+DOM update is added; a future recovery handler will render after restoration,
+just as existing action handlers render after navigation/submission.
+
+## Later stages — not implemented
+
+1. **Stage 7B:** persistent saving, Continue Game, confirmed New Game, storage keys,
+   format versioning, and changing-release compatibility policy.
+2. **Stage 7C:** `*death` and Try Again. Death must never replace the checkpoint
+   with dead state; Try Again will use the existing complete pre-entry restoration.
+3. **Stage 8:** interface improvements and end-to-end testing.
+
+Future Continue Game resumes the single checkpoint on reopening. New Game must
+confirm before replacing progress. Currently refreshing starts over: there is no
+browser/cloud storage, title screen, death handling, or Try Again. In-story Continue
+still follows its explicit destination. Traditional Undo, history stacks, manual
+rewind, Return to Checkpoint controls, manual saves, and multiple slots remain
+excluded. Static story metadata stays outside snapshots.
 
 ## Scope and verification
 
@@ -359,11 +409,12 @@ one-paragraph conditional narrative, chapter metadata, journal recording/viewing
 binary skill definitions/acquisition/revocation/viewing, interpolation, validated text authoring,
 item definitions/quantities/conditions and inventory viewing,
 one-field player text input and story-driven character creation,
+in-memory checkpoint capture/validation/restoration,
 explicit navigation, and basic rendering. No dependencies or visual redesign are
 needed. Ordinary TypeScript iteration over data is not a story-language loop.
 
 Character attributes/UI, arithmetic expressions,
-and the saving/death roadmap require future tasks. Randomness,
+and the later persistence/death roadmap require future tasks. Randomness,
 glossary, shops, skill purchasing, manual saves, save slots, import/export,
 procedures, subroutines, loops, and plugin systems remain excluded. System
 Awakening is reference only and its engine architecture is not imported.
@@ -382,6 +433,9 @@ nested immutability, item literal validation, own-property safety, quantity limi
 insertion order, and mixed-effect atomic failure. Text-input coverage includes
 parsing/normalization, Unicode limits, submission guards, input rollback,
 exactly-once destination entry, and character-background routes.
+Checkpoint tests cover pre-entry capture, replacement/re-entry, direct fresh
+restoration, complete state/order recovery, untrusted data validation, deep
+immutability, and atomic failures.
 `npm run build` checks source/tests
 with strict TypeScript and builds the app. Browser checks cover hidden content,
 rerendering, keyboard navigation, and inert HTML-like interpolation.

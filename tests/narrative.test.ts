@@ -212,8 +212,11 @@ test('paragraph records, conditions and visible arrays cannot be mutated by cons
   assert.equal(game.visibleParagraphs.length, 2);
 });
 
-test('checkpoint and death roadmap commands remain unsupported', () => {
-  for (const command of ['*checkpoint', '*death', '*undo', '*return_to_checkpoint']) {
+test('checkpoint metadata is supported while death and rewind commands remain unsupported', () => {
+  const passage = parseStory(`${declarations}${header}*checkpoint\nAlways.`).passages[0]!;
+  assert.equal(passage.checkpoint, true);
+  assert.deepEqual(passage.effects, []);
+  for (const command of ['*death', '*undo', '*return_to_checkpoint']) {
     assert.throws(() => parseStory(`${declarations}${header}${command}\nAlways.`), /Unsupported directive/);
   }
 });
