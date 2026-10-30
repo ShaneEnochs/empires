@@ -13,6 +13,7 @@ test('enters the authored starting passage', () => {
     passageId: 'gate', variables: { influence: 1, honor: 5, loyal: false, character_name: 'Alexander' },
     journal: [{ id: 'arrived_city', chapter: 'Prologue', text: 'Alexander reached the city with influence 1.' }],
     skills: ['composure'],
+    inventory: { gold_coin: 10, gate_token: 1 },
   });
   assert.equal(game.passage.id, 'gate');
 });

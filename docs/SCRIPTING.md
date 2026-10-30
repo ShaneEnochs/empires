@@ -9,10 +9,12 @@ data; it does not execute JavaScript or the reference engine's language.
 ```text
 *var influence 0
 *skill diplomacy "Diplomacy"
+*item gold_coin "Gold Coin"
 *var honor 5
 *var loyal false
 *var character_name "Unknown"
 *skill composure "Composure"
+*item gate_token "Gate Token"
 
 *chapter Prologue
 
@@ -21,6 +23,8 @@ data; it does not execute JavaScript or the reference engine's language.
 *set character_name "Alexander"
 *add influence 1
 *grant_skill composure
+*add_item gold_coin 10
+*add_item gate_token 1
 *journal arrived "${character_name} reached the city with influence ${influence}."
 
 At dawn, you arrive outside the city walls.
@@ -39,6 +43,7 @@ Your name is ${character_name}. Your influence is ${influence}.
 *add honor -1
 *set loyal true
 *grant_skill diplomacy
+*add_item gold_coin 2
 *journal met_messenger "You spoke to the messenger."
 
 The messenger lowers their voice.
@@ -54,6 +59,8 @@ Your loyalty is ${loyal}.
 *title The Council Chamber
 *add influence -0.5
 *revoke_skill composure
+*remove_item gold_coin 5
+*remove_item gate_token 1
 *journal met_council "You entered the council with influence ${influence}."
 
 The council members turn toward you as you enter.
@@ -65,19 +72,28 @@ Your exchange with the messenger helps you choose your words.
 
 *show_if lacks_skill diplomacy
 Without diplomatic training, you face the council unaided.
+
+*show_if has_item gold_coin
+Your remaining coins offer a small reassurance.
+
+*show_if item_count gold_coin >= 7
+The messenger's extra coins remain after the entry fee.
 ```
 
 The first passage starts the story. The player can go directly to `council`
 (influence `0.5`, honor `5`, loyal `false`) or via `messenger` and Continue
 (influence `2.5`, honor `4`, loyal `true`). The council is terminal: there are no
 further actions or automatic fall-through. Refreshing starts a new game; variables,
-recorded journal events, and acquired skills persist between passages, not across
+recorded journal events, acquired skills, and inventory persist between passages, not across
 page reloads.
 The Journal button groups events in first-recorded chapter order; the messenger
 route has an extra event. Stored text keeps its original resolved values.
 Both routes acquire Composure at the gate and lose it at the council. Only the
 messenger route acquires Diplomacy, changing the council's visible prose. The
 Skills button lists current acquisitions by display name, in acquisition order.
+Both routes start with ten coins and a gate token. The messenger grants two more
+coins; council entry removes five coins and the token, leaving seven coins on the
+messenger route and five on the direct route. Neither route can underflow.
 
 ## Supported syntax
 
@@ -85,6 +101,7 @@ Skills button lists current acquisitions by display name, in acquisition order.
 | --- | --- |
 | `*var name literal` | Declares one variable and its initial value before all chapters/passages. Names must be unique. |
 | `*skill id "Display Name"` | Defines immutable skill metadata in the same initial section as variables. Skill IDs must be unique; names must be nonempty JSON strings. |
+| `*item id "Display Name"` | Defines immutable item metadata interleaved with variables/skills before all chapters/passages. Unique item ID; nonempty JSON-string name. |
 | `*chapter Label` | Top-level nonempty literal label for subsequent passages; each declaration needs a following passage. Default: `Prologue`. |
 | `*passage id` | Begins a passage with a unique stable ID matching `[a-z][a-z0-9_-]*`. The first passage is the start. |
 | `*title text` | Exactly one nonempty literal title per passage, before navigation. Place it immediately after the header. |
@@ -93,14 +110,19 @@ Skills button lists current acquisitions by display name, in acquisition order.
 | `*journal event_id "Entry text"` | Records an event once by a story-wide unique ID. Interpolation uses candidate variables at that point. Same placement as `*set`. |
 | `*grant_skill id` | Acquires a declared skill if absent. Same placement as `*set`. |
 | `*revoke_skill id` | Removes a declared skill if present. Same placement as `*set`. |
+| `*add_item id quantity` | Adds a positive safe integer literal quantity of a declared item. Same placement as `*set`. |
+| `*remove_item id quantity` | Removes that quantity, failing entry if insufficient; zero deletes the property. Same placement as `*set`. |
 | Narrative text | At least one unconditional paragraph per passage. Nonblank consecutive lines join with spaces; blank lines separate paragraphs. |
 | `*show_if name operator literal` | At a paragraph boundary after the title/effects, conditions only the paragraph starting on the immediately following source line. |
 | `*show_if has_skill id` / `*show_if lacks_skill id` | Conditions the next paragraph on possession/absence of a declared skill, with the same paragraph boundaries. |
+| `*show_if has_item id` / `*show_if lacks_item id` | Conditions the next paragraph on possession/absence of a declared item. |
+| `*show_if item_count id operator quantity` | Compares the owned quantity with a nonnegative safe integer literal; absent items count as zero. |
 | `${name}` | In narrative only, displays the variable's post-entry value as text. |
 | `*choice` | Takes no arguments; starts one or more flat choice lines. Must conclude the passage. |
 | `#Label -> destination_id` | Inside a choice block, a nonempty literal label and explicit existing destination. Exactly one `->` separator. |
 | `#Label -> destination_id [if name operator literal]` | Optional single typed condition, evaluated against the committed post-entry state. The block must include an unconditional choice. |
 | `#Label -> destination_id [if has_skill id]` / `[if lacks_skill id]` | Optional skill condition, using the same evaluator and requiring an unconditional fallback. |
+| `#Label -> destination_id [if has_item id]` / `[if lacks_item id]` / `[if item_count id >= 1]` | Optional item condition with the same evaluator/fallback rules; all six comparison operators work for counts. |
 | `*continue destination_id` | One explicit Continue destination, mutually exclusive with choices. Must conclude the passage. |
 
 A passage ends at the next `*passage`, a `*chapter` after a valid passage, or EOF. Terminal passages have neither
@@ -119,7 +141,7 @@ string decoding or interpolation. Reusing a label later is permitted.
 A chapter declaration can finish a valid preceding passage, including one with
 choices or Continue. It cannot rescue missing titles/prose, empty choices, or
 pending conditional prose. Every declaration must have at least one passage
-before another chapter or EOF. Variables and skills must precede chapters, and prose/effects
+before another chapter or EOF. Variables, skills, and items must precede chapters, and prose/effects
 cannot appear between a declaration and its next passage header. Chapters belong
 to immutable passage definitions, not a mutable global current chapter; player
 navigation order never changes them.
@@ -154,7 +176,7 @@ and recorded text use `textContent`.
 ## Skills
 
 Define skills before the first chapter or passage using `*skill id "Display Name"`.
-Definitions may interleave with `*var` declarations. IDs match
+Definitions may interleave with `*var` and `*item` declarations. IDs match
 `[a-z][a-z0-9_-]*`, are case-sensitive, and must be unique even if never used.
 Skill IDs occupy a separate namespace from variables, passages, and journal
 events: `*var diplomacy 0` and `*skill diplomacy "Diplomacy"` may coexist.
@@ -233,6 +255,101 @@ definitions and IDs from current state, in acquisition order; no UI copy of
 acquired skills exists. Empty lists show “No skills acquired yet.” Open sections
 update after navigation, including removal. Toggling either control changes no
 gameplay state. Skill names use `textContent`, so HTML-like names remain inert.
+
+## Items and inventory
+
+Declare each item with `*item id "Display Name"` in the initial metadata section,
+interleaved with variables and skills before every chapter/passage. Item IDs use
+`[a-z][a-z0-9_-]*`, stay stable when names change, and must be unique, even if
+unused. Item, variable, skill, passage, and journal IDs have separate namespaces.
+Duplicate display names are allowed. Names use the existing double-quoted JSON
+string rules and escapes, must be nonempty after trimming, and stay literal
+without interpolation. Immutable `Story.items` stores only `{ id, name }`.
+Definitions inside passages or between chapters are invalid.
+
+`*add_item id quantity` adds to the current owned quantity; `*remove_item id quantity`
+subtracts it. Both operands are required. Quantities use decimal integer digits
+without signs or leading zeros, from `1` through `9007199254740991` inclusive.
+Reject zero, negatives, fractions, decimal points, exponent notation, hexadecimal,
+`NaN`, `Infinity`, unsafe integers, quoted numbers, variables, or expressions.
+For example, `*add_item gold_coin 10` works; `*add_item gold_coin influence`,
+`*add_item gold_coin 1e3`, and `*remove_item gold_coin 0` do not.
+
+Item effects must be after the title and before the first narrative line, just
+like other entry effects. They may interleave with variables, skills, and journal
+commands. They cannot appear in prose, conditional paragraphs, choices, or after
+navigation, and cannot be conditional. They run once on initial entry and each
+legitimate return; reads, rendering, and inventory inspection never rerun them.
+
+New games begin with empty inventory before initial effects. Only owned item IDs
+and positive safe integer quantities live in the frozen `GameState.inventory`
+record; names stay in story metadata. Adding an owned item increases its existing
+quantity. Removing the final quantity deletes its property. Quantity updates retain
+display order; removal followed by reacquisition puts the item at the end.
+Inherited object properties never count as items, including `constructor`.
+
+Insufficient removal and addition beyond `Number.MAX_SAFE_INTEGER` fail entry with
+a passage/item error; quantities are never clamped. Every intermediate operation
+must be valid even if a later effect would repair it. The private candidate has
+its own inventory record: failure discards all inventory, variable, journal, skill,
+and passage-ID changes, including on initial entry or repeated attempts. Earlier
+states and other games remain unchanged. Inventory is JSON-serializable and will
+be preserved by the future single checkpoint without a separate recovery system.
+
+All existing condition locations support `has_item id`, `lacks_item id`, and
+`item_count id operator quantity`. Counts use the same six operators as variables:
+`==`, `!=`, `>`, `>=`, `<`, and `<=`. Operands are **nonnegative** safe integer
+decimal literals, so zero is valid here. Absent items count as zero. Possession
+means at least one; absence means zero. Item counts never read ordinary variables.
+Unknown items are errors, including in hidden or unreachable content.
+
+```text
+*item gold_coin "Gold Coin"
+*item gate_token "Gate Token"
+
+*passage gate
+*title The Gate
+*add_item gold_coin 10
+*add_item gate_token 1
+
+The guard gives you a token.
+
+*show_if has_item gate_token
+The token identifies you as a visitor.
+
+*choice
+  #Enter the council -> council [if item_count gold_coin >= 5]
+  #Wait outside -> gate
+
+*passage council
+*title The Council
+*remove_item gold_coin 5
+*remove_item gate_token 1
+
+The clerk collects your token and five coins.
+
+*show_if lacks_item gate_token
+Your token has been handed in.
+```
+
+The shared evaluator reads committed state after all entry effects. Acquiring or
+removing items immediately changes available choices and visible paragraphs.
+Conditional choices still require an unconditional fallback, and navigation uses
+the same eligibility rules, including shared destinations. No compounds, logical
+operators, parentheses, variable operands, expressions, or conditional effects
+are added. Existing variable/skill conditions and Continue remain unchanged.
+
+The Inventory button toggles a native labeled section beside Journal and Skills,
+with `aria-controls`, `aria-expanded`, and keyboard access. It derives names from
+`Story.items` and quantities/order from `GameState.inventory`, listing only owned
+items as `Name × quantity`. Empty inventory shows “No items in inventory.” Open
+sections update after navigation, including items removed at zero. Toggling any
+control never changes gameplay state or navigates; item names use `textContent`,
+so HTML-like strings remain inert. There is no UI inventory copy or sorting layer.
+
+Only names and quantities exist: no descriptions, custom properties, shops,
+buying/selling systems, equipment, crafting, rarity, durability, weight, capacity,
+categories, or passive effects.
 
 ## Variables and literal values
 
@@ -358,6 +475,8 @@ when `faction` has been declared. All six operators use the same typed rules,
 finite literals, and parser/evaluator as choice conditions.
 The skill forms `*show_if has_skill id` and `*show_if lacks_skill id` use that
 same parser/evaluator and all the paragraph boundary rules below.
+The item forms `has_item id`, `lacks_item id`, and `item_count id operator quantity`
+also work after `*show_if` with these same boundaries.
 
 Boundary rules:
 
@@ -378,7 +497,7 @@ Boundary rules:
   all conditions initially pass. No fallback text is generated automatically.
 
 `game.passage.paragraphs` stores immutable `{ text, condition? }` records.
-`game.visibleParagraphs` filters them using committed post-entry variables and skills, just
+`game.visibleParagraphs` filters them using committed post-entry variables, skills, and inventory, just
 as `game.availableChoices` filters actions. The browser uses this runtime view;
 hidden paragraphs create no elements or spacing. Visibility does not alter state,
 rerun effects, or change navigation. Legitimate re-entry applies its effects once
@@ -421,7 +540,7 @@ effects once again; merely reading or rerendering it does not.
 
 Every entry is atomic. An overflow in any addition rejects the whole transition,
 even if a later effect would repair the value. Previous state and all its values
-remain intact, including acquired skills and journal entries. A failed initial
+remain intact, including inventory, acquired skills, and journal entries. A failed initial
 entry does not start a game. No effect reads the
 browser UI or performs external actions.
 
@@ -437,7 +556,7 @@ unreachable passages. Immutable source text keeps its placeholders.
 Interpolation is a single read-only substitution pass. If a variable contains
 `<em>${other}</em>`, that entire string is displayed as literal text; it does not
 execute HTML or recursively interpolate `other`. Titles, choice labels,
-chapter labels, skill display names, and variable/condition literals never interpolate; `${unknown}`
+chapter labels, skill/item display names, and variable/condition literals never interpolate; `${unknown}`
 there remains literal text. Journal templates resolve once when first recorded.
 All display content uses `textContent`, so HTML and JavaScript are never executed.
 Markdown and other inline syntax stay literal as well.
@@ -472,7 +591,11 @@ passage references are valid, and all destinations are checked before play.
 | Missing `*title` or two titles | Supply exactly one nonempty title. |
 | A title with no narrative | Add at least one nonblank paragraph. |
 | Empty chapter or no following passage | Supply a nonempty label and at least one passage per declaration. |
-| Variables or skills after `*chapter` | Move all definitions before chapter metadata. |
+| Variables, skills, or items after `*chapter` | Move all definitions before chapter metadata. |
+| Duplicate item ID or empty item name | Use a unique item ID and a non-whitespace double-quoted name. |
+| `*add_item unknown 1` or `has_item unknown` | Declare that item in the initial metadata section. |
+| `*remove_item gold_coin 0` or `*add_item gold_coin 1.5` | Use an explicit positive safe integer in decimal digits. |
+| `item_count gold_coin >= influence` | Compare item counts with nonnegative safe integer literals. |
 | Duplicate skill ID or empty skill name | Use a unique skill ID and a non-whitespace double-quoted name. |
 | `*grant_skill unknown` or `has_skill unknown` | Define that skill in the initial metadata section. |
 | `has_skill diplomacy >= 1` | Skills are binary; use only `has_skill diplomacy` or `lacks_skill diplomacy`. |
@@ -501,9 +624,9 @@ referring actions. No partially validated story can initialize a game.
 
 ## Future functionality, not current syntax
 
-Character attributes/UI, arithmetic expressions, inventory
-quantities and character creation remain future work. Chapters, the journal,
-and binary skills are implemented; journal and acquired-skill data must be
+Character attributes/UI, arithmetic expressions, and character creation remain
+future work. Chapters, the journal, binary skills, and inventory quantities are
+implemented; journal, acquired skills, and inventory must be
 included in the future single checkpoint. Definitions stay in static `Story` metadata.
 
 The saving/death roadmap is documentation only: one persistent automatic
@@ -512,7 +635,7 @@ death passages, Continue Game on reopening, and confirmed New Game. The first ne
 game must establish an initial checkpoint. Authored checkpoints replace it;
 death must not save dead state over it. Try Again restores complete pre-passage
 state and enters that passage with effects applied exactly once, including current
-variables/journal/skills and future inventory and character-creation data. Continue Game resumes
+variables/journal/skills/inventory and future character-creation data. Continue Game resumes
 the latest checkpoint; New Game confirms before overwriting progress.
 
 There will be no traditional Undo, choice-history stack, manual rewind, Return to

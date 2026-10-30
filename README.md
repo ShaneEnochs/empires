@@ -20,7 +20,10 @@ records an extra event; journal text keeps the values present when recorded.
 The Skills button lists acquired skills in acquisition order. Both routes start
 with Composure, which is revoked at the council. Speaking to the messenger grants
 Diplomacy and changes the council's visible prose.
-Variables, journal entries, and acquired skills persist across passages.
+The Inventory button lists item names and quantities in acquisition order. Both
+routes start with ten coins and a gate token; the messenger adds two coins. The
+council collects five coins and the token, leaving seven or five coins.
+Variables, journal entries, acquired skills, and inventory persist across passages.
 Refreshing starts a new game from the story's initial values; there is no saved progress.
 
 ```sh
@@ -42,6 +45,7 @@ plain-text format:
 ```text
 *var influence 4
 *skill diplomacy "Diplomacy"
+*item gold_coin "Gold Coin"
 *var loyal false
 *var character_name "Unknown"
 
@@ -51,6 +55,7 @@ plain-text format:
 *title The City Gate
 *set character_name "Alexander"
 *add influence 1
+*add_item gold_coin 10
 *journal arrived "${character_name} arrived with influence ${influence}."
 
 Welcome, ${character_name}. Your influence is ${influence}.
@@ -77,24 +82,28 @@ Loyal: ${loyal}.
 
 *passage council
 *title The Council
+*remove_item gold_coin 5
 *journal met_council "You entered the council chamber."
 
 The council awaits your answer.
 
 *show_if has_skill diplomacy
 You recognize the diplomatic opening.
+
+*show_if item_count gold_coin >= 5
+Five coins remain in your purse.
 ```
 
 Blank lines separate paragraphs; consecutive prose lines join with spaces. The
 first passage starts the story. Choices and `*continue id` navigate to explicit
-stable IDs. Declare variables and skills before all chapters and passages; these
+stable IDs. Declare variables, skills, and items before all chapters and passages; these
 declarations may be interleaved. Variable values are finite numbers, booleans,
 or double-quoted strings; `*set` preserves the declared
 type, and `*add` only accepts numeric variables and numeric literals. Effects
 must follow the title and precede all narrative.
 
 `*chapter Label` assigns literal static chapter metadata to subsequent passages;
-the default is `Prologue`. Chapters must follow all variable/skill declarations, and
+the default is `Prologue`. Chapters must follow all variable/skill/item declarations, and
 each declaration needs a following passage. `*journal event_id "Text"` is an
 entry effect with a story-wide unique ID. Its interpolation uses candidate
 variables at that point in effect order. The resolved text and passage chapter
@@ -118,9 +127,29 @@ order. All effects share the same placement and execute in source order.
 Only acquired IDs live in the frozen, JSON-serializable `GameState.skills` array.
 New games start empty before initial effects. Entry clones skills along with
 variables and journal; any failure commits none of their changes. The future
-single checkpoint must preserve all three. The Skills section derives names from
+single checkpoint must preserve these and inventory. The Skills section derives names from
 story definitions and IDs from current state, updates after navigation, and
 shows “No skills acquired yet.” when empty. Its button changes no gameplay state.
+
+`*item id "Display Name"` defines immutable `Story.items` metadata, using the same
+ID and nonempty JSON-string name rules as skills. Items, skills, and variables
+have separate namespaces. Only quantities live in `GameState.inventory`, a frozen
+JSON-serializable record. New games start with an empty inventory before entry
+effects. `*add_item id quantity` adds to the owned quantity; `*remove_item id quantity`
+subtracts it and deletes the property at zero. Reacquisition appends the item at
+the end of display order. Both require declared item IDs and positive safe integer
+quantities written in decimal digits (`1` through `9007199254740991`, without
+leading zeros). Signs, fractions, exponent notation, expressions, and variable
+operands are unsupported. They share the existing entry-effect placement/order.
+
+Insufficient removal or quantity overflow fails the entire entry, including all
+earlier variable, skill, journal, and item changes. Each operation must be valid,
+even if a later operation would repair it. Candidate inventory is copied before
+effects; earlier states remain unchanged. The future checkpoint must include it.
+The native Inventory section resolves names from story definitions and lists
+`Name × quantity` in insertion order. Empty inventory shows “No items in inventory.”
+Opening it changes no gameplay state; all three sections update after navigation
+and render authored names as safe text.
 
 Choices may have one optional `[if variable operator literal]` suffix. Operators
 are `==`, `!=`, `>`, `>=`, `<`, and `<=`; equality supports matching primitive
@@ -132,6 +161,12 @@ Skills use `[if has_skill diplomacy]` or `[if lacks_skill diplomacy]`, with no
 comparison operator or value. The same forms work as `*show_if has_skill diplomacy`
 and `*show_if lacks_skill diplomacy`. They use the shared condition evaluator
 after entry grants/revocations, including runtime navigation enforcement.
+
+Items use `has_item id`, `lacks_item id`, or `item_count id operator quantity`
+in either condition context. All six comparison operators work with nonnegative
+safe integer literals, including zero. Absent items count as zero; counts never
+read ordinary variables. Entry effects run before these shared checks, and the
+same unconditional fallback and runtime navigation rules apply.
 
 `passage.choices` contains all authored choices. The read-only
 `Game.availableChoices` view filters them against committed state after entry
@@ -160,8 +195,7 @@ and reports errors with source lines and passage IDs. See the
 
 ## Planned future work (not implemented)
 
-Character attributes/UI, arithmetic expressions, inventory
-quantities and character creation remain future work.
+Character attributes/UI, arithmetic expressions, and character creation remain future work.
 The saving/death roadmap is one automatic persistent checkpoint, future
 author-controlled `*checkpoint`/`*death` directives, and Try Again on death
 passages. A new game must establish an initial checkpoint; authored checkpoints
@@ -180,3 +214,5 @@ subroutines, loops, and plugin systems. No UI redesign, storage, database, or
 backend was added. System Awakening remains untouched reference material.
 Skills are binary only: no levels, experience, purchasing, rarity, categories,
 cooldowns, passive bonuses, or progression trees.
+Inventory has no shops, buying/selling systems, equipment, crafting, weight,
+capacity, rarity, durability, categories, descriptions, or automatic bonuses.

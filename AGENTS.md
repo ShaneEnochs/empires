@@ -32,6 +32,14 @@ libraries. Use the existing checkout; no frontend framework is needed.
   IDs have separate namespaces; use the existing condition parser/evaluator for
   explicit `has_skill`/`lacks_skill` checks. The Skills control is presentation
   only; the future checkpoint must preserve acquired IDs, not duplicate definitions.
+- Item definitions are immutable `Story.items` ID/name metadata. Quantities belong
+  only to the frozen `GameState.inventory` record, with positive safe integers
+  and no zero properties. Clone the record for each entry candidate; every item
+  operation must succeed before committing any gameplay changes. Use own-property
+  checks for item reads, including `constructor`. Deletion and reacquisition must
+  preserve object insertion order. Reuse shared conditions/navigation enforcement;
+  inventory inspection is presentation only. The future checkpoint preserves the
+  complete inventory alongside variables, skills, and journal.
 - Passage IDs are authored, unique, and stable. Never derive them from order,
   titles, prose, timestamps, or random values. Preserve IDs for navigation and
   future checkpoint compatibility.
@@ -59,18 +67,21 @@ libraries. Use the existing checkout; no frontend framework is needed.
 
 ## Planned features, only when requested
 
-Character attributes/UI; expressions; basic inventory with quantities;
+Character attributes/UI; expressions;
 character creation; one persistent automatic checkpoint; author-controlled
 `*checkpoint` and `*death`; Try Again on death passages; Continue Game; and
 confirmed New Game. None of this roadmap is implemented yet. The first new game
 must establish an initial checkpoint; authored checkpoints replace it. Death
 shows authored prose without saving dead state over the checkpoint. Try Again
-restores all gameplay state, including current variables/journal/skills and future
-inventory and character-creation data. There are no manual save slots
+restores all gameplay state, including current variables/journal/skills/inventory
+and future character-creation data. There are no manual save slots
 or rewind controls.
 Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
 are implemented, as are single typed conditions on choices and narrative
-paragraphs, chapter metadata, the chapter-organized journal, and binary skills.
+paragraphs, chapter metadata, the chapter-organized journal, binary skills, and
+item quantities. Item operands use decimal integer literals, never variables or
+expressions; do not add shops, equipment, crafting, weight, rarity, durability,
+categories, capacity, descriptions, or passive effects.
 Skills have no levels, experience, purchasing, rarity, cooldowns, passive bonuses,
 or progression trees. Keep these small without expanding into a general evaluator
 or event framework.
