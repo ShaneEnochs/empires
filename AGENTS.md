@@ -222,6 +222,12 @@ import/export, procedures, subroutines, loops, and plugin architectures.
 
 ## Commands
 
+Keep the default Vite base at `/` for development and browser tests. Use
+`npm run build:pages` for `/empires/` hosting and its asset-path check. Pages
+deployment must depend on passing checks and run only on pushes to main, never
+pull requests. Keep Pages/OIDC write permissions limited to the deployment job;
+publish `dist/` as an artifact, never commit generated files.
+
 Use Node.js 22.12+ and npm. Run `npm ci`, `npm test`, `npm run check:stories`, `npm run build`, and
 `npm run test:e2e`; start development with `npm run dev`. Install the pinned
 Playwright Chromium with `npx playwright install chromium`, or
