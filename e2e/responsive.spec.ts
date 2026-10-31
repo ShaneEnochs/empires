@@ -2,13 +2,13 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import {
   checkpointRecord, enterWatchtower, expectCharacter, expectPassage, openPanel, panelNames, startGame,
-  returnToStory,
+  returnToStory, choose,
 } from './helpers';
 
 async function expectLayout(page: Page): Promise<void> {
   const layout = await page.evaluate(() => {
     const bounds = (element: Element) => {
-      const rect = element.getBoundingClientRect();
+      const rect = (element.matches('input[type="radio"]') ? element.closest('label')! : element).getBoundingClientRect();
       return { left: rect.left, right: rect.right, width: rect.width, height: rect.height,
         clipped: element.scrollWidth > element.clientWidth + 1 || element.scrollHeight > element.clientHeight + 1 };
     };
@@ -42,7 +42,7 @@ for (const width of [320, 375, 768, 1280]) {
       await startGame(page);
       await expectLayout(page);
       await page.keyboard.press('Tab');
-      const choice = page.getByRole('button', { name: 'Speak to the messenger', exact: true });
+      const choice = page.getByRole('radio', { name: 'Speak to the messenger', exact: true });
       await expect(choice).toBeFocused();
       await expect(choice).toBeInViewport();
       const outline = await choice.evaluate(element => {
@@ -54,13 +54,13 @@ for (const width of [320, 375, 768, 1280]) {
       for (const name of panelNames) {
         await openPanel(page, name);
         await expect(page.getByRole('button', { name, exact: true })).toHaveAttribute('aria-pressed', 'true');
-        await expect(page.getByRole('region')).toHaveCount(1);
+        await expect(page.locator('main > section[aria-labelledby]:visible')).toHaveCount(1);
         await expect(page.getByRole('navigation', { name: 'Passage actions' })).toHaveCount(0);
         await expectLayout(page);
       }
       await expect(page.getByRole('group', { name: 'Game tools' }).getByRole('button')).toHaveCount(1);
       await returnToStory(page);
-      await choice.click();
+      await choose(page, 'Speak to the messenger');
       await expectPassage(page, 'A Quiet Warning');
       await page.getByRole('button', { name: 'Continue', exact: true }).click();
       await expectPassage(page, 'The Empty Chair');
@@ -70,7 +70,7 @@ for (const width of [320, 375, 768, 1280]) {
 
     test('name input and checkpoint recovery remain visible and usable', async ({ page }) => {
       await startGame(page);
-      await page.getByRole('button', { name: 'Choose a preferred name and background', exact: true }).click();
+      await choose(page, 'Choose a preferred name and background');
       const field = page.getByRole('textbox', { name: 'Preferred name', exact: true });
       await expect(field).toBeEditable();
       await expect(field).toBeInViewport();

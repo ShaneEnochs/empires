@@ -1,10 +1,11 @@
 import { expect } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { STORAGE_KEY } from '../src/storage';
 
 export const arrival = 'Alexander reached the city with influence 1.';
-export const panelNames = ['Character', 'Journal', 'Skills', 'Inventory'] as const;
+export const panelNames = ['Character', 'Journal', 'People'] as const;
 type PanelName = typeof panelNames[number];
+type CharacterSection = 'Skills' | 'Inventory';
 export type StoryTitle = 'The City Gate' | 'Provincial Crisis';
 
 export async function expectPassage(page: Page, title: string): Promise<void> {
@@ -27,7 +28,11 @@ export async function selectStory(page: Page, title: StoryTitle = 'The City Gate
   await expect(page.getByRole('navigation', { name: 'Game startup' })).toBeVisible();
 }
 
-export async function openPanel(page: Page, name: PanelName) {
+export async function openPanel(page: Page, name: PanelName | CharacterSection): Promise<Locator> {
+  if (name === 'Skills' || name === 'Inventory') {
+    const character = await openPanel(page, 'Character');
+    return character.getByRole('region', { name, exact: true });
+  }
   const button = page.getByRole('button', { name, exact: true });
   if (await button.getAttribute('aria-pressed') !== 'true') await button.click();
   const section = page.getByRole('region', { name, exact: true });
@@ -47,10 +52,16 @@ export async function expectCharacter(page: Page, values: string[]): Promise<voi
   await returnToStory(page);
 }
 
-export async function expectItems(page: Page, name: Exclude<PanelName, 'Character'>, items: string[]): Promise<void> {
+export async function expectItems(page: Page, name: Exclude<PanelName, 'Character'> | CharacterSection, items: string[]): Promise<void> {
   const panel = await openPanel(page, name);
   await expect(panel.getByRole('listitem')).toHaveText(items);
   await returnToStory(page);
+}
+
+/** Authored choices commit only after selecting a native radio and pressing Next. */
+export async function choose(page: Page, label: string): Promise<void> {
+  await page.getByRole('radio', { name: label, exact: true }).check();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 }
 
 export async function expectGateState(page: Page): Promise<void> {
@@ -61,7 +72,7 @@ export async function expectGateState(page: Page): Promise<void> {
 }
 
 export async function chooseName(page: Page, value: string): Promise<void> {
-  await page.getByRole('button', { name: 'Choose a preferred name and background', exact: true }).click();
+  await choose(page, 'Choose a preferred name and background');
   await expectPassage(page, 'Choose Your Name');
   await page.getByRole('textbox', { name: 'Preferred name', exact: true }).fill(value);
   await page.getByRole('textbox', { name: 'Preferred name', exact: true }).press('Enter');
@@ -69,7 +80,7 @@ export async function chooseName(page: Page, value: string): Promise<void> {
 }
 
 export async function enterWatchtower(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Explore the abandoned watchtower', exact: true }).click();
+  await choose(page, 'Explore the abandoned watchtower');
   await expectPassage(page, 'The Abandoned Watchtower');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expectPassage(page, 'A Fatal Fall');

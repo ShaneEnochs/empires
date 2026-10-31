@@ -263,7 +263,8 @@ Labels remain literal. String, number, and boolean variable behavior is unchange
 This metadata adds no state fields, effects, conditions, formulas, categories,
 or conditional visibility.
 
-`panels.ts` owns the four fixed Character/Journal/Skills/Inventory sections.
+`panels.ts` owns the three fixed Character/Journal/People views. Character contains
+Character Statistics, Skills, and Inventory as separate read-only sections.
 A small private helper shares native button/section setup, heading creation,
 `hidden`, and `aria-pressed`/`aria-controls`/`aria-labelledby` behavior.
 Another helper shares plain text lists; journal chapter grouping/order is retained.
@@ -317,7 +318,7 @@ remains, the field is marked `aria-invalid` and associated with a `role="alert"`
 message, and focus returns to it. On success the destination renders and receives
 heading focus. Authored labels, narrative, and errors use `textContent`.
 Draft text exists only in the field until submission. Rendering or toggling
-Journal/Skills/Inventory never submits it; toggles do not rebuild the input form.
+Character/Journal/People never submits it; view changes do not rebuild the input form.
 
 The native Journal button selects an accessible inline view with `aria-pressed`
 and `aria-controls`. Toggling it changes only presentation; it does not navigate,
@@ -328,16 +329,14 @@ existing group. DOM grouping is derived locally, never a separate state store.
 A selected view reads current state when presented; no entries yields the
 plain empty message. Headings and entries use `textContent` throughout.
 
-The native Skills button selects an exclusive inline section with `aria-pressed`,
-`aria-controls`, and a labeled heading. Each render derives display names from
+The Skills section within Character has a labeled heading. Each render derives display names from
 immutable `Story.skills` using current acquired IDs in acquisition order. There
 is no UI copy of acquired-skill state. Empty lists show “No skills acquired yet.”
-Selecting Skills reads current state, including revocations. Toggling either
-Skills or Journal never changes gameplay state; skill names use `textContent`.
+Selecting Character reads current state, including revocations. Viewing either
+Character or Journal never changes gameplay state; skill names use `textContent`.
 
-Inventory uses the same native single-view pattern alongside Journal and
-Skills, with a labeled heading, `aria-controls`, `aria-pressed`, and keyboard
-access. `Object.entries(game.state.inventory)` determines insertion order and
+Inventory follows Skills within Character, with its own labeled heading.
+`Object.entries(game.state.inventory)` determines insertion order and
 quantities; immutable item definitions supply names. Only positive quantities
 exist in committed state. List entries use `textContent` for `Name × quantity`;
 empty inventory shows “No items in inventory.” Selecting the view reflects changes after
@@ -534,7 +533,8 @@ to one browser profile/origin; no cross-tab synchronization or cloud copy is add
 Stage 9B adds `src/catalog.ts` with two bundled sources: The City Gate
 (`src/example.story`) and Provincial Crisis (`examples/provincial-crisis.story`).
 Entries contain a stable application `id`, title, description, Vite `?raw` source,
-and explicit `StorySaveIdentity`. Catalog/entry/identity data is frozen. Initialization
+explicit `StorySaveIdentity`, and read-only People definitions. Catalog/entry/identity
+and People data is frozen. Initialization
 rejects invalid/duplicate catalog IDs and duplicate save IDs, even if revisions differ.
 Catalog IDs need not equal save IDs: `city-gate` deliberately keeps the established
 `empires-example` save identity. Titles/files/content never determine either ID.
@@ -579,7 +579,7 @@ A death destination follows the same atomic entry path and entry-effect ordering
 as every other passage. Its title and visible prose render before a native
 Try Again button; no restoration happens on entry or rendering. It has no normal
 outgoing action, so existing navigation/input guards remain effective.
-Journal, Skills, Inventory, New Game, and storage warnings remain available.
+Character, Journal, People, New Game, and storage warnings remain available.
 
 `Game.retryAfterDeath()` verifies the current passage marker, then calls the
 existing `restoreCheckpoint()`. No target/snapshot argument, runtime death mode,
@@ -776,20 +776,46 @@ See README for local installation and diagnostics. CI does not deploy, publish,
 or merge anything.
 
 
-## Unified reading views (Stage 10A)
+## Compact reading views and deliberate choices (Stage 10B)
 
-The browser presents a compact application header, selected story identity,
-wrapping Story/Character/Journal/Skills/Inventory navigation, and one active
-content section in the same centered column at every viewport width. Native
+Gameplay starts with four equal-width grid controls in one row: Story, Character,
+Journal, People. Flat tabs have at least 44px targets and an active underline.
+An opaque CSS sticky wrapper holds the tabs and a separate compact chapter bar,
+derived from `game.passage.chapter` after each successful action. The passage
+heading remains in scrollable content; CSS scroll spacing keeps focus visible.
+Branding remains on library/startup screens, which have no chapter bar. One active
+content view uses the same centered column at every viewport width. Native
 buttons expose aria-pressed; hidden subtrees are removed from keyboard and
 assistive navigation. Information headings receive focus on selection; Story
 returns focus to the passage heading. This is presentation only, with no new
 story directives or persisted state.
 
-Main retains the story DOM while information is shown, so unsubmitted text and
-validation errors survive. It refreshes only the selected read-only view through
+Main retains the story DOM while information is shown, so unsubmitted text,
+validation errors, and selected choices survive. It refreshes only the selected read-only view through
 panels.ts. View selection never runs GameSession actions, rerenders the passage,
 or touches storage. New Game and save warnings stay outside the hidden content.
 Successful navigation/input/retry rebuild the passage and select Story. Checkpoint
 and save compatibility remain unchanged. The muted palette uses system fonts;
 there are no animations, overlays, sidebars, or separate mobile navigation.
+
+Authored choices are native radio rows within a labeled fieldset, followed by
+Next. Every render starts with no selection and disabled Next. Selecting a radio
+only records a transient choice in that passage's rendering closure and enables
+Next; it never calls Game/GameSession or touches persistence. Native arrow keys
+and Space select, Tab reaches Next, and Enter/Space commits. Next calls only
+`session.navigate(selected.destinationId)`; Game still enforces eligibility and
+applies effects. Success rebuilds the passage and drops selection, including
+same-ID entries and recovery. Failure retains the DOM, choice, and existing error
+behavior. Reload never persists the uncommitted selection. Continue, text-input
+submission, Try Again, terminal endings, and New Game keep their distinct behaviors.
+
+`people.ts` defines small frozen per-story arrays associated through `catalog.ts`.
+Each PersonReference has `id`, `name`, `description`, and `discoveryEvents`.
+`validatePeople` checks stable/unique IDs, nonempty text, and one or more real
+journal event IDs in the selected parsed Story before session construction.
+The library remains inert: importing metadata does not parse stories or read saves.
+`encounteredPeople` filters these definitions from the current journal on each
+People render. Any listed event establishes discovery; missing events reveal
+nothing. Recovery naturally removes references whose events were rolled back.
+Definitions describe only authored encounters; prose alone adds no tracking.
+They are never fields in Story, GameState, snapshots, or save envelopes.

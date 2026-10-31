@@ -92,7 +92,7 @@ The Journal button groups events in first-recorded chapter order; the messenger
 route has an extra event. Stored text keeps its original resolved values.
 Both routes acquire Composure at the gate and lose it at the council. Only the
 messenger route acquires Diplomacy, changing the council's visible prose. The
-Skills button lists current acquisitions by display name, in acquisition order.
+Skills section in Character lists current acquisitions by display name, in acquisition order.
 The shipped `src/example.story` also offers a third gate choice for a preferred
 name and noble/soldier background. It keeps the original start ID and both routes
 above; see the text-input section below for a complete independent example.
@@ -357,7 +357,7 @@ You remain safely at camp.
 
 The player sees the fatal narrative and a native Try Again button. The game
 waits for that action; it does not recover automatically or ask for confirmation.
-Journal, Skills, Inventory, New Game, and save warnings remain usable.
+Character, Journal, People, New Game, and save warnings remain usable.
 Ordinary entry effects are allowed before death prose and execute atomically.
 Try Again discards all changes after the checkpoint, including death effects,
 and restores variables, journal text/chapters/order, acquired skills/order, and
@@ -517,8 +517,8 @@ revocation, journal append, variable change, or new passage ID commits. Earlier
 states and other games stay unchanged. Initial entry follows the same rule.
 Reads, condition checks, and rendering never execute skill effects.
 
-The native Skills button selects an accessible section in place of Story or
-Journal, with `aria-pressed` reflecting its visibility. Names come from static
+The Skills section is read-only within Character, below Character Statistics.
+The Character tab exposes `aria-pressed`. Skill names come from static
 definitions and IDs from current state, in acquisition order; no UI copy of
 acquired skills exists. Empty lists show “No skills acquired yet.” Selected views
 reflect navigation changes, including removal. Toggling either control changes no
@@ -607,8 +607,7 @@ the same eligibility rules, including shared destinations. No compounds, logical
 operators, parentheses, variable operands, expressions, or conditional effects
 are added. Existing variable/skill conditions and Continue remain unchanged.
 
-The Inventory button selects a native labeled view alongside Journal and Skills,
-with `aria-controls`, `aria-pressed`, and keyboard access. It derives names from
+The Inventory section is read-only within Character, below Skills. It derives names from
 `Story.items` and quantities/order from `GameState.inventory`, listing only owned
 items as `Name × quantity`. Empty inventory shows “No items in inventory.” Open
 sections update after navigation, including items removed at zero. Toggling any
@@ -742,7 +741,7 @@ The browser uses a native labeled form. Enter or its Continue button submits
 without reloading, and success focuses the new heading. Invalid input or failed
 destination entry shows an accessible text error, keeps the typed value and form,
 and returns focus to the field. Unsaved typing belongs only to that field until
-submission. Opening Journal, Skills, or Inventory does not change or submit it.
+submission. Opening Character, Journal, or People does not change or submit it.
 Rendering and state reads never resubmit text. All display content uses
 `textContent`; HTML-like input remains inert.
 
@@ -806,7 +805,7 @@ eligible ones to the renderer, so unavailable choices are hidden entirely.
 Eligibility uses committed values after entry effects, never initial declaration
 values or DOM state. Evaluating choices or rerendering never applies effects.
 A later legitimate re-entry applies its effects once and recomputes eligibility.
-The runtime also enforces conditions when navigating; bypassing a hidden button
+The runtime also enforces conditions when navigating; bypassing a hidden option
 cannot change state. If choices share a destination, any eligible one permits it.
 
 Unsupported: variable-to-variable comparisons, arithmetic, parentheses, logical
@@ -1089,20 +1088,43 @@ import/export, procedures, subroutines, loops, and plugin systems remain exclude
 unless a future task explicitly changes the requirements.
 
 
-## Unified reading views (Stage 10A)
+## Compact reading views and deliberate choices (Stage 10B)
 
-The browser presents a compact application header, selected story identity,
-wrapping Story/Character/Journal/Skills/Inventory navigation, and one active
-content section in the same centered column at every viewport width. Native
+The browser presents four compact equal-width tabs in one row: Story, Character,
+Journal, People. An opaque CSS sticky wrapper holds the tabs and a compact bar
+showing the current passage's authored chapter, in every view. Passage titles
+remain in scrollable content; focus clears the sticky header. Library/startup
+screens keep the Empires identity and show no invented chapter. One active content
+view uses the same centered column at every viewport width. Native
 buttons expose aria-pressed; hidden subtrees are removed from keyboard and
 assistive navigation. Information headings receive focus on selection; Story
 returns focus to the passage heading. This is presentation only, with no new
 story directives or persisted state.
 
-Main retains the story DOM while information is shown, so unsubmitted text and
-validation errors survive. It refreshes only the selected read-only view through
+Main retains the story DOM while information is shown, so unsubmitted text,
+validation errors, and selected choices survive. It refreshes only the selected read-only view through
 panels.ts. View selection never runs GameSession actions, rerenders the passage,
 or touches storage. New Game and save warnings stay outside the hidden content.
 Successful navigation/input/retry rebuild the passage and select Story. Checkpoint
 and save compatibility remain unchanged. The muted palette uses system fonts;
 there are no animations, overlays, sidebars, or separate mobile navigation.
+
+Character contains Character Statistics, Skills, and Inventory, preserving author
+order for stats and acquisition order for skills/items. Journal stays independent.
+People uses immutable definitions in `src/people.ts` associated through each
+`src/catalog.ts` entry. Each has a stable ID, name/role, short description supported
+by the story, and `discoveryEvents` listing one or more existing journal event IDs.
+Selection validates event IDs against the applicable parsed story. Only a recorded
+event reveals its reference; checkpoint recovery derives visibility from the restored
+journal. People mentioned without a recorded encounter are omitted. This introduces
+no story directive or gameplay/save fields, and needs no revision or save migration.
+
+Authored `*choice` options use a native radio group followed by Next. No choice is
+preselected; Next stays disabled until selection. Tab enters the group, Space
+selects, and arrow keys change selection. Tab to Next and Enter/Space advances to
+the existing authored destination. Selecting alone never executes effects,
+captures checkpoints, navigates, or reads/writes saves. Information views retain
+the choice; reload discards it. Successful navigation resets selection; failure
+retains it with the existing accessible error. Eligibility and effects still belong
+to Game. `*continue`, text-input submission, and Try Again remain single actions;
+terminal passages have no Next. Confirmed New Game behavior is unchanged.

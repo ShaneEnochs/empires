@@ -30,7 +30,7 @@ libraries. Use the existing checkout; no frontend framework is needed.
   acquisition-ordered, frozen JSON array. Clone it for entry candidates so mixed
   skill, journal, and variable effects commit atomically. Skill IDs and variable
   IDs have separate namespaces; use the existing condition parser/evaluator for
-  explicit `has_skill`/`lacks_skill` checks. The Skills control is presentation
+  explicit `has_skill`/`lacks_skill` checks. The Skills section in Character is presentation
   only; checkpoints preserve acquired IDs, not duplicate definitions.
 - Item definitions are immutable `Story.items` ID/name metadata. Quantities belong
   only to the frozen `GameState.inventory` record, with positive safe integers
@@ -56,20 +56,37 @@ libraries. Use the existing checkout; no frontend framework is needed.
   variable may be displayed once. Keep author order and freeze `Story.stats`
   and its entries. Never add stat definitions/values to gameplay state or saves.
   Presentation-only stat edits do not require a story-revision change.
-- Keep `panels.ts` limited to the four fixed read-only sections and their small
+- Keep `panels.ts` limited to Character, Journal, and People and their small
   shared native rendering helpers. Read current GameState for every refresh;
   never cache variable values. Character uses text-only semantic name/value
   pairs, Yes/No booleans, and ordinary number/string text. Selecting a view must
   not execute effects, navigate, submit drafts, or access persistence. Preserve
   existing action/focus/error handling in main; do not build a component system.
-- Keep one inline view active: Story, Character, Journal, Skills, or Inventory.
-  Main owns only transient view selection; panels.ts renders the four fixed views.
-  Preserve the story DOM subtree while hidden, including input drafts and errors.
+- Keep one inline view active: Story, Character, Journal, or People. Character
+  contains Character Statistics, Skills, and Inventory with unchanged formatting
+  and author/acquisition order. Main owns only transient view/choice selection;
+  panels.ts renders the three information views. Preserve the story DOM subtree
+  while hidden, including uncommitted choices, input drafts, and errors.
   Use native pressed buttons, hide inactive subtrees from all interaction, and
   focus the presented heading. View switching must never call gameplay/session
   actions, access persistence, or clear notices. Successful gameplay returns to
-  Story. Use the same wrapping navigation on every width, a muted single palette,
-  system fonts, and no transitions or animations.
+  Story. Use four equal-width grid tabs in one row with at least 44px targets;
+  keep tabs and the current passage's chapter in one opaque CSS sticky wrapper.
+  Keep passage titles in the reading content and focus clear of the wrapper.
+  Preserve the muted palette, system fonts, and absence of motion or nested scrolling.
+- Authored choices use native radios, initially unselected, followed by a disabled
+  Next until selection. Selection only changes presentation; Next alone calls
+  GameSession.navigate with the authored destination. Use Game.availableChoices;
+  keep eligibility/effects in Game. Failed navigation retains selection/error;
+  successful navigation resets selection. View switching retains it; reload may
+  discard it. Continue, text submission, Try Again, and New Game keep their existing
+  action/confirmation behavior. Terminal passages have no Next.
+- People definitions in `people.ts` are immutable per-story presentation metadata
+  associated through `catalog.ts`: stable ID, name/role, short supported description,
+  and discovery event IDs. Validate IDs against the selected parsed story before
+  session construction. Derive visibility only from current GameState.journal,
+  including after recovery; omit people without a recorded encounter. Do not add
+  tracking, story directives, state fields, save data, or engine behavior.
 - Keep responsive reading changes in CSS and small presentation hooks. Preserve
   the separate passage-action/tools groups, exclusive inline view visibility, native
   focus and error handling, at least 44px touch targets, and browser zoom. Wrap
@@ -202,7 +219,9 @@ explicit story save identities and shared-memory storage tests are implemented.
 Stage 9B's static browser library makes both stories playable through the same
 renderer/startup flow and isolated save identities. Stages 9C–9D add standalone
 authoring preflight, bounded first-return/immediate-exit probes, explicit coverage
-limits, and a CLI.
+limits, and a CLI. Stages 10A–10B provide exclusive reading views, compact sticky
+tabs/chapter bar, consolidated Character, journal-linked People, and select-then-Next
+choices without changing stories, game state, or save compatibility.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.

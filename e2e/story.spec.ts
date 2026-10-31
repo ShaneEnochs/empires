@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
-  arrival, checkpointRecord, expectCharacter, expectGateState, expectItems, expectPassage, openPanel, panelNames, startGame,
+  choose, arrival, checkpointRecord, expectCharacter, expectGateState, expectItems, expectPassage, openPanel, panelNames, startGame,
   returnToStory,
 } from './helpers';
 
@@ -11,7 +11,7 @@ for (const messenger of [false, true]) {
     const saved = await checkpointRecord(page);
     const journal = [arrival];
     if (messenger) {
-      await page.getByRole('button', { name: 'Speak to the messenger', exact: true }).click();
+      await choose(page, 'Speak to the messenger');
       await expectPassage(page, 'A Quiet Warning');
       await expect(page.getByText(/The messenger lowers their voice/)).toBeVisible();
       await expectCharacter(page, ['Alexander', '3', '4', 'Yes']);
@@ -21,7 +21,7 @@ for (const messenger of [false, true]) {
       await expectItems(page, 'Journal', journal);
       await page.getByRole('button', { name: 'Continue', exact: true }).click();
     } else {
-      await page.getByRole('button', { name: 'Go straight to the council', exact: true }).click();
+      await choose(page, 'Go straight to the council');
     }
 
     await expectPassage(page, 'The Empty Chair');
@@ -53,7 +53,7 @@ for (const messenger of [false, true]) {
 
 test('preferred name, panel inspection, Enter submission, and soldier background use ordinary gameplay', async ({ page }) => {
   await startGame(page);
-  await page.getByRole('button', { name: 'Choose a preferred name and background', exact: true }).click();
+  await choose(page, 'Choose a preferred name and background');
   await expectPassage(page, 'Choose Your Name');
   const field = page.getByRole('textbox', { name: 'Preferred name', exact: true });
   await expect(field).toHaveValue('Alexander');
@@ -74,7 +74,7 @@ test('preferred name, panel inspection, Enter submission, and soldier background
   await expectCharacter(page, [name, '1', '5', 'No']);
   await expectItems(page, 'Journal', [arrival, 'You introduced yourself as ' + name + '.']);
   await expect(page.locator('main b, main img, main script')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Trained with soldiers', exact: true }).click();
+  await choose(page, 'Trained with soldiers');
   await expectPassage(page, "A Soldier's Training");
   await expectCharacter(page, [name, '1', '7', 'Yes']);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
@@ -84,7 +84,7 @@ test('preferred name, panel inspection, Enter submission, and soldier background
 
 test('invalid text retains the form value and focus without navigation or saving', async ({ page }) => {
   await startGame(page);
-  await page.getByRole('button', { name: 'Choose a preferred name and background', exact: true }).click();
+  await choose(page, 'Choose a preferred name and background');
   const field = page.getByRole('textbox', { name: 'Preferred name', exact: true });
   const saved = await checkpointRecord(page);
   for (const value of ['', '   ', 'x'.repeat(81)]) {

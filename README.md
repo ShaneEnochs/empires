@@ -60,10 +60,10 @@ records an extra event; journal text keeps the values present when recorded.
 The Character button shows the author's selected variables in display order:
 Name, Influence, Honor, and Loyal in the example. It reads current values without
 changing gameplay; booleans display as Yes or No.
-The Skills button lists acquired skills in acquisition order. Both routes start
+The Skills section within Character lists acquired skills in acquisition order. Both routes start
 with Composure, which is revoked at the council. Speaking to the messenger grants
 Diplomacy and changes the council's visible prose.
-The Inventory button lists item names and quantities in acquisition order. Both
+The Inventory section within Character lists item names and quantities in acquisition order. Both
 routes start with ten coins and a gate token; the messenger adds two coins. The
 council collects five coins and the token, leaving seven or five coins.
 An optional third gate action lets the player choose a preferred name and a
@@ -86,7 +86,7 @@ Ordinary progress after the last saved checkpoint is not restored.
 Each story has its own Continue Game, confirmed New Game, automatic checkpoint,
 and Try Again recovery. Opening the library does not read or write saves.
 Choosing a story checks only its record; a corrupt save cannot block the other.
-Character, Journal, Skills, and Inventory use the selected story's definitions.
+Character, Journal, and People use the selected story's definitions.
 There are no shared characters, statistics, inventory, or transfers between stories.
 
 ```sh
@@ -206,20 +206,51 @@ bound. No new defect was found. Neither story source nor revision was changed.
 ## Reading interface
 
 Empires uses the same centered, 46rem maximum reading surface on phone and desktop.
-A compact application header and selected story title precede wrapping navigation:
-**Story, Character, Journal, Skills, Inventory**. Chapter labels, serif passage
-headings/prose, and a separated choice area make reading the primary activity.
+A single row of four equal-width, flat tabs sits at the top of gameplay:
+**Story, Character, Journal, People**. The active tab has an underline. An opaque
+CSS sticky wrapper keeps these 44px controls and the compact chapter bar visible
+while scrolling in every view. The chapter comes from the current passage and
+updates after successful navigation; the passage title stays in the reading content.
+Branding remains on library/startup screens, which show no invented chapter.
+Serif prose and restrained selectable choice rows keep reading prominent.
 System sans-serif controls and statistics use one muted neutral palette. Native
-buttons have 44px minimum targets and visible focus. There are no themes,
+controls have visible keyboard focus; focus targets clear the sticky header.
+There are no themes,
 animations, transitions, drawers, sidebars, or nested scrolling containers.
 
 One view is active at a time. Information replaces the story inline; select Story
 or Return to Story to resume the exact same passage. The story DOM remains hidden
-and intact, retaining unfinished input, validation messages, and form state.
+and intact, retaining unfinished input, validation messages, and selected choices.
 Viewing information never enters passages or touches saves. Heading focus follows
 view selection; successful gameplay navigation and Try Again return to Story and
 focus the passage heading. Validation focuses the retained input. Critical save
 warnings and confirmed New Game remain available across views.
+
+Character contains **Character Statistics**, **Skills**, and **Inventory**.
+Statistics preserve author order and formatting; acquired skills and item names/
+quantities preserve acquisition order and existing empty messages. Journal remains
+its own chapter-grouped view. People lists only recorded encounters, using frozen
+per-story definitions in `src/people.ts` associated through `src/catalog.ts`.
+Each reference has a stable ID, name/role, description supported by the story, and
+one or more discovery journal event IDs. Selection validates those event IDs against
+the parsed story before reading saves. References with no recorded event stay
+hidden, and recovery derives visibility again from the restored journal.
+People mentioned only in prose, such as the ferryman, are omitted without adding
+story tracking. An empty reference displays “No people recorded yet.”
+
+Authored choices require **select an option, then press Next**. No option starts
+selected, and Next is disabled until one is selected. Selecting a different option
+replaces the previous selection; selecting alone never navigates, executes effects,
+captures a checkpoint, or touches storage. Only Next calls the existing session
+navigation method. A failed action retains the selection and accessible error;
+successful navigation begins a fresh unselected passage. Selection survives visits
+to information views but is discarded on reload and never saved.
+
+Use Tab to enter the native radio group, Space to select, arrow keys to change
+selection, then Tab to Next and Enter/Space to advance. The whole row is selectable;
+the checked radio and restrained highlight expose selection without color alone.
+Continue passages, text-input forms (including Enter submission), and Try Again
+remain single actions. Terminal endings have no Next. New Game keeps its confirmation.
 
 Story content, saves, identities, revisions, and recovery semantics are unchanged.
 
@@ -338,7 +369,7 @@ New games start empty before initial effects. Entry clones skills along with
 variables and journal; any failure commits none of their changes. The
 single checkpoint preserves these and inventory. The Skills section derives names from
 story definitions and IDs from current state, updates after navigation, and
-shows “No skills acquired yet.” when empty. Its button changes no gameplay state.
+shows “No skills acquired yet.” when empty. Reading Character changes no gameplay state.
 
 `*item id "Display Name"` defines immutable `Story.items` metadata, using the same
 ID and nonempty JSON-string name rules as skills. Items, skills, and variables
@@ -357,7 +388,7 @@ even if a later operation would repair it. Candidate inventory is copied before
 effects; earlier states remain unchanged. The checkpoint includes it.
 The native Inventory section resolves names from story definitions and lists
 `Name × quantity` in insertion order. Empty inventory shows “No items in inventory.”
-Opening it changes no gameplay state; all three sections update after navigation
+Reading Character changes no gameplay state; its sections update after navigation
 and render authored names as safe text.
 
 Choices may have one optional `[if variable operator literal]` suffix. Operators
@@ -411,7 +442,8 @@ Declarations may interleave with variables, skills, and items, and their order
 determines display order. Strings, finite numbers, and booleans are supported.
 Labels remain literal, without interpolation.
 
-Character is a native inline information view alongside Journal, Skills, and Inventory.
+Character is a native inline information view alongside Journal and People.
+Its Character Statistics section precedes Skills and Inventory.
 It lists labels and current committed values as semantic name/value pairs.
 Booleans display as Yes/No; numbers and strings use their ordinary text without
 changing stored values. All content uses `textContent`. An unconfigured story
@@ -432,7 +464,7 @@ passage after its narrative. It requires a declared string variable, a nonempty
 JSON-string label, and an existing explicit destination. The label stays literal.
 An input passage has one field and cannot also offer choices or ordinary Continue.
 The browser displays a labeled native text field and Continue submit button;
-Enter submits without reloading. Journal, Skills, and Inventory remain available.
+Enter submits without reloading. Character, Journal, and People remain available.
 
 `Game.submitText(value)` validates the player action; `navigate()` cannot bypass
 the form. Input must be a string, with no line breaks or C0/C1 control characters
@@ -594,7 +626,7 @@ The starting passage cannot be death, since it creates the initial checkpoint.
 
 Death is immutable passage metadata, not an `isDead` gameplay variable. Ordinary
 entry effects still run atomically before its prose displays. The player can read
-that prose and inspect Journal, Skills, and Inventory before choosing Try Again;
+that prose and inspect Character, Journal, and People before choosing Try Again;
 New Game and any save warning remain available.
 
 `Game.retryAfterDeath()` rejects outside death and delegates to the existing

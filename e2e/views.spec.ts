@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { startGame, openPanel, returnToStory, panelNames, expectPassage } from './helpers';
+import { choose, startGame, openPanel, returnToStory, panelNames, expectPassage } from './helpers';
 
 for (const width of [320, 375, 768, 1280]) {
   test('exclusive views preserve drafts, errors, state and storage at ' + width + 'px', async ({ page }) => {
@@ -7,7 +7,7 @@ for (const width of [320, 375, 768, 1280]) {
     await startGame(page);
     await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', ...panelNames]);
     await expect(page.getByRole('button', { name: 'Story', exact: true })).toHaveAttribute('aria-pressed', 'true');
-    await page.getByRole('button', { name: 'Choose a preferred name and background', exact: true }).click();
+    await choose(page, 'Choose a preferred name and background');
     const field = page.locator('#player-text');
     await field.fill('   ');
     await field.press('Enter');
@@ -28,7 +28,7 @@ for (const width of [320, 375, 768, 1280]) {
     for (const name of panelNames) {
       const section = await openPanel(page, name);
       await expect(section.getByRole('heading', { name, exact: true })).toBeFocused();
-      await expect(page.getByRole('region')).toHaveCount(1);
+      await expect(page.locator('main > section[aria-labelledby]:visible')).toHaveCount(1);
       await expect(page.getByRole('textbox')).toHaveCount(0);
       await expect(page.getByRole('navigation', { name: 'Passage actions' })).toHaveCount(0);
       await expect(field).toHaveValue('Unfinished Éléonore');
