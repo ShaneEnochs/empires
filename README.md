@@ -12,7 +12,10 @@ npm ci
 npm run dev
 ```
 
-Open the address printed by Vite. The example offers **gate → messenger → council**
+Open the address printed by Vite. Startup offers **New Game**, plus **Continue Game**
+when a usable checkpoint exists. New Game asks before replacing existing saved
+progress. Continue resumes the **last checkpoint**, not the last visited passage.
+The example offers **gate → messenger → council**
 or **gate → council**, with different influence, honor, and loyalty values.
 The messenger's Continue explicitly targets `council`; the council is terminal.
 The Journal button shows recorded events grouped by chapter. The messenger route
@@ -27,7 +30,8 @@ An optional third gate action lets the player choose a preferred name and a
 noble or soldier background. The original two routes keep their outcomes.
 The name is an ordinary string variable; backgrounds use choices and entry effects.
 Variables, journal entries, acquired skills, and inventory persist across passages.
-Refreshing starts a new game from the story's initial values; there is no saved progress.
+Successful checkpoints are saved automatically in this browser. Refreshing shows
+startup again; ordinary progress after the last saved checkpoint is not restored.
 
 ```sh
 npm test          # parsing, validation, state effects, interpolation, navigation
@@ -225,7 +229,7 @@ skills, inventory, and journal effects. See the complete example in the
 [authoring guide](docs/SCRIPTING.md#text-input-and-character-creation).
 The checkpoint at an input destination includes accepted text before entry
 effects, so restoration there does not prompt again. Restoring a genuine input
-passage makes its form available on rendering. Persistence remains unimplemented.
+passage makes its form available on rendering. Draft text is never saved.
 
 ## In-memory checkpoint
 
@@ -260,19 +264,74 @@ known skills, and positive safe quantities of known items. Data is copied and
 deeply frozen without storing story definitions, derived views, or form drafts.
 See [engine details](docs/ENGINE.md#in-memory-checkpoint-capture-and-restoration).
 
-This is engine-only recovery in memory: there is no player-facing checkpoint
-return control, storage, or saved progress across refreshes.
+The engine remains independent of storage. There is no voluntary Return to
+Checkpoint control; browser startup uses the checkpoint constructor for Continue.
+
+## Persistent checkpoint and startup
+
+`src/storage.ts` uses exactly one namespaced localStorage key,
+`empires:checkpoint:empires-example`. The explicit constants are
+`SAVE_FORMAT_VERSION = 1`, `STORY_ID = 'empires-example'`, and `STORY_REVISION = 1`.
+Identity/revision stay outside GameState and `.story` syntax. The initial save
+envelope for the shipped example is:
+
+```json
+{
+  "formatVersion": 1,
+  "storyId": "empires-example",
+  "storyRevision": 1,
+  "checkpoint": {
+    "state": {
+      "passageId": "gate",
+      "variables": { "influence": 0, "honor": 5, "loyal": false, "character_name": "Unknown" },
+      "journal": [],
+      "skills": [],
+      "inventory": {}
+    }
+  }
+}
+```
+
+Maintain stable IDs. **Bump `STORY_REVISION` when changing a story incompatibly**,
+including variable declarations/types, passage/item/skill/journal identities or
+journal chapters, and entry effects that change saved-state behavior. Bump
+`SAVE_FORMAT_VERSION` for incompatible envelope changes. There are no migrations
+or version histories. Matching versions still require complete snapshot validation.
+
+Startup parses the story, reads/validates the envelope and snapshot, and verifies
+saved entry through `new Game(story, { checkpoint })`. Continue activates that
+prepared Game without another entry or write. No fresh game starts automatically.
+Unusable saves remain untouched, Continue is omitted, and a readable reason is
+shown. Technical details are available in the browser console.
+
+New Game confirms before replacing any existing record, including a corrupt one.
+It constructs a fresh Game, writes its initial pre-entry checkpoint once using
+one `setItem`, then activates it. Cancel, construction failure, or replacement
+failure preserves the old game/save. New Game is also available beside the panels.
+
+After explicit navigation or text submission, the application compares checkpoint
+references and saves only a successful replacement. Re-entry to the same marked
+passage saves its new snapshot. Ordinary passages, renders, conditions, panel
+controls, input editing, rejected actions, and Continue Game never write. Saved
+entry effects replay exactly once from pre-entry values, so reopening cannot
+accumulate rewards. The current post-entry state is never a second save source.
+
+If an automatic write fails, gameplay and the new in-memory checkpoint remain
+committed, the previous persistent record remains, and a warning explains possible
+loss on closing the page. A later successful checkpoint write clears the warning;
+there are no timer, background, or unload retries. Blocked storage or a failed
+New Game save offers **Play without saving**, requiring explicit confirmation and
+keeping existing saved bytes untouched. That mode clearly warns that progress
+will be lost on closing. Saves are local to this browser profile and origin.
 
 ## Roadmap
 
-1. **Stage 7A (implemented):** in-memory capture, validation, and restoration.
-2. **Stage 7B (planned):** persistent saving, Continue Game, and confirmed New Game.
-3. **Stage 7C (planned):** `*death` and Try Again restoring the latest checkpoint.
-4. **Stage 8 (planned):** interface improvements and end-to-end testing.
+Stages 7A and 7B are implemented. Remaining:
 
-Persistent format/version policy, browser storage, title screens, death, and
-Try Again remain unimplemented. Continue Game will resume the single checkpoint;
-New Game will confirm before replacing progress. Death must never overwrite it
+1. **Stage 7C:** `*death` and Try Again restoring the latest checkpoint.
+2. **Stage 8:** interface improvements and comprehensive end-to-end testing.
+
+Death and Try Again remain unimplemented. Death must never overwrite the checkpoint
 with dead state. Traditional Undo, choice-history stacks, manual rewind, Return
 to Checkpoint controls, manual saves, and save slots remain excluded. Current
 Continue only follows an in-story destination. Character attributes/UI and
@@ -280,8 +339,8 @@ arithmetic expressions still require separate requests.
 
 Excluded unless requirements explicitly change: random mechanics, glossary,
 shops, skill purchasing, manual saves, save slots, import/export, procedures,
-subroutines, loops, and plugin systems. No UI redesign, storage, database, or
-backend was added. System Awakening remains untouched reference material.
+subroutines, loops, and plugin systems. No UI redesign, third-party runtime,
+database, or backend was added. System Awakening remains untouched reference material.
 Skills are binary only: no levels, experience, purchasing, rarity, categories,
 cooldowns, passive bonuses, or progression trees.
 Inventory has no shops, buying/selling systems, equipment, crafting, weight,

@@ -24,7 +24,7 @@ libraries. Use the existing checkout; no frontend framework is needed.
   entries; failed entry must commit neither variables nor journal changes.
 - The Journal control is presentation only: viewing/grouping entries must never
   trigger entry effects, navigation, or gameplay changes. Keep recorded chapter
-  and text values intact in checkpoints and future persistent storage.
+  and text values intact in checkpoints and persistent storage.
 - Skill definitions are immutable `Story.skills` metadata containing only IDs and
   display names. Acquired IDs belong only to `GameState.skills`: a unique,
   acquisition-ordered, frozen JSON array. Clone it for entry candidates so mixed
@@ -67,9 +67,28 @@ libraries. Use the existing checkout; no frontend framework is needed.
   the saved pre-entry state exactly once and preserves the checkpoint itself.
   Fresh `new Game(story, { checkpoint: data })` enters that destination directly;
   never initialize the starting passage before restoring. These are engine APIs,
-  not player controls. Future persistence must save this pre-entry snapshot.
+  not player rewind controls. Persistence must save this pre-entry snapshot.
   Do not add traditional Undo, a history stack, manual rewind, or a player-facing
   Return to Checkpoint command.
+- Keep `Game` and snapshot semantics independent of browser storage. `storage.ts`
+  reads/writes one localStorage key using the explicit format/story/revision
+  constants and full snapshot validation. Never persist current post-entry state,
+  automatically repair a save, migrate it, or delete it before replacement.
+- `GameSession` prepares a restored Game once before offering Continue, then
+  activates it without re-entering or writing. Empty startup must not construct a
+  new Game. Explicit actions compare checkpoint references and write once only
+  after replacement; ordinary transitions, failed actions, renders, panel controls,
+  and form edits never save. No timers or unload saves.
+- New Game rechecks record presence, confirms replacement even for unusable saves,
+  constructs successfully before writing, and activates only after one successful
+  replacement write. Cancellation and failed construction/writes preserve the old
+  game/save. Automatic write failure instead keeps committed gameplay/checkpoint
+  and displays a progress-loss warning. Inaccessible storage permits only explicit
+  consent to play without saving; never imply reload survival in that mode.
+- Keep stable passage/item/skill/journal/variable IDs. Bump `STORY_REVISION` for
+  incompatible story changes, including entry-effect changes; bump
+  `SAVE_FORMAT_VERSION` for incompatible envelope changes. Identity/revision are
+  application constants, never mutable gameplay fields or scripting directives.
 - Implement new features only when explicitly requested. Do not replace working
   features with elaborate abstractions without a demonstrated benefit. Keep one
   authoring format; avoid parser frameworks and hypothetical extension layers.
@@ -90,12 +109,12 @@ libraries. Use the existing checkout; no frontend framework is needed.
 
 ## Planned features, only when requested
 
-Stage 7A is implemented: one in-memory checkpoint, automatic initial capture,
-author-controlled `*checkpoint`, validation, and engine restoration. Stage 7B adds
-persistent saving, Continue Game, and confirmed New Game; Stage 7C adds `*death`
-and Try Again; Stage 8 adds interface improvements and end-to-end testing. Do not
-start later stages without a request. Storage keys, versioning, changing-release
-compatibility, title screens, and browser storage remain unimplemented.
+Stages 7A and 7B are implemented: one in-memory checkpoint, automatic initial
+capture, author-controlled `*checkpoint`, validated restoration, one versioned
+localStorage record, startup, Continue Game, and confirmed New Game. The remaining
+roadmap is Stage 7C (`*death` and Try Again), then Stage 8 (interface improvements
+and comprehensive end-to-end testing). Do not start later stages without a request.
+There are no migrations, manual saves, multiple slots, or cloud storage.
 Death must eventually show authored prose without saving dead state over the
 checkpoint. Try Again will restore the existing complete pre-entry snapshot.
 Submitted names and character attributes are ordinary variables; a checkpoint at

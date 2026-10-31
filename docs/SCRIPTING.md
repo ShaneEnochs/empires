@@ -84,8 +84,10 @@ The first passage starts the story. The player can go directly to `council`
 (influence `0.5`, honor `5`, loyal `false`) or via `messenger` and Continue
 (influence `2.5`, honor `4`, loyal `true`). The council is terminal: there are no
 further actions or automatic fall-through. Refreshing starts a new game; variables,
-recorded journal events, acquired skills, and inventory persist between passages, not across
-page reloads.
+recorded journal events, acquired skills, and inventory persist between passages.
+Browser startup offers New Game and, when valid saved progress exists, Continue
+Game. Continue resumes the last saved checkpoint rather than the latest ordinary
+passage; progress since that checkpoint is not recovered after reload.
 The Journal button groups events in first-recorded chapter order; the messenger
 route has an extra event. Stored text keeps its original resolved values.
 Both routes acquire Composure at the gate and lose it at the council. Only the
@@ -236,12 +238,60 @@ Validation rejects malformed structure, missing/extra fields, wrong variable
 names/types or non-finite numbers, unknown/duplicate journal or skill IDs, wrong
 journal origin chapters, unknown items, invalid quantities, and inherited or
 accessor data. It does not invent defaults or repair quantities. It checks against
-current story definitions; persistent versioning/compatibility belongs to Stage 7B.
+current story definitions; the browser save envelope adds an explicit revision gate.
 
-Stage 7A is in memory only. There is no restore command in the story language,
-player-facing checkpoint return, persistence, or saved progress across refreshes.
-The engine APIs are foundations for future Continue Game and Try Again, not
-current UI controls.
+The engine remains in memory and has no restore command in the story language or
+voluntary player checkpoint-return control. Stage 7B persists its checkpoint and
+provides startup Continue Game; future Try Again will use the same restoration.
+
+## Browser saving and startup
+
+The application persists exactly one checkpoint per story with native localStorage,
+separate from `Game`. New Game constructs a fresh game, saves its automatic initial
+pre-entry checkpoint once, then displays the start passage. Every successful
+authored checkpoint entry (including text submission and same-passage re-entry)
+saves the new pre-entry snapshot once. Ordinary navigation, rejected actions,
+condition evaluation, rendering, panel controls, and unsubmitted text never save.
+There is no manual save command or save slot.
+
+Startup first parses/validates the story, reads the save, validates its envelope
+and full snapshot, and verifies that its destination can actually be entered.
+Continue Game is offered only when all checks pass. It activates that prepared
+restored game without another entry or storage write, skips earlier passages and
+character creation, and applies checkpoint effects once. Reopening repeatedly
+does not accumulate rewards or duplicate journal events. A checkpoint at an input
+passage still offers its form; a saved accepted name at its destination is retained
+without prompting. The current post-entry passage state is not separately saved.
+
+The fixed application constants live in `src/storage.ts`, not `.story` declarations
+or GameState: `SAVE_FORMAT_VERSION = 1`, `STORY_ID = 'empires-example'`,
+`STORY_REVISION = 1`, and key `empires:checkpoint:empires-example`.
+The JSON envelope has exactly `formatVersion`, `storyId`, `storyRevision`, and
+`checkpoint` (the complete existing `{ state: GameState }` representation).
+See README for an actual initial-save example.
+
+**Keep passage, item, skill, journal, and variable IDs stable.** Maintainers must
+bump `STORY_REVISION` for incompatible identity/declaration/type, journal-chapter,
+or entry-effect changes. Matching versions do not bypass snapshot validation.
+Change `SAVE_FORMAT_VERSION` intentionally for incompatible envelope changes.
+There are no automatic migrations or version histories; saves from another story,
+revision, or format are rejected without deleting or overwriting them.
+
+Startup with unusable saved data explains the problem and offers New Game without
+a working Continue option. New Game asks before replacing any existing record,
+including unusable saves. Cancel leaves it untouched. Construction must succeed
+before one replacement write; if construction or writing fails, old progress and
+the previous active game remain. The record is never removed first.
+
+If an automatic checkpoint write fails after entry, committed gameplay and its
+in-memory checkpoint remain. A warning explains that closing the page may lose
+progress since the last stored checkpoint, whose bytes remain intact. A later
+successful checkpoint write clears that warning; no timer/unload retries occur.
+When storage is inaccessible or a new game cannot be saved, Play without saving
+requires explicit consent and leaves old saved progress untouched. That mode
+clearly states that progress will be lost on closing. Technical diagnostics are
+logged in the browser console. Storage is scoped to the browser profile/origin,
+with no cloud synchronization, import/export, or migration tools.
 
 ## Skills
 
@@ -551,8 +601,8 @@ Rendering and state reads never resubmit text. All display content uses
 The checkpoint at the marked input destination contains the accepted name before
 its effects, so engine restoration there does not ask for it again. A checkpoint
 that starts at a genuine input passage instead offers its form when rendered and
-permits a fresh submission. Stage 7A implements in-memory restoration only, with
-no persistence, input history, or Undo. Only one text field is supported: no numeric input,
+permits a fresh submission. Stage 7B persists that pre-entry checkpoint; it never
+saves input drafts or input history. There is no Undo. Only one text field is supported: no numeric input,
 multi-field forms, point-buy, portraits, visual customization, or character sheet.
 
 ## Conditional choices
@@ -756,8 +806,8 @@ executed.
 Keep stable passage IDs when editing prose, changing titles, or moving passages.
 Moving the first passage changes where play begins; moving other passages does
 not affect navigation. Changing an ID changes passage identity, so update every
-reference. Checkpoint restoration relies on these IDs; persistent release policy
-is deferred to Stage 7B. Forward
+reference. Checkpoint restoration relies on these IDs; incompatible releases must
+bump the configured story revision as described above. Forward
 passage references are valid, and all destinations are checked before play.
 
 ## Common errors
@@ -808,26 +858,25 @@ referring actions. No partially validated story can initialize a game.
 
 Character attributes/UI and arithmetic expressions remain
 future work. Chapters, the journal, binary skills, inventory quantities,
-text input for story-driven character creation, and Stage 7A in-memory checkpoints
+text input for story-driven character creation, in-memory checkpoints, and
+Stage 7B persistence/startup
 are implemented. Snapshots include complete variables, journal, skills, and
 inventory; definitions stay in static `Story` metadata.
 
 The remaining roadmap is:
 
-1. **Stage 7B:** persistent saving, Continue Game, and confirmed New Game, with
-   storage keys, persistent versioning, and compatibility policy.
-2. **Stage 7C:** `*death` and Try Again restoring the latest checkpoint. Death must
+1. **Stage 7C:** `*death` and Try Again restoring the latest checkpoint. Death must
    not save dead state over it; Try Again uses the existing pre-entry restore path.
-3. **Stage 8:** interface improvements and end-to-end testing.
+2. **Stage 8:** interface improvements and comprehensive end-to-end testing.
 
-Continue Game will resume the single checkpoint when reopening, and New Game
-will confirm before replacing saved progress. These features remain unimplemented.
+Continue Game resumes the single checkpoint when reopening, and New Game confirms
+before replacing saved progress. Both are implemented in Stage 7B.
 
 There will be no traditional Undo, choice-history stack, manual rewind, Return to
-Checkpoint control, manual saves, or save slots. Future `*death`, Try Again,
-Continue Game, and New Game are **not supported syntax or UI yet**.
-The Stage 7A `*checkpoint` marker and engine recovery API are supported in memory.
-No persistence, death handling, title-screen changes, or Try Again is implemented.
+Checkpoint control, manual saves, or save slots. Future `*death` and Try Again are
+**not supported syntax or UI yet**. The `*checkpoint` marker, engine recovery,
+versioned browser persistence, and startup controls are supported. No death
+handling or Try Again is implemented.
 See `docs/ENGINE.md` for the checkpoint boundary. Current `*continue id` remains
 ordinary navigation.
 
