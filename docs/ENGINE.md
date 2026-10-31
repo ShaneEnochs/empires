@@ -607,6 +607,75 @@ declarations, chapters, effects, and route outcomes stay intact. Revision 1 rema
 compatible, so `STORY_REVISION` is deliberately unchanged. Authors choose safe
 alternatives; the engine does not prove narrative survivability.
 
+## Authoring preflight
+
+`src/preflight.ts` is separate from browser/runtime orchestration.
+`analyzeStory(story, maxRoutes = 2000)` accepts an already parsed immutable Story
+and returns a frozen `PreflightReport`. `exploreGameplay` exposes the same bounded
+runtime exploration without structural checks. Reports contain diagnostics,
+`exploredRoutes` (attempted replay prefixes), `limitReached`, and
+`skippedReentries`. Neither function accepts an active Game or uses GameSession,
+storage, snapshots for branching, or browser APIs.
+
+Each diagnostic has a stable `code`, `severity` (`error`, `warning`, or
+`information`), optional `passageId`, concise `message`, recommended `action`,
+and an optional concrete `route`. Route entries have a `passageId` and optional
+`input` string: the first creates a fresh Game at start; each later entry calls
+`navigate(passageId)`, or `submitText(input)` on the previous passage. The final
+entry is the failed attempt. Replay against the same unchanged story to reproduce
+the failure. Route arrays/entries and diagnostics are frozen and JSON-serializable.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `UNREACHABLE_PASSAGE` | warning | No structural path from start, even with all conditional choices traversable. |
+| `REPEATABLE_EFFECT` | warning | A graph-cycle passage has a nonzero numeric add or item add/remove effect; checkpoint metadata is highlighted. |
+| `ENTRY_FAILURE` | error | Initial entry or an actually executed eligible transition threw; the runtime message and route are retained. |
+| `REPRESENTATIVE_INPUT` | information | Text was submitted as `"Preflight Reader"`; other values remain untested. |
+| `REENTRY_SKIPPED` | information | Eligible return actions were omitted to keep each path simple. |
+| `EXPLORATION_LIMIT` | information | The configured route-prefix budget omitted eligible simple-path work. |
+| `ANALYSIS_SCOPE` | information | The report cannot establish complete story correctness. |
+
+The graph includes choice, Continue, and text-input destinations. Structural
+traversals ignore conditions; death and ordinary endings terminate. Iterative
+reachability finds unused content and cycle membership by checking whether a
+passage is reachable again through its successors. Cycle warnings preserve
+authored passage/effect order, include unreachable cycles, and do not imply that
+conditions permit the cycle. Journal, set, skill grant/revoke, and zero numeric
+adds are not accumulation warnings. This does not prove those effects harmless
+in all surrounding gameplay states.
+
+Breadth-first exploration queues complete action prefixes in authored choice
+order. Each prefix is replayed from a fresh Game; Game alone filters choices,
+validates actions/input, applies effects, and captures private in-memory checkpoints.
+No effect arithmetic or condition evaluator is duplicated. Converging paths keep
+their distinct histories; only equivalent eligible choices with the same
+destination in one state are collapsed. No state is copied into another game via
+a fabricated checkpoint. A failed prefix stops there; a death or ordinary ending
+is not itself a failure. Recovery is deliberately not followed.
+
+The queue holds at most `maxRoutes` prefixes (a positive safe integer); paths
+never revisit an ID. The limit bounds exploration work, not the size of the input
+file or its structural graph. Omitted work is reported. A drained queue means only
+the eligible simple prefixes for the one representative input were exercised,
+not all repeated-entry states, input values, restoration, or narrative intentions.
+Reports append runtime diagnostics in deterministic breadth-first discovery order
+after structural warnings. CLI grouping preserves that order within each passage.
+
+`scripts/check-stories.ts` reads the two bundled files by default, or explicit
+`.story` paths supplied after `npm run check:stories --`. It parses normally,
+prints diagnostics grouped by file/passage plus counts, and exits 1 for parser,
+file (`PARSE_ERROR`/`FILE_ERROR`), or reproduced runtime errors. Warnings and
+information exit 0. No browser bundle imports the analyzer or CLI. CI runs the
+command as well as the existing Node/build/Chromium checks.
+
+The bundled-story review found no confirmed defects or structural warnings:
+The City Gate has 14 prefixes and two information diagnostics; Provincial Crisis
+has 1,086 prefixes and three information diagnostics. Both use representative
+input and report scope. Four Provincial Crisis return attempts are skipped at the
+intentional queue/offer cycle, whose only entry effect is a deduplicated journal
+event. Neither reaches the default limit. Existing route/recovery tests remain
+necessary; authored sources, identity/revision, and browser gameplay are unchanged.
+
 ## Later stages — not implemented
 
 Stage 8A adds read-only selected statistics and limited panel organization.
@@ -615,7 +684,7 @@ tests. Stage 8D adds the separate Provincial Crisis story and API playtests with
 engine changes. Its playtest notes document current language/deployment limits;
 Stage 9A adds explicit story identity configuration and shared-storage isolation
 tests. Stage 9B adds the static two-story browser library with independent startup
-and progress. Stage 9C is not implemented.
+and progress. Stage 9C adds separate authoring preflight and concrete-route diagnostics.
 Continue Game, confirmed New Game, browser checkpoint storage, and death/Try Again
 are implemented. In-story Continue still follows its explicit destination.
 Traditional Undo, history stacks, manual
