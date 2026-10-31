@@ -543,8 +543,8 @@ alternatives; the engine does not prove narrative survivability.
 ## Later stages — not implemented
 
 Stage 8A adds read-only selected statistics and limited panel organization.
-Stage 8B adds responsive reading styles. Stage 8C and further authoring/usability
-work remain unimplemented.
+Stage 8B adds responsive reading styles. Stage 8C adds permanent browser integration
+tests. Stage 8D remains unimplemented.
 Continue Game, confirmed New Game, browser checkpoint storage, and death/Try Again
 are implemented. In-story Continue still follows its explicit destination.
 Traditional Undo, history stacks, manual
@@ -600,6 +600,10 @@ formatting, state updates, read-only inspection, and pre-existing save compatibi
 with strict TypeScript and builds the app. Browser checks cover hidden content,
 rerendering, keyboard navigation, and inert HTML-like interpolation.
 
-`.github/workflows/ci.yml` runs `npm ci`, `npm test`, and `npm run build` on Node.js
-22 for PRs to `main` and pushes to `main`, with only `contents: read`. It does not
-deploy, publish, or merge anything.
+`.github/workflows/ci.yml` runs `npm ci`, `npm test`, `npm run build`, and
+`npm run test:e2e` on Node.js 22 for PRs to `main` and pushes to `main`, with only
+`contents: read`. It installs Playwright Chromium/system dependencies and uploads
+failure traces/screenshots and the HTML report. The isolated production browser
+suite supplements the unchanged Node tests without app hooks or test-only routes.
+See README for local installation and diagnostics. CI does not deploy, publish,
+or merge anything.

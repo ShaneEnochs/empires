@@ -44,9 +44,54 @@ npm run build    # strict TypeScript check, then browser build in dist/
 npm run preview  # serve the production build locally
 ```
 
-GitHub Actions runs `npm ci`, `npm test`, and `npm run build` on Node.js 22 for
-pull requests to `main` and pushes to `main`. It grants only read access to
-repository contents and does not deploy, publish, or merge anything.
+GitHub Actions runs `npm ci`, `npm test`, `npm run build`, and `npm run test:e2e`
+on Node.js 22 for pull requests to `main` and pushes to `main`. It installs
+Playwright Chromium and its system dependencies, has a 10-minute job limit, and
+uploads browser diagnostics on failure. Repository contents remain read-only;
+the workflow does not deploy, publish, or merge anything.
+
+## Browser integration tests
+
+The committed `e2e/` suite uses Playwright Test with Chromium. `npm test` remains
+the separate Node suite; `npm run build` type-checks both suites and the config.
+
+```sh
+npm ci
+npx playwright install chromium
+npm run build
+npm run test:e2e
+```
+
+On Linux, `npx playwright install --with-deps chromium` also installs required
+system libraries and may need administrator privileges. CI uses that command.
+Install browsers again after upgrading Playwright.
+
+Tests automatically start/stop the production preview at
+`http://127.0.0.1:4175`. Keep that port free; an existing server is never reused.
+Rebuild after application changes so tests exercise the latest production bundle.
+Each test gets a fresh browser context and isolated storage. Core workflows run
+at desktop size; a focused selection also runs at 320, 375, 768, and 1280px.
+Coverage includes startup, checkpoint Continue, confirmed/canceled New Game,
+invalid saved data, original routes, conditional prose, all panels, names/input,
+death/retry, persistent bytes/write counts, responsive controls, and keyboard focus.
+Tests drive the shipped example via accessible controls without app hooks or
+test-only routes. There are no screenshot baselines, sleeps, or automatic retries.
+
+Failures retain screenshots and traces in `test-results/` plus an HTML report in
+`playwright-report/`. View the report with `npx playwright show-report`; open a
+trace from it for the action timeline and DOM snapshots. Both directories are
+ignored by Git. GitHub Actions retains failure diagnostics for seven days.
+For one workflow, use `npm run test:e2e -- e2e/recovery.spec.ts`.
+
+If a restricted environment blocks browser downloads but already has Chromium,
+an optional runner-only override is available:
+
+```sh
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e
+```
+
+The normal local setup and CI use Playwright's bundled Chromium. This override
+affects only the test runner, never the app.
 
 ## Reading interface
 
@@ -413,7 +458,7 @@ Authors provide safe alternatives; the engine does not analyze narrative loops.
 
 Stages 7A–7C, 8A, and 8B are implemented, including persistent checkpoints, death
 recovery, selected character statistics, panel organization, and responsive reading
-styles. Stage 8C and further authoring/usability work remain future tasks.
+styles. Stage 8C adds permanent browser integration tests. Stage 8D remains future work.
 
 Traditional Undo, choice-history stacks, manual rewind, Return
 to Checkpoint controls, manual saves, and save slots remain excluded. In-story
