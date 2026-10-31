@@ -3,6 +3,40 @@
 A small, passage-based TypeScript interactive-fiction engine for the browser.
 No frontend framework, backend, or runtime library dependencies.
 
+## GitHub Pages
+
+GitHub Pages deployment is configured for
+https://shaneenochs.github.io/empires/ (the intended address; verify a successful
+deployment before treating it as live). The published library includes both
+The City Gate and Provincial Crisis and requires no local installation.
+
+One-time repository setup: go to **Settings → Pages → Build and deployment →
+Source → GitHub Actions**. Allow the `github-pages` environment to deploy from
+`main` if environment protection rules are configured. Merge the deployment PR,
+then check the **Checks** workflow's `deploy-pages` job and open its environment URL.
+Verify both stories before announcing the site as live.
+
+Pull requests run all checks, including a Pages build, but never deploy.
+Only a push to `main` can deploy, after the Node tests, story checks, root build,
+Chromium tests, and Pages asset checks pass. The deployment job alone receives
+`pages: write` and `id-token: write`; it uploads `dist/` using official Pages
+actions. Generated output remains ignored.
+
+`npm run build:pages` uses Vite's explicit `--base=/empires/` override and verifies
+that JavaScript/CSS references point to existing files under `/empires/assets/`.
+Ordinary `npm run dev`, `npm run build`, and the browser tests keep the root base.
+To preview the Pages build locally, run `npm run build:pages` then
+`npm run preview -- --base=/empires/` and open the printed origin at `/empires/`.
+Rebuild with `npm run build` before running the ordinary browser tests.
+
+Saves remain in localStorage with separate unchanged keys:
+`empires:checkpoint:empires-example` and `empires:checkpoint:provincial-crisis`,
+both revision 1 with the same envelope. Saves belong to the browser profile and
+website origin: localhost progress does not automatically transfer to GitHub Pages.
+Different project paths on the same GitHub Pages origin share localStorage;
+the story-specific keys still distinguish these two games. Clearing site data
+removes progress; no cloud storage or transfer mechanism is added.
+
 ## Install and run
 
 Requires Node.js **22.12+** and npm.
@@ -65,7 +99,8 @@ GitHub Actions runs `npm ci`, `npm test`, `npm run check:stories`, `npm run buil
 on Node.js 22 for pull requests to `main` and pushes to `main`. It installs
 Playwright Chromium and its system dependencies, has a 10-minute job limit, and
 uploads browser diagnostics on failure. Repository contents remain read-only;
-the workflow does not deploy, publish, or merge anything.
+pull requests do not deploy or merge. Successful pushes to main can deploy Pages
+as described above.
 
 ## Browser integration tests
 
