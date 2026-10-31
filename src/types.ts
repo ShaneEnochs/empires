@@ -20,6 +20,11 @@ export interface ItemDefinition {
   readonly name: string;
 }
 
+export interface StatDisplay {
+  readonly variable: string;
+  readonly label: string;
+}
+
 export interface JournalEntry {
   readonly id: string;
   readonly chapter: string;
@@ -68,6 +73,7 @@ export interface Story {
   readonly initialVariables: Variables;
   readonly skills: readonly SkillDefinition[];
   readonly items: readonly ItemDefinition[];
+  readonly stats: readonly StatDisplay[];
   readonly passages: readonly Passage[];
 }
 

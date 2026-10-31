@@ -108,6 +108,7 @@ messenger route and five on the direct route. Neither route can underflow.
 | Construct | Rule |
 | --- | --- |
 | `*var name literal` | Declares one variable and its initial value before all chapters/passages. Names must be unique. |
+| `*stat variable "Display Label"` | Selects a previously declared variable for Character. Initial metadata only; nonempty JSON-string label, one display per variable, in authored order. |
 | `*skill id "Display Name"` | Defines immutable skill metadata in the same initial section as variables. Skill IDs must be unique; names must be nonempty JSON strings. |
 | `*item id "Display Name"` | Defines immutable item metadata interleaved with variables/skills before all chapters/passages. Unique item ID; nonempty JSON-string name. |
 | `*chapter Label` | Top-level nonempty literal label for subsequent passages; each declaration needs a following passage. Default: `Prologue`. |
@@ -141,6 +142,53 @@ choices, Continue, input, or death action. After a concluding action, only blank
 current `*choice` block, or a new chapter/passage are allowed. Additional prose, titles,
 effects, duplicate action blocks, or nested choices are errors.
 
+## Character statistics
+
+`*stat influence "Influence"` selects an existing variable for the read-only
+Character panel. It must follow that variable's `*var` declaration and precede
+every chapter/passage. You may interleave stats with variable, skill, and item
+definitions, but forward variable references are rejected.
+
+```text
+*var influence 0
+*stat influence "Influence"
+*var character_name "Unknown"
+*var loyal false
+*stat character_name "Name"
+*stat loyal "Loyal"
+
+*passage arrival
+*title Arrival
+*add influence 2
+
+Your journey begins.
+```
+
+Character shows Influence: 2, Name: Unknown, Loyal: No, in that authored order.
+Only explicitly selected variables appear. Each variable can be selected once,
+even if the labels differ. Different variables may share a label.
+References use the existing identifier grammar and must name declared variables,
+not skill/item definitions or expressions. Labels must be nonempty after trimming,
+use the existing double-quoted JSON literal/escape rules, and remain literal
+without interpolation. Malformed labels, unknown/duplicate references, and
+declarations in passages or after chapters are source-line errors.
+
+Strings and numbers display as text; booleans display Yes or No. The native
+Character button toggles a labeled section with keyboard access,
+`aria-controls`, and `aria-expanded`. Labels and values are inert `textContent`,
+even when they contain HTML-like text. No stats shows
+“No character statistics configured.”
+Open panels update after successful navigation, input, Continue Game, and
+Try Again. Opening or closing a panel never changes gameplay, repeats effects,
+submits draft input, or writes storage.
+
+Frozen `Story.stats` stores presentation references/labels only. Current values
+remain in `GameState.variables`. Stat metadata is not part of snapshots or the
+browser save envelope. Adding, removing, reordering, or relabeling displays alone
+needs no story revision change; incompatible variable changes still do.
+No derived stats, formulas, categories, progress bars, point allocation,
+or conditional stat visibility are supported.
+
 ## Chapters and journal events
 
 `*chapter Label` is a top-level authoring declaration. Its literal label applies
@@ -152,7 +200,7 @@ string decoding or interpolation. Reusing a label later is permitted.
 A chapter declaration can finish a valid preceding passage, including one with
 choices or Continue. It cannot rescue missing titles/prose, empty choices, or
 pending conditional prose. Every declaration must have at least one passage
-before another chapter or EOF. Variables, skills, and items must precede chapters, and prose/effects
+before another chapter or EOF. Variables, skills, items, and stats must precede chapters, and prose/effects
 cannot appear between a declaration and its next passage header. Chapters belong
 to immutable passage definitions, not a mutable global current chapter; player
 navigation order never changes them.
@@ -689,7 +737,7 @@ its effects, so engine restoration there does not ask for it again. A checkpoint
 that starts at a genuine input passage instead offers its form when rendered and
 permits a fresh submission. Stage 7B persists that pre-entry checkpoint; it never
 saves input drafts or input history. There is no Undo. Only one text field is supported: no numeric input,
-multi-field forms, point-buy, portraits, visual customization, or character sheet.
+multi-field forms, point-buy, portraits, visual customization, or editable character sheet.
 
 ## Conditional choices
 
@@ -918,6 +966,8 @@ passage references are valid, and all destinations are checked before play.
 | Duplicate journal event ID | Use one unique ID per authored journal effect; runtime re-entry deduplicates it. |
 | `*journal event Text` | Supply a double-quoted string and declared interpolation references. |
 | `*var count 0` inside a passage | Move declarations to the beginning of the file. |
+| `*stat missing "Name"` or a duplicate stat variable | Declare the variable earlier with `*var` and select it only once. |
+| `*stat influence ""` or a stat after `*chapter` | Use a non-whitespace JSON-string label in initial metadata. |
 | `*set missing 1` or `${missing}` in narrative | Declare that variable first. |
 | `*set count "two"` for a number | Keep the declared type. |
 | `*add loyal 1` for a boolean | Only add numeric literals to numeric variables. |
@@ -943,15 +993,15 @@ referring actions. No partially validated story can initialize a game.
 
 ## Future functionality, not current syntax
 
-Character attributes/UI and arithmetic expressions remain
-future work. Chapters, the journal, binary skills, inventory quantities,
+Further character features and arithmetic expressions remain
+future work. Read-only character statistics, chapters, the journal, binary skills, inventory quantities,
 text input for story-driven character creation, in-memory checkpoints,
 persistence/startup, and death/Try Again recovery
 are implemented. Snapshots include complete variables, journal, skills, and
 inventory; definitions stay in static `Story` metadata.
 
-Stage 8 remains future work: interface improvements, character-attribute
-presentation, authoring usability, and comprehensive end-to-end testing.
+Stage 8A's selected-stat panel is implemented. Stage 8B and further interface/
+authoring usability and comprehensive end-to-end testing remain future work.
 
 Continue Game resumes the single checkpoint when reopening, and New Game confirms
 before replacing saved progress. Both are implemented in Stage 7B.

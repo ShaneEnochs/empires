@@ -1,5 +1,6 @@
 import type { Game } from './game';
 import { GameSession } from './session';
+import { createPanels } from './panels';
 import { parseStory } from './story';
 import { interpolate } from './interpolate';
 import exampleStory from './example.story?raw';
@@ -97,122 +98,7 @@ try {
   }
 
   function showGameplay(game: Game): void {
-    const journalButton = document.createElement('button');
-    journalButton.type = 'button';
-    journalButton.textContent = 'Journal';
-    journalButton.setAttribute('aria-controls', 'journal');
-    journalButton.setAttribute('aria-expanded', 'false');
-
-    const journalSection = document.createElement('section');
-    journalSection.id = 'journal';
-    journalSection.hidden = true;
-    journalSection.setAttribute('aria-labelledby', 'journal-heading');
-
-    function renderJournal(): void {
-      const heading = document.createElement('h2');
-      heading.id = 'journal-heading';
-      heading.textContent = 'Journal';
-      journalSection.replaceChildren(heading);
-      if (game.state.journal.length === 0) {
-        const empty = document.createElement('p');
-        empty.textContent = 'No journal entries yet.';
-        journalSection.append(empty);
-        return;
-      }
-      const groups = new Map<string, HTMLUListElement>();
-      for (const entry of game.state.journal) {
-        let list = groups.get(entry.chapter);
-        if (!list) {
-          const chapter = document.createElement('h3');
-          chapter.textContent = entry.chapter;
-          list = document.createElement('ul');
-          groups.set(entry.chapter, list);
-          journalSection.append(chapter, list);
-        }
-        const item = document.createElement('li');
-        item.textContent = entry.text;
-        list.append(item);
-      }
-    }
-
-    journalButton.addEventListener('click', () => {
-      journalSection.hidden = !journalSection.hidden;
-      journalButton.setAttribute('aria-expanded', String(!journalSection.hidden));
-      if (!journalSection.hidden) renderJournal();
-    });
-
-    const skillsButton = document.createElement('button');
-    skillsButton.type = 'button';
-    skillsButton.textContent = 'Skills';
-    skillsButton.setAttribute('aria-controls', 'skills');
-    skillsButton.setAttribute('aria-expanded', 'false');
-    const skillsSection = document.createElement('section');
-    skillsSection.id = 'skills';
-    skillsSection.hidden = true;
-    skillsSection.setAttribute('aria-labelledby', 'skills-heading');
-
-    function renderSkills(): void {
-      const heading = document.createElement('h2');
-      heading.id = 'skills-heading';
-      heading.textContent = 'Skills';
-      skillsSection.replaceChildren(heading);
-      if (game.state.skills.length === 0) {
-        const empty = document.createElement('p');
-        empty.textContent = 'No skills acquired yet.';
-        skillsSection.append(empty);
-        return;
-      }
-      const list = document.createElement('ul');
-      for (const id of game.state.skills) {
-        const item = document.createElement('li');
-        item.textContent = story.skills.find(skill => skill.id === id)!.name;
-        list.append(item);
-      }
-      skillsSection.append(list);
-    }
-
-    skillsButton.addEventListener('click', () => {
-      skillsSection.hidden = !skillsSection.hidden;
-      skillsButton.setAttribute('aria-expanded', String(!skillsSection.hidden));
-      if (!skillsSection.hidden) renderSkills();
-    });
-
-    const inventoryButton = document.createElement('button');
-    inventoryButton.type = 'button';
-    inventoryButton.textContent = 'Inventory';
-    inventoryButton.setAttribute('aria-controls', 'inventory');
-    inventoryButton.setAttribute('aria-expanded', 'false');
-    const inventorySection = document.createElement('section');
-    inventorySection.id = 'inventory';
-    inventorySection.hidden = true;
-    inventorySection.setAttribute('aria-labelledby', 'inventory-heading');
-
-    function renderInventory(): void {
-      const heading = document.createElement('h2');
-      heading.id = 'inventory-heading';
-      heading.textContent = 'Inventory';
-      inventorySection.replaceChildren(heading);
-      const entries = Object.entries(game.state.inventory);
-      if (entries.length === 0) {
-        const empty = document.createElement('p');
-        empty.textContent = 'No items in inventory.';
-        inventorySection.append(empty);
-        return;
-      }
-      const list = document.createElement('ul');
-      for (const [id, quantity] of entries) {
-        const item = document.createElement('li');
-        item.textContent = `${story.items.find(item => item.id === id)!.name} × ${quantity}`;
-        list.append(item);
-      }
-      inventorySection.append(list);
-    }
-
-    inventoryButton.addEventListener('click', () => {
-      inventorySection.hidden = !inventorySection.hidden;
-      inventoryButton.setAttribute('aria-expanded', String(!inventorySection.hidden));
-      if (!inventorySection.hidden) renderInventory();
-    });
+    const panels = createPanels(story, game);
 
     function render(): void {
       const passage = game.passage;
@@ -285,10 +171,8 @@ try {
         actions.append(form);
       }
 
-      root.replaceChildren(heading, ...paragraphs, actions, journalButton, skillsButton, inventoryButton, newGameButton, journalSection, skillsSection, inventorySection);
-      renderJournal();
-      renderSkills();
-      renderInventory();
+      root.replaceChildren(heading, ...paragraphs, actions, ...panels.buttons, newGameButton, ...panels.sections);
+      panels.render();
       renderNotice();
       heading.focus();
     }
