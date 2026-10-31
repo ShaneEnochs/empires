@@ -265,7 +265,7 @@ or conditional visibility.
 
 `panels.ts` owns the four fixed Character/Journal/Skills/Inventory sections.
 A small private helper shares native button/section setup, heading creation,
-`hidden`, and `aria-expanded`/`aria-controls`/`aria-labelledby` behavior.
+`hidden`, and `aria-pressed`/`aria-controls`/`aria-labelledby` behavior.
 Another helper shares plain text lists; journal chapter grouping/order is retained.
 This is limited rendering code, with no component registry or screen framework.
 `main.ts` retains startup, actions, input, errors, notices, and heading focus.
@@ -274,9 +274,9 @@ This is limited rendering code, with no component registry or screen framework.
 variables without caching. Character renders it in `dl`/`dt`/`dd` elements using
 `textContent` for labels and values. Booleans become Yes/No; numbers/strings use
 `String(value)` without mutating their values. No configuration shows
-“No character statistics configured.” Panels retain only their open/closed DOM
-state; each refresh reads current gameplay data. All panels update after
-navigation, submission, Continue Game activation, and successful death recovery.
+“No character statistics configured.” Main retains transient active-view selection; each presented view reads current
+gameplay data. Navigation, submission, Continue Game, and recovery select Story;
+information reflects the latest committed data when presented again.
 Toggles never navigate, execute effects, submit drafts, read/write storage, or
 change state; focus/error behavior stays in the existing action handlers.
 
@@ -304,9 +304,8 @@ wrapping utility controls, minimum 44px touch targets, visible focus, and consis
 panel/form/error/warning styling. Long content wraps naturally; panels have no
 fixed heights or internal scrolling. No animations or scripted scroll behavior
 are added, and the viewport remains zoomable.
-These are presentation changes only: event handlers, text rendering, independent
-panel visibility, focus/error handling, session semantics, and persistence timing
-are unchanged. No state, parser, snapshot, save-envelope, or revision changes occur.
+Stage 10A replaces independent visibility with one active inline view. Text
+safety, session semantics, and persistence timing remain unchanged. No state, parser, snapshot, save-envelope, or revision changes occur.
 
 Input passages render one native form inside passage actions, with an associated
 label, single-line field initialized from the committed string, and Continue
@@ -320,28 +319,28 @@ heading focus. Authored labels, narrative, and errors use `textContent`.
 Draft text exists only in the field until submission. Rendering or toggling
 Journal/Skills/Inventory never submits it; toggles do not rebuild the input form.
 
-The native Journal button controls an accessible section with `aria-expanded`
+The native Journal button selects an accessible inline view with `aria-pressed`
 and `aria-controls`. Toggling it changes only presentation; it does not navigate,
 rebuild passage choices, or execute effects. The section groups the current flat
 journal under chapter headings, in first-encountered chapter order and recording
 order within each chapter. Later returns to an earlier chapter append to that
 existing group. DOM grouping is derived locally, never a separate state store.
-An open section refreshes after a successful navigation; no entries yields the
+A selected view reads current state when presented; no entries yields the
 plain empty message. Headings and entries use `textContent` throughout.
 
-The native Skills button independently toggles a section with `aria-expanded`,
+The native Skills button selects an exclusive inline section with `aria-pressed`,
 `aria-controls`, and a labeled heading. Each render derives display names from
 immutable `Story.skills` using current acquired IDs in acquisition order. There
 is no UI copy of acquired-skill state. Empty lists show “No skills acquired yet.”
-An open section refreshes after navigation, including revocations. Toggling either
+Selecting Skills reads current state, including revocations. Toggling either
 Skills or Journal never changes gameplay state; skill names use `textContent`.
 
-Inventory uses the same native expandable-section pattern beside Journal and
-Skills, with a labeled heading, `aria-controls`, `aria-expanded`, and keyboard
+Inventory uses the same native single-view pattern alongside Journal and
+Skills, with a labeled heading, `aria-controls`, `aria-pressed`, and keyboard
 access. `Object.entries(game.state.inventory)` determines insertion order and
 quantities; immutable item definitions supply names. Only positive quantities
 exist in committed state. List entries use `textContent` for `Name × quantity`;
-empty inventory shows “No items in inventory.” An open section updates after
+empty inventory shows “No items in inventory.” Selecting the view reflects changes after
 navigation, including deletions. Toggling any section affects presentation only;
 there is no UI inventory state or renderer-specific condition logic.
 
@@ -775,3 +774,22 @@ failure traces/screenshots and the HTML report. The isolated production browser
 suite supplements the unchanged Node tests without app hooks or test-only routes.
 See README for local installation and diagnostics. CI does not deploy, publish,
 or merge anything.
+
+
+## Unified reading views (Stage 10A)
+
+The browser presents a compact application header, selected story identity,
+wrapping Story/Character/Journal/Skills/Inventory navigation, and one active
+content section in the same centered column at every viewport width. Native
+buttons expose aria-pressed; hidden subtrees are removed from keyboard and
+assistive navigation. Information headings receive focus on selection; Story
+returns focus to the passage heading. This is presentation only, with no new
+story directives or persisted state.
+
+Main retains the story DOM while information is shown, so unsubmitted text and
+validation errors survive. It refreshes only the selected read-only view through
+panels.ts. View selection never runs GameSession actions, rerenders the passage,
+or touches storage. New Game and save warnings stay outside the hidden content.
+Successful navigation/input/retry rebuild the passage and select Story. Checkpoint
+and save compatibility remain unchanged. The muted palette uses system fonts;
+there are no animations, overlays, sidebars, or separate mobile navigation.

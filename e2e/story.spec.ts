@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   arrival, checkpointRecord, expectCharacter, expectGateState, expectItems, expectPassage, openPanel, panelNames, startGame,
+  returnToStory,
 } from './helpers';
 
 for (const messenger of [false, true]) {
@@ -34,6 +35,7 @@ for (const messenger of [false, true]) {
     await expectItems(page, 'Journal', journal);
     const journalPanel = await openPanel(page, 'Journal');
     await expect(journalPanel.getByRole('heading', { level: 3 })).toHaveText(['Prologue', 'Chapter One']);
+    await returnToStory(page);
     await expect(page.getByText('The coins remaining in your purse offer a small reassurance.', { exact: true })).toBeVisible();
     const diplomatic = page.getByText('Your diplomatic training helps you choose your words.', { exact: true });
     const unaided = page.getByText('Without diplomatic training, you face the council unaided.', { exact: true });
@@ -58,6 +60,7 @@ test('preferred name, panel inspection, Enter submission, and soldier background
   await field.fill('Draft alias');
   const saved = await checkpointRecord(page);
   for (const name of panelNames) await openPanel(page, name);
+  await returnToStory(page);
   await expect(field).toHaveValue('Draft alias');
   await expectCharacter(page, ['Alexander', '1', '5', 'No']);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Choose Your Name');

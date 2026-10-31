@@ -59,11 +59,19 @@ libraries. Use the existing checkout; no frontend framework is needed.
 - Keep `panels.ts` limited to the four fixed read-only sections and their small
   shared native rendering helpers. Read current GameState for every refresh;
   never cache variable values. Character uses text-only semantic name/value
-  pairs, Yes/No booleans, and ordinary number/string text. Toggling any panel must
+  pairs, Yes/No booleans, and ordinary number/string text. Selecting a view must
   not execute effects, navigate, submit drafts, or access persistence. Preserve
   existing action/focus/error handling in main; do not build a component system.
+- Keep one inline view active: Story, Character, Journal, Skills, or Inventory.
+  Main owns only transient view selection; panels.ts renders the four fixed views.
+  Preserve the story DOM subtree while hidden, including input drafts and errors.
+  Use native pressed buttons, hide inactive subtrees from all interaction, and
+  focus the presented heading. View switching must never call gameplay/session
+  actions, access persistence, or clear notices. Successful gameplay returns to
+  Story. Use the same wrapping navigation on every width, a muted single palette,
+  system fonts, and no transitions or animations.
 - Keep responsive reading changes in CSS and small presentation hooks. Preserve
-  the separate passage-action/tools groups, independent panel visibility, native
+  the separate passage-action/tools groups, exclusive inline view visibility, native
   focus and error handling, at least 44px touch targets, and browser zoom. Wrap
   long content without hiding page overflow, truncating data, or adding nested
   panel scrolling. Do not add animations or change gameplay/save semantics for UI.

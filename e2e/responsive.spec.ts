@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import {
   checkpointRecord, enterWatchtower, expectCharacter, expectPassage, openPanel, panelNames, startGame,
+  returnToStory,
 } from './helpers';
 
 async function expectLayout(page: Page): Promise<void> {
@@ -37,7 +38,7 @@ for (const width of [320, 375, 768, 1280]) {
   test.describe(width + 'px reading interface', () => {
     test.use({ viewport: { width, height: 900 }, isMobile: width <= 375, hasTouch: width <= 375 });
 
-    test('choices, keyboard focus, and independently open panels remain usable', async ({ page }) => {
+    test('choices, keyboard focus, and exclusive inline views remain usable', async ({ page }) => {
       await startGame(page);
       await expectLayout(page);
       await page.keyboard.press('Tab');
@@ -52,14 +53,13 @@ for (const width of [320, 375, 768, 1280]) {
       expect(outline.width).toBeGreaterThanOrEqual(2);
       for (const name of panelNames) {
         await openPanel(page, name);
-        await expect(page.getByRole('button', { name, exact: true })).toHaveAttribute('aria-expanded', 'true');
+        await expect(page.getByRole('button', { name, exact: true })).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.getByRole('region')).toHaveCount(1);
+        await expect(page.getByRole('navigation', { name: 'Passage actions' })).toHaveCount(0);
+        await expectLayout(page);
       }
-      for (const name of panelNames) await expect(page.getByRole('region', { name, exact: true })).toBeVisible();
-      await expect(page.getByRole('group', { name: 'Game tools' }).getByRole('button')).toHaveCount(5);
-      await expectLayout(page);
-      await page.getByRole('button', { name: 'Journal', exact: true }).click();
-      await expect(page.getByRole('region', { name: 'Journal', exact: true })).toBeHidden();
-      for (const name of ['Character', 'Skills', 'Inventory']) await expect(page.getByRole('region', { name, exact: true })).toBeVisible();
+      await expect(page.getByRole('group', { name: 'Game tools' }).getByRole('button')).toHaveCount(1);
+      await returnToStory(page);
       await choice.click();
       await expectPassage(page, 'A Quiet Warning');
       await page.getByRole('button', { name: 'Continue', exact: true }).click();
@@ -82,6 +82,7 @@ for (const width of [320, 375, 768, 1280]) {
       const saved = await checkpointRecord(page);
       for (const panel of panelNames) await openPanel(page, panel);
       await expectLayout(page);
+      await returnToStory(page);
       await enterWatchtower(page);
       await expectLayout(page);
       await page.getByRole('button', { name: 'Try Again', exact: true }).click();

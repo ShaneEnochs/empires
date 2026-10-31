@@ -17,7 +17,23 @@ function showError(error: unknown): void {
   message.setAttribute('role', 'alert');
   message.id = 'story-error';
   message.textContent = `Story error: ${error instanceof Error ? error.message : String(error)}`;
-  root.append(message);
+  (root.querySelector('#story-content') ?? root).append(message);
+}
+
+function appHeader(title?: string): HTMLElement {
+  const header = document.createElement('header');
+  header.className = 'app-header';
+  const brand = document.createElement('p');
+  brand.className = 'brand';
+  brand.textContent = 'Empires';
+  header.append(brand);
+  if (title) {
+    const identity = document.createElement('p');
+    identity.className = 'story-identity';
+    identity.textContent = title;
+    header.append(identity);
+  }
+  return header;
 }
 
 function selectStory(entry: CatalogStory): void {
@@ -55,7 +71,7 @@ function selectStory(entry: CatalogStory): void {
       });
       section.append(play);
     }
-    root.append(section);
+    root.insertBefore(section, root.querySelector('.view-navigation')?.nextSibling ?? null);
   }
 
   function startNewGame(): void {
@@ -69,7 +85,7 @@ function selectStory(entry: CatalogStory): void {
     const heading = document.createElement('h1');
     heading.textContent = entry.title;
     heading.tabIndex = -1;
-    root.replaceChildren(heading);
+    root.replaceChildren(appHeader(), heading);
     const startup = session.startup;
     if (startup.status === 'invalid' || startup.status === 'unavailable') {
       const message = document.createElement('p');
@@ -107,12 +123,45 @@ function selectStory(entry: CatalogStory): void {
   }
 
   function showGameplay(game: Game): void {
-    const panels = createPanels(story, game);
+    const storyContent = document.createElement('section');
+    storyContent.id = 'story-content';
+    storyContent.setAttribute('aria-labelledby', 'passage-heading');
+    const storyButton = document.createElement('button');
+    storyButton.type = 'button';
+    storyButton.textContent = 'Story';
+    storyButton.setAttribute('aria-controls', 'story-content');
+    storyButton.addEventListener('click', () => selectView('Story'));
+    const panels = createPanels(story, game, selectView);
+    const navigation = document.createElement('nav');
+    navigation.className = 'view-navigation';
+    navigation.setAttribute('aria-label', 'Reading views');
+    navigation.append(storyButton, ...panels.buttons);
+    function selectView(name: string): void {
+      storyContent.hidden = name !== 'Story';
+      storyButton.setAttribute('aria-pressed', String(name === 'Story'));
+      for (let index = 0; index < panels.sections.length; index++) {
+        const section = panels.sections[index]!;
+        const active = panels.buttons[index]!.textContent === name;
+        section.hidden = !active;
+        panels.buttons[index]!.setAttribute('aria-pressed', String(active));
+        if (active) {
+          panels.render(name);
+          const back = document.createElement('button');
+          back.type = 'button';
+          back.textContent = 'Return to Story';
+          back.addEventListener('click', () => selectView('Story'));
+          section.append(back);
+          section.querySelector<HTMLElement>('h2')!.focus();
+        }
+      }
+      if (name === 'Story') storyContent.querySelector<HTMLElement>('h1')!.focus();
+    }
 
     function render(): void {
       const passage = game.passage;
       root.className = passage.death ? 'reading death' : 'reading';
       const heading = document.createElement('h1');
+      heading.id = 'passage-heading';
       heading.textContent = passage.title;
       heading.tabIndex = -1;
 
@@ -182,8 +231,12 @@ function selectStory(entry: CatalogStory): void {
         actions.append(form);
       }
 
-      root.replaceChildren(heading, ...paragraphs, actions, utilities, ...panels.sections);
-      panels.render();
+      const chapter = document.createElement('p');
+      chapter.className = 'chapter-label';
+      chapter.textContent = passage.chapter;
+      storyContent.replaceChildren(chapter, heading, ...paragraphs, actions);
+      root.replaceChildren(appHeader(entry.title), navigation, storyContent, ...panels.sections, utilities);
+      selectView('Story');
       renderNotice();
       heading.focus();
     }
@@ -196,7 +249,7 @@ function selectStory(entry: CatalogStory): void {
     utilities.className = 'utility-controls';
     utilities.setAttribute('role', 'group');
     utilities.setAttribute('aria-label', 'Game tools');
-    utilities.append(...panels.buttons, newGameButton);
+    utilities.append(newGameButton);
     render();
   }
 
@@ -206,7 +259,7 @@ function selectStory(entry: CatalogStory): void {
 function renderLibrary(): void {
   root.className = 'startup';
   const heading = document.createElement('h1');
-  heading.textContent = 'Empires';
+  heading.textContent = 'Your next story';
   heading.tabIndex = -1;
   const introduction = document.createElement('p');
   introduction.textContent = 'Choose a story.';
@@ -227,7 +280,7 @@ function renderLibrary(): void {
     item.append(title, description, select);
     stories.append(item);
   }
-  root.replaceChildren(heading, introduction, stories);
+  root.replaceChildren(appHeader(), heading, introduction, stories);
   heading.focus();
 }
 
