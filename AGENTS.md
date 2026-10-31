@@ -144,8 +144,15 @@ libraries. Use the existing checkout; no frontend framework is needed.
   replays for confirmed eligible failures. Never duplicate effect arithmetic or
   condition evaluation, mutate an active game, fabricate snapshots for branching,
   access storage, or import diagnostics into browser gameplay. Keep deterministic
-  ordering, explicit input values in failure routes, and a bounded queue of simple
-  prefixes (default 2,000). Report omissions and representative input
+  ordering, explicit input values in failure routes, and one shared bounded queue
+  (default 2,000 prefixes) for ordinary simple paths, first returns, and immediate
+  exits. Each eligible first return is replayed through fresh Game; it may have
+  one subsequent transition per branch only to an unvisited passage, then stops.
+  Never allow another repeated entry, expand follow-ups, or invoke checkpoint
+  restoration/Try Again. Preserve normal checkpoint updates and atomic failures.
+  Count executed prefixes and distinct return probes accurately, aggregate
+  return results, and retain distinct failure routes while deduplicating identical
+  route/message failures. Report budget and one-repeat omissions and representative input
   (`"Preflight Reader"`); never claim a clean report proves all routes safe.
   Journal-only cycles are not accumulation errors. Warnings are advisory; only
   parser/file errors and reproduced runtime failures make the CLI fail. Keep
@@ -185,9 +192,9 @@ under `examples/` and test it through parser/Game APIs and isolated memory stora
 do not replace the shipped story or reuse its browser save slot. Stage 9A's
 explicit story save identities and shared-memory storage tests are implemented.
 Stage 9B's static browser library makes both stories playable through the same
-renderer/startup flow and isolated save identities. Stage 9C adds standalone
-authoring preflight, explicit diagnostic limitations, and a CLI. Do not start
-later stages without a request.
+renderer/startup flow and isolated save identities. Stages 9C–9D add standalone
+authoring preflight, bounded first-return/immediate-exit probes, explicit coverage
+limits, and a CLI.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.

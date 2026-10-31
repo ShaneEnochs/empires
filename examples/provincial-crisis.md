@@ -196,21 +196,26 @@ engine changes. These distinctions matter:
 - **Deployment:** Stages 9A–9B provide explicit save identity and a static browser
   library. This story uses its own `provincial-crisis` ID, never `empires-example`.
 
-## Preflight review (Stage 9C)
+## Preflight review (Stages 9C–9D)
 
-`npm run check:stories` reports **0 errors, 0 warnings, and 3 information**
-diagnostics for this unchanged story. It replays **1,086** eligible simple-route
+`npm run check:stories` reports **0 errors, 0 warnings, and 4 information**
+diagnostics for this unchanged story. It replays **1,098** eligible route
 prefixes, below the 2,000-prefix default budget. Findings were reviewed as follows:
 
 - `REPRESENTATIVE_INPUT` at `choose_name`: an analysis limitation. The tool submits
   `"Preflight Reader"`; other accepted names are not explored by preflight.
-- `REENTRY_SKIPPED`: four eligible returns from `bonded_offer` to `depot_queue`
-  are omitted across the naming/background branches. The cycle is intentional:
+- `REENTRY_TESTED`: all four eligible first returns from `bonded_offer` to
+  `depot_queue` succeed across the naming/background branches. Eight immediate
+  exits are also tested: issuing grain to the kitchen or proceeding to council.
+  The journal keeps its original single queue event; currency and supplies
+  remain unchanged by declining the offer and returning. The cycle is intentional:
   the offer has no entry effects and the queue only records a deduplicated journal
-  event. There is no accumulating resource effect to warn about. The existing
-  explicit route that declines the bond and returns to the queue still tests it.
-- `ANALYSIS_SCOPE`: a limitation, not proof of correctness. Repeated-entry states,
-  other names, and checkpoint/death restoration remain the responsibility of
+  event. There is no accumulating resource effect to warn about.
+- `REENTRY_SKIPPED`: four further actions from the returned queue back to the
+  already visited offer are beyond the one-repeat bound. No default-budget
+  exhaustion occurred. Further negotiations remain covered by authored playtests.
+- `ANALYSIS_SCOPE`: a limitation, not proof of correctness. Longer repeated-entry
+  sequences, continuations beyond one immediate exit, other names, and checkpoint/death restoration remain the responsibility of
   route tests and browser playtests.
 
 No actual defect or conservative structural warning was found. The City Gate
@@ -220,7 +225,7 @@ separately reports 0 errors, 0 warnings, and 2 information diagnostics over
 Recommended future work, ranked by practical importance:
 
 Explicit save identity and static browser selection are now implemented in
-Stages 9A–9B, with standalone preflight added in Stage 9C. Remaining authoring priorities:
+Stages 9A–9B, with standalone preflight and targeted re-entry probes in Stages 9C–9D. Remaining authoring priorities:
 
 1. **Keep explicit re-entry, input, and recovery playtests beside preflight.**
    The bounded tool supplements the authored routes; it cannot establish every

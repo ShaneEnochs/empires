@@ -130,7 +130,7 @@ separate file.
 | --- | --- | --- |
 | Error | Syntax/reference failure or an eligible executed route whose entry failed. | Replay the route; fix syntax, resource budgets, or eligibility. The command exits nonzero. |
 | Warning | Structurally unreachable content or a potentially repeatable numeric/item effect on a graph cycle. | Check intended navigation and repeated rewards/expenses. Warnings are advisory. |
-| Information | Representative input, skipped re-entry, route limits, or analysis scope. | Playtest what the tool did not cover. |
+| Information | Aggregated return results, representative input, skipped returns, route limits, or analysis scope. | Review the coverage and playtest what the tool did not cover. |
 
 Structural reachability includes all authored conditional choices. An unreachable
 passage has no authored path from the start, but an authored path does not prove
@@ -138,26 +138,35 @@ its gameplay conditions can be met. A cycle can be intentional: journal events
 already deduplicate, while numeric/item effects repeat on ordinary entry.
 
 Gameplay exploration replays eligible simple paths through Game, using
-`"Preflight Reader"` for text input. The default limit is 2,000 replayed route
-prefixes, including initial entry and failed attempts. An explicit information
-message reports any omitted prefixes. Repeated passage visits, other text values,
-and checkpoint recovery are not explored. **No-error output is not proof that
+`"Preflight Reader"` for text input. It also probes each eligible first return
+under the same 2,000-prefix budget. After a successful return, each eligible exit
+to an unvisited passage can be tested as a separate one-transition prefix that
+stops there. A route may contain only one repeated entry: further returns and
+longer continuations after the immediate exit remain untested.
+
+The budget includes initial entry, ordinary paths, return probes, immediate
+exits, and failed attempts. Reports distinguish attempted return prefixes from
+successful return entries; an immediate exit may still fail. Replaying a return
+inside a follow-up prefix does not count as a second distinct probe. Information
+messages aggregate results and explain omitted work. Normal checkpoint capture
+occurs inside each private Game, but checkpoint restoration, death recovery, and
+other text values remain outside coverage. **No-error output is not proof that
 every route is safe.** Keep the existing route/recovery tests and manual playtests.
 See [engine details and diagnostic codes](docs/ENGINE.md#authoring-preflight) and
 [author guidance](docs/SCRIPTING.md#preflight-and-playtesting).
 
 Current bundled-story findings:
 
-| Story | Errors | Warnings | Information | Replayed prefixes |
-| --- | --- | --- | --- | --- |
-| The City Gate | 0 | 0 | 2 | 14 |
-| Provincial Crisis | 0 | 0 | 3 | 1,086 |
+| Story | Errors | Warnings | Information | Replayed prefixes | Return probes |
+| --- | --- | --- | --- | --- | --- |
+| The City Gate | 0 | 0 | 2 | 14 | 0 |
+| Provincial Crisis | 0 | 0 | 4 | 1,098 | 4 successful |
 
 Neither story reached the default limit. Both report representative-name and
-scope limitations. Provincial Crisis also skips four eligible returns on its
-intentional journal-only queue/offer cycle; repeated visits remain covered by
-explicit playtests. These are analysis limitations and intentional authoring
-decisions, not confirmed defects. Neither story source nor revision was changed.
+scope limitations. Provincial Crisis's four queue-return probes succeed without
+duplicating journal events; eight immediate exits are also exercised. Four
+further returns to the already visited merchant offer are outside the one-repeat
+bound. No new defect was found. Neither story source nor revision was changed.
 
 ## Reading interface
 
@@ -581,7 +590,8 @@ styles. Stage 8C adds permanent browser integration tests. Stage 8D adds an
 independent story/playtest example using the existing language. Stage 9A adds
 explicit story save identities and isolated persistence. Stage 9B adds the static
 two-story library and shared startup/gameplay presentation. Stage 9C adds separate
-authoring preflight diagnostics and its CLI, without changing gameplay.
+authoring preflight diagnostics and its CLI. Stage 9D adds bounded first returns
+and immediate-exit checks without changing gameplay.
 
 Traditional Undo, choice-history stacks, manual rewind, Return
 to Checkpoint controls, manual saves, and save slots remain excluded. In-story

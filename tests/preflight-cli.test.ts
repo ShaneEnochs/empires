@@ -20,8 +20,9 @@ test('CLI checks both bundled stories by default and prints their diagnostic cou
   assert.match(result.stdout, /src\/example.story/);
   assert.match(result.stdout, /examples\/provincial-crisis.story/);
   assert.match(result.stdout, /0 errors, 0 warnings, 2 information; 14 route prefixes/);
-  assert.match(result.stdout, /0 errors, 0 warnings, 3 information; 1086 route prefixes/);
-  assert.match(result.stdout, /Total: 0 errors, 0 warnings, 5 information/);
+  assert.match(result.stdout, /0 errors, 0 warnings, 4 information; 1098 route prefixes/);
+  assert.match(result.stdout, /4 re-entry probes \(4 returns succeeded\)/);
+  assert.match(result.stdout, /Total: 0 errors, 0 warnings, 6 information/);
 });
 
 test('CLI supports an explicit filename with spaces and leaves advisory warnings nonfatal', t => {
@@ -60,4 +61,36 @@ test('CLI rejects missing/non-story files with useful errors instead of crashing
   assert.match(result.stdout, /Expected a .story filename/);
   assert.match(result.stdout, /FILE_ERROR:.*ENOENT/);
   assert.match(result.stdout, /Total: 2 errors/);
+});
+
+test('CLI includes a repeated passage in a confirmed failure route and exits nonzero', t => {
+  const directory = mkdtempSync(join(tmpdir(), 'empires-preflight-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const file = join(directory, 'reentry.story');
+  writeFileSync(file, [
+    '*item coin "Coin"', '*passage start', '*title Start', '*add_item coin 1', 'Begin.', '*continue market',
+    '*passage market', '*title Market', '*remove_item coin 1', 'Pay.', '*choice',
+    '#Repeat -> market', '#Leave -> end', '*passage end', '*title End', 'Done.',
+  ].join('\n'));
+  const result = run(file);
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /ERROR ENTRY_FAILURE/);
+  assert.match(result.stdout, /Route: start -> market -> market/);
+  assert.match(result.stdout, /1 re-entry probes \(0 returns succeeded\)/);
+});
+
+test('CLI aggregates successful journal-only returns as information without failing', t => {
+  const directory = mkdtempSync(join(tmpdir(), 'empires-preflight-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const file = join(directory, 'journal-cycle.story');
+  writeFileSync(file, [
+    '*passage queue', '*title Queue', '*journal queued "You queued."', 'Queue.', '*continue offer',
+    '*passage offer', '*title Offer', 'Decide.', '*choice', '#Back -> queue', '#End -> end',
+    '*passage end', '*title End', 'Done.',
+  ].join('\n'));
+  const result = run(file);
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout.match(/INFORMATION REENTRY_TESTED/g)?.length, 1);
+  assert.match(result.stdout, /1 re-entry probes \(1 returns succeeded\)/);
+  assert.match(result.stdout, /Total: 0 errors, 0 warnings, 3 information/);
 });

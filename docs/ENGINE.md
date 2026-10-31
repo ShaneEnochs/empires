@@ -613,8 +613,8 @@ alternatives; the engine does not prove narrative survivability.
 `analyzeStory(story, maxRoutes = 2000)` accepts an already parsed immutable Story
 and returns a frozen `PreflightReport`. `exploreGameplay` exposes the same bounded
 runtime exploration without structural checks. Reports contain diagnostics,
-`exploredRoutes` (attempted replay prefixes), `limitReached`, and
-`skippedReentries`. Neither function accepts an active Game or uses GameSession,
+`exploredRoutes` (attempted replay prefixes), `limitReached`, `reentryProbes`,
+`successfulReentries`, and `skippedReentries`. Neither function accepts an active Game or uses GameSession,
 storage, snapshots for branching, or browser APIs.
 
 Each diagnostic has a stable `code`, `severity` (`error`, `warning`, or
@@ -631,8 +631,9 @@ the failure. Route arrays/entries and diagnostics are frozen and JSON-serializab
 | `REPEATABLE_EFFECT` | warning | A graph-cycle passage has a nonzero numeric add or item add/remove effect; checkpoint metadata is highlighted. |
 | `ENTRY_FAILURE` | error | Initial entry or an actually executed eligible transition threw; the runtime message and route are retained. |
 | `REPRESENTATIVE_INPUT` | information | Text was submitted as `"Preflight Reader"`; other values remain untested. |
-| `REENTRY_SKIPPED` | information | Eligible return actions were omitted to keep each path simple. |
-| `EXPLORATION_LIMIT` | information | The configured route-prefix budget omitted eligible simple-path work. |
+| `REENTRY_TESTED` | information | Aggregated attempted first-return probes and successful return entries; exits may fail separately. |
+| `REENTRY_SKIPPED` | information | Eligible returns were omitted by the one-repeat bound or shared route budget. |
+| `EXPLORATION_LIMIT` | information | The shared route-prefix budget omitted eligible ordinary, return, or immediate-exit work. |
 | `ANALYSIS_SCOPE` | information | The report cannot establish complete story correctness. |
 
 The graph includes choice, Continue, and text-input destinations. Structural
@@ -653,11 +654,35 @@ destination in one state are collapsed. No state is copied into another game via
 a fabricated checkpoint. A failed prefix stops there; a death or ordinary ending
 is not itself a failure. Recovery is deliberately not followed.
 
-The queue holds at most `maxRoutes` prefixes (a positive safe integer); paths
-never revisit an ID. The limit bounds exploration work, not the size of the input
-file or its structural graph. Omitted work is reported. A drained queue means only
-the eligible simple prefixes for the one representative input were exercised,
-not all repeated-entry states, input values, restoration, or narrative intentions.
+Stage 9D gives queue entries three fixed phases: ordinary, re-entry, and follow-up.
+Ordinary prefixes remain simple. An eligible action back to an ID already in the
+route queues a re-entry prefix, replayed completely from a fresh Game through the
+return. After successful entry, current Game eligibility is read again. Each
+eligible exit to an unvisited ID queues one follow-up prefix, which is never
+expanded. Exits to previously visited IDs are skipped, preserving the strict
+one-repeated-entry bound. Failed returns and death passages have no follow-ups.
+This is one fixed search, with no strategy selection or arbitrary recursive loops.
+
+The queue holds at most `maxRoutes` prefixes (a positive safe integer, default
+2,000), shared by all three phases. `exploredRoutes` counts every replayed prefix
+once, including failures and initial entry. `reentryProbes` counts distinct
+first-return prefixes whose return action was attempted; `successfulReentries`
+counts successful return entries, regardless of a subsequent exit failure.
+Replaying that return as part of a follow-up is included in that follow-up's
+prefix execution, not counted as another distinct probe. `skippedReentries`
+counts eligible return actions rejected by the one-repeat bound or budget.
+Budget omissions set `limitReached`, including omissions of first returns or
+follow-ups. Further-return omissions also receive `REENTRY_SKIPPED` even when
+the queue budget is not exhausted. Successful/failed return totals use a single
+`REENTRY_TESTED` summary, rather than one information diagnostic per cycle.
+Failures retain the whole repeated-ID route. Identical route/message failures
+are suppressed; different routes to the same failing passage remain useful.
+
+The limit bounds exploration work, not the size of the input file or structural
+graph. A drained queue is not evidence about longer loops, continuations beyond
+the immediate exit, other input values, restoration, or narrative intentions.
+Re-entered checkpoints update normally through Game; a failed entry preserves
+its prior state/checkpoint. No checkpoint restore or Try Again is invoked.
 Reports append runtime diagnostics in deterministic breadth-first discovery order
 after structural warnings. CLI grouping preserves that order within each passage.
 
@@ -669,11 +694,13 @@ information exit 0. No browser bundle imports the analyzer or CLI. CI runs the
 command as well as the existing Node/build/Chromium checks.
 
 The bundled-story review found no confirmed defects or structural warnings:
-The City Gate has 14 prefixes and two information diagnostics; Provincial Crisis
-has 1,086 prefixes and three information diagnostics. Both use representative
-input and report scope. Four Provincial Crisis return attempts are skipped at the
-intentional queue/offer cycle, whose only entry effect is a deduplicated journal
-event. Neither reaches the default limit. Existing route/recovery tests remain
+The City Gate has 14 prefixes, no return candidates, and two information diagnostics.
+Provincial Crisis has 1,098 prefixes and four information diagnostics. Its four
+first-return probes succeed; eight immediate exits are checked. The intentional
+queue/offer cycle keeps one original journal event on return. Four further
+returns to the already visited offer are skipped by the one-repeat bound.
+Both use representative input and report scope, and neither reaches the default
+limit. No story defect was found. Existing route/recovery tests remain
 necessary; authored sources, identity/revision, and browser gameplay are unchanged.
 
 ## Later stages — not implemented
@@ -684,7 +711,8 @@ tests. Stage 8D adds the separate Provincial Crisis story and API playtests with
 engine changes. Its playtest notes document current language/deployment limits;
 Stage 9A adds explicit story identity configuration and shared-storage isolation
 tests. Stage 9B adds the static two-story browser library with independent startup
-and progress. Stage 9C adds separate authoring preflight and concrete-route diagnostics.
+and progress. Stage 9C adds separate authoring preflight and concrete-route diagnostics;
+Stage 9D extends it with bounded first returns and immediate-exit probes.
 Continue Game, confirmed New Game, browser checkpoint storage, and death/Try Again
 are implemented. In-story Continue still follows its explicit destination.
 Traditional Undo, history stacks, manual
