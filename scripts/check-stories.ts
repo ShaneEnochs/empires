@@ -51,7 +51,8 @@ for (const file of files) {
     }
   }
   console.log('  ' + counts.error + ' errors, ' + counts.warning + ' warnings, ' + counts.information
-    + ' information; ' + report.exploredRoutes + ' route prefixes replayed.');
+    + ' information; ' + report.exploredRoutes + ' route prefixes replayed; '
+    + report.reentryProbes + ' re-entry probes (' + report.successfulReentries + ' returns succeeded).');
 }
 console.log('\nTotal: ' + totals.error + ' errors, ' + totals.warning + ' warnings, ' + totals.information + ' information.');
 process.exitCode = totals.error > 0 ? 1 : 0;

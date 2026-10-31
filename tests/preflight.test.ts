@@ -83,7 +83,7 @@ test('death is an authored termination, not an error or an implicit recovery edg
   assert.equal(report.skippedReentries, 0);
 });
 
-test('a journal-only cycle is advisory about untested re-entry, without accumulation warnings', () => {
+test('a journal-only cycle is tested without accumulation warnings and reports further-return limits', () => {
   const story = parsed(
     '*passage queue', '*title Queue', '*journal queued "You queued."', 'A queue.', '*continue offer',
     '*passage offer', '*title Offer', 'Decide.', '*choice', '#Return -> queue', '#Finish -> end',
@@ -92,7 +92,9 @@ test('a journal-only cycle is advisory about untested re-entry, without accumula
   const report = analyzeStory(story);
   assert.deepEqual(warnings(report), []);
   assert.deepEqual(errors(report), []);
-  assert.deepEqual(codes(report), ['REENTRY_SKIPPED', 'ANALYSIS_SCOPE']);
+  assert.deepEqual(codes(report), ['REENTRY_TESTED', 'REENTRY_SKIPPED', 'ANALYSIS_SCOPE']);
+  assert.equal(report.reentryProbes, 1);
+  assert.equal(report.successfulReentries, 1);
   assert.equal(report.skippedReentries, 1);
 });
 
@@ -339,8 +341,8 @@ test('preflight never modifies Story or another Game state/checkpoint; exposed d
   assert.throws(() => { (failure.route![0] as { passageId: string }).passageId = 'changed'; }, TypeError);
 });
 
-for (const [file, expectedRoutes, skipped] of [
-  ['src/example.story', 14, 0], ['examples/provincial-crisis.story', 1086, 4],
+for (const [file, expectedRoutes, probes, skipped] of [
+  ['src/example.story', 14, 0, 0], ['examples/provincial-crisis.story', 1098, 4, 4],
 ] as const) {
   test('preflights the unchanged included story: ' + file, () => {
     const story = parseStory(readFileSync(new URL('../' + file, import.meta.url), 'utf8'));
@@ -348,10 +350,12 @@ for (const [file, expectedRoutes, skipped] of [
     assert.deepEqual(errors(report), []);
     assert.deepEqual(warnings(report), []);
     assert.equal(report.exploredRoutes, expectedRoutes);
+    assert.equal(report.reentryProbes, probes);
+    assert.equal(report.successfulReentries, probes);
     assert.equal(report.skippedReentries, skipped);
     assert.equal(report.limitReached, false);
     assert.deepEqual(codes(report), skipped
-      ? ['REPRESENTATIVE_INPUT', 'REENTRY_SKIPPED', 'ANALYSIS_SCOPE']
+      ? ['REPRESENTATIVE_INPUT', 'REENTRY_TESTED', 'REENTRY_SKIPPED', 'ANALYSIS_SCOPE']
       : ['REPRESENTATIVE_INPUT', 'ANALYSIS_SCOPE']);
   });
 }

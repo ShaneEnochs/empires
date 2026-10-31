@@ -1024,7 +1024,9 @@ add commands, suppress entry effects, edit your story, or change saves.
   or whether repeated rewards/expenses are intended. A checkpoint does not turn
   entry effects into one-time rewards. A journal-only return visit can be safe
   because event IDs already deduplicate; cycles are not automatically bugs.
-- **Information** explains substituted text, skipped returns, limits, and scope.
+- **Information** aggregates successful/failed return probes and explains
+  substituted text, skipped returns, limits, and scope. A successful repeated
+  reward remains intentional gameplay unless a real transition fails.
   The tool submits `"Preflight Reader"` wherever text input is encountered.
   Playtest other names, especially if string conditions depend on them.
 
@@ -1034,14 +1036,26 @@ A structural path does not establish that the player can satisfy its conditions.
 Normal endings and death terminate exploration and are not errors by themselves.
 
 Exploration follows currently eligible choices, Continue, and text input using
-Game, on simple paths that never revisit a passage. A 2,000-prefix limit also
-prevents excessive work and reports incomplete exploration explicitly if reached.
-Thus some repeated-entry failures may receive only a warning, and other input
-values or recovery sequences may remain untested. A clean report is not a safety
+Game. Ordinary paths remain simple, but each eligible first return can now be
+probed by replaying its entire route, including the repeated passage ID.
+After a successful return, the tool rechecks available actions and can test
+each eligible exit to an unvisited passage in a separate one-transition prefix.
+It stops there. An exit requiring another repeated entry is outside coverage.
+
+Ordinary entries, return probes, and these immediate exits share one 2,000-prefix
+budget. Reports count executed prefixes and distinct attempted/successful returns.
+Budget omissions are explicit; successful return summaries do not assert that
+all subsequent choices are safe. For a reproduced failure, follow the full route,
+including repeated IDs and any printed input value. Re-entry may legitimately
+grant rewards, spend items, update checkpoints, or change available choices.
+The tool uses the existing engine to discover these consequences.
+
+Longer loops, later continuations after an immediate exit, other text values,
+checkpoint restoration, and death recovery remain untested. A clean report is not a safety
 guarantee. Use the existing route-test style and manual playtests to check
 revisits, recovery, resource promises, and alternative input values.
 The TypeScript `analyzeStory(story, maxRoutes)` API can increase the limit for a
-targeted review; it still does not cover non-simple paths or all text values.
+targeted review; it still permits only one repeated entry per route and one immediate exit.
 
 ## Future functionality, not current syntax
 
@@ -1058,7 +1072,7 @@ syntax or gameplay. Stage 8D adds the independent
 [Provincial Crisis story/playtest](../examples/provincial-crisis.md) using this
 syntax. Stage 9A adds application-level save identity configuration without new
 syntax. Stage 9B adds the static browser story library without altering either
-story or this language. Stage 9C adds authoring preflight tooling without new syntax.
+story or this language. Stages 9C–9D add authoring preflight and bounded return probes without new syntax.
 
 Continue Game resumes the single checkpoint when reopening, and New Game confirms
 before replacing saved progress. Both are implemented in Stage 7B.
