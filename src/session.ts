@@ -87,6 +87,12 @@ export class GameSession {
     this.act(game => game.submitText(value));
   }
 
+  retryAfterDeath(): void {
+    if (this.currentGame === undefined) throw new Error('Start or continue a game first.');
+    // Recovery preserves the checkpoint, stored bytes, and any save-failure notice.
+    this.currentGame.retryAfterDeath();
+  }
+
   private prepareNewGame(): Game | undefined {
     try { return new Game(this.story); } catch (error) {
       this.failure('A new game could not be started. Any previous progress was kept.', error);

@@ -79,6 +79,17 @@ libraries. Use the existing checkout; no frontend framework is needed.
   new Game. Explicit actions compare checkpoint references and write once only
   after replacement; ordinary transitions, failed actions, renders, panel controls,
   and form edits never save. No timers or unload saves.
+- `*death` is immutable passage metadata and one concluding action after prose.
+  Reject arguments, duplicates, other actions, conditional placement, a checkpoint
+  in the same passage, and a starting death passage. No `isDead` state/history.
+  Ordinary death entry effects use the existing atomic path. Display death prose
+  before allowing recovery; no automatic retry or arbitrary outgoing navigation.
+- Player recovery goes only through guarded `Game.retryAfterDeath()`, delegating
+  to existing atomic `restoreCheckpoint()`. Session retry must never access storage,
+  capture a checkpoint, or clear a persistence warning. Use the newest in-memory
+  checkpoint even after a failed write; reload uses the older stored checkpoint.
+  Preserve accepted names, all state/order, and the checkpoint reference. Failed
+  retry leaves death visible and recoverable. Reject untrusted death snapshots.
 - New Game rechecks record presence, confirms replacement even for unusable saves,
   constructs successfully before writing, and activates only after one successful
   replacement write. Cancellation and failed construction/writes preserve the old
@@ -109,14 +120,15 @@ libraries. Use the existing checkout; no frontend framework is needed.
 
 ## Planned features, only when requested
 
-Stages 7A and 7B are implemented: one in-memory checkpoint, automatic initial
+Stages 7A–7C are implemented: one in-memory checkpoint, automatic initial
 capture, author-controlled `*checkpoint`, validated restoration, one versioned
-localStorage record, startup, Continue Game, and confirmed New Game. The remaining
-roadmap is Stage 7C (`*death` and Try Again), then Stage 8 (interface improvements
-and comprehensive end-to-end testing). Do not start later stages without a request.
+localStorage record, startup, Continue Game, confirmed New Game, and death/Try Again.
+Stage 8 remains future work: interface improvements, character-attribute
+presentation, authoring usability, and comprehensive end-to-end testing.
+Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
-Death must eventually show authored prose without saving dead state over the
-checkpoint. Try Again will restore the existing complete pre-entry snapshot.
+Death shows authored prose without saving dead state over the checkpoint.
+Try Again restores the existing complete pre-entry snapshot.
 Submitted names and character attributes are ordinary variables; a checkpoint at
 their destination already includes them. Restoring a genuine input passage permits
 a new submission when rendered. There are no manual save slots or rewind controls.

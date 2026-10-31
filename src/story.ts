@@ -91,12 +91,12 @@ export function parseStory(source: string): Story {
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
     id: string; chapter: string; line: number; title?: string; checkpoint?: true; paragraphs: NarrativeParagraph[];
-    choices: Choice[]; effects: PassageEffect[]; continueTo?: string; textInput?: TextInputAction;
+    choices: Choice[]; effects: PassageEffect[]; continueTo?: string; textInput?: TextInputAction; death?: true;
   } | undefined;
   let paragraph: string[] = [];
   let paragraphCondition: Condition | undefined;
   let showIfLine = 1;
-  let action: 'choice' | 'continue' | 'input_text' | undefined;
+  let action: 'choice' | 'continue' | 'input_text' | 'death' | undefined;
   let actionLine = 1;
 
   function flushParagraph(): void {
@@ -137,6 +137,7 @@ export function parseStory(source: string): Story {
       effects: Object.freeze(current.effects),
       choices: Object.freeze(current.choices),
       ...(current.checkpoint === undefined ? {} : { checkpoint: current.checkpoint }),
+      ...(current.death === undefined ? {} : { death: current.death }),
       ...(current.continueTo === undefined ? {} : { continueTo: current.continueTo }),
       ...(current.textInput === undefined ? {} : { textInput: current.textInput }),
     }));
@@ -263,19 +264,32 @@ export function parseStory(source: string): Story {
         action = undefined;
         continue;
       }
-      if (!['*title', '*choice', '*continue', '*input_text'].includes(directive)) {
+      if (!['*title', '*choice', '*continue', '*input_text', '*death'].includes(directive)) {
         throw syntaxError(`Unsupported directive "${directive}".`, line, current?.id);
       }
       if (!current) throw syntaxError('Expected *passage before any content.', line);
       if (action !== undefined) {
+        if (action === 'death') throw syntaxError('*death must conclude the passage; no further directives are allowed.', line, current.id);
         if (action === 'input_text') throw syntaxError('Text input must conclude the passage; no further directives are allowed.', line, current.id);
         throw syntaxError('Choices and Continue must conclude the passage; no further directives are allowed.', line, current.id);
+      }
+      if (directive === '*death' && paragraphCondition !== undefined) {
+        throw syntaxError('*death cannot appear inside conditional narrative; end the paragraph with a blank line first.', line, current.id);
       }
       flushParagraph();
       if (directive === '*title') {
         if (current.title !== undefined) throw syntaxError('Duplicate *title.', line, current.id);
         if (argument === '') throw syntaxError('*title requires non-empty text.', line, current.id);
         current.title = argument;
+      } else if (directive === '*death') {
+        if (argument !== '') throw syntaxError('*death takes no arguments.', line, current.id);
+        if (current.title === undefined || current.paragraphs.length === 0) {
+          throw syntaxError('*death must follow the title and narrative content.', line, current.id);
+        }
+        if (current.checkpoint) throw syntaxError('A death passage cannot also be a checkpoint.', line, current.id);
+        if (passages.length === 0) throw syntaxError('The starting passage cannot be a death passage.', line, current.id);
+        current.death = true;
+        action = 'death';
       } else if (directive === '*choice') {
         if (argument !== '') throw syntaxError('*choice takes no arguments.', line, current.id);
         action = 'choice';
@@ -323,6 +337,8 @@ export function parseStory(source: string): Story {
       }
       current.choices.push(Object.freeze({ label, destinationId, ...(condition === undefined ? {} : { condition }) }));
       references.push({ destinationId, passageId: current.id, line });
+    } else if (action === 'death') {
+      throw syntaxError('*death must conclude the passage; no further prose or choices are allowed.', line, current.id);
     } else if (action === 'continue') {
       throw syntaxError('Continue must conclude the passage; no further prose or choices are allowed.', line, current.id);
     } else if (action === 'input_text') {

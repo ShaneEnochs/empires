@@ -55,6 +55,7 @@ export interface Passage {
   readonly chapter: string;
   readonly title: string;
   readonly checkpoint?: true;
+  readonly death?: true;
   readonly effects: readonly PassageEffect[];
   readonly paragraphs: readonly NarrativeParagraph[];
   readonly choices: readonly Choice[];

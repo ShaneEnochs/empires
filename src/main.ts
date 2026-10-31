@@ -229,13 +229,13 @@ try {
       const actions = document.createElement('nav');
       actions.setAttribute('aria-label', 'Passage actions');
 
-      function addAction(label: string, destinationId: string): void {
+      function addAction(label: string, action: () => void): void {
         const button = document.createElement('button');
         button.type = 'button';
         button.textContent = label;
         button.addEventListener('click', () => {
           try {
-            session.navigate(destinationId);
+            action();
             render();
           } catch (error) {
             showError(error);
@@ -244,8 +244,13 @@ try {
         actions.append(button);
       }
 
-      for (const choice of game.availableChoices) addAction(choice.label, choice.destinationId);
-      if (passage.continueTo !== undefined) addAction('Continue', passage.continueTo);
+      if (passage.death) {
+        addAction('Try Again', () => session.retryAfterDeath());
+      } else {
+        for (const choice of game.availableChoices) addAction(choice.label, () => session.navigate(choice.destinationId));
+        const destination = passage.continueTo;
+        if (destination !== undefined) addAction('Continue', () => session.navigate(destination));
+      }
 
       if (passage.textInput !== undefined) {
         const action = passage.textInput;

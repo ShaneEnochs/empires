@@ -29,6 +29,7 @@ Your name is ${character_name}. Your influence is ${influence}.
   #Speak to the messenger -> messenger
   #Go straight to the council -> council
   #Choose a preferred name and background -> choose_name
+  #Explore the abandoned watchtower -> watchtower
 
 *passage messenger
 *title A Quiet Warning
@@ -94,6 +95,7 @@ Welcome, ${character_name}. What shaped your life before this journey?
 *choice
   #Raised among nobility -> noble_origin
   #Trained with soldiers -> soldier_origin
+  #Explore the abandoned watchtower -> watchtower
 
 *passage noble_origin
 *title A Noble Upbringing
@@ -114,3 +116,22 @@ You learned to navigate the customs of the royal court.
 Discipline and loyalty shaped your years of training.
 
 *continue council
+
+*passage watchtower
+*title The Abandoned Watchtower
+*add influence 1
+*revoke_skill composure
+*grant_skill diplomacy
+*add_item gold_coin 1
+*journal entered_watchtower "You explored the abandoned watchtower."
+
+You climb a broken stair in search of a view of the city.
+
+*continue fatal_fall
+
+*passage fatal_fall
+*title A Fatal Fall
+
+The stair collapses beneath you. Your journey ends in the silent tower.
+
+*death

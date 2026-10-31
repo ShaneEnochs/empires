@@ -83,8 +83,8 @@ The messenger's extra coins remain after the entry fee.
 The first passage starts the story. The player can go directly to `council`
 (influence `0.5`, honor `5`, loyal `false`) or via `messenger` and Continue
 (influence `2.5`, honor `4`, loyal `true`). The council is terminal: there are no
-further actions or automatic fall-through. Refreshing starts a new game; variables,
-recorded journal events, acquired skills, and inventory persist between passages.
+further actions or automatic fall-through. Variables, recorded journal events,
+acquired skills, and inventory persist between passages.
 Browser startup offers New Game and, when valid saved progress exists, Continue
 Game. Continue resumes the last saved checkpoint rather than the latest ordinary
 passage; progress since that checkpoint is not recovered after reload.
@@ -96,6 +96,9 @@ Skills button lists current acquisitions by display name, in acquisition order.
 The shipped `src/example.story` also offers a third gate choice for a preferred
 name and noble/soldier background. It keeps the original start ID and both routes
 above; see the text-input section below for a complete independent example.
+The shipped example also offers an optional watchtower route from the gate and
+background selection, ending in death and Try Again without changing either
+original route's outcome.
 Both routes start with ten coins and a gate token. The messenger grants two more
 coins; council entry removes five coins and the token, leaving seven coins on the
 messenger route and five on the direct route. Neither route can underflow.
@@ -131,9 +134,10 @@ messenger route and five on the direct route. Neither route can underflow.
 | `#Label -> destination_id [if has_item id]` / `[if lacks_item id]` / `[if item_count id >= 1]` | Optional item condition with the same evaluator/fallback rules; all six comparison operators work for counts. |
 | `*continue destination_id` | One explicit Continue destination, mutually exclusive with choices. Must conclude the passage. |
 | `*input_text variable "Label" -> destination_id` | One concluding text-input action after narrative, targeting a declared string variable and existing passage. Mutually exclusive with choices/Continue. |
+| `*death` | No arguments; concludes a non-start, non-checkpoint passage after prose. Mutually exclusive with choices, Continue, and input. |
 
 A passage ends at the next `*passage`, a `*chapter` after a valid passage, or EOF. Terminal passages have no
-choices, Continue, or input action. After navigation, only blank lines, choices inside the
+choices, Continue, input, or death action. After a concluding action, only blank lines, choices inside the
 current `*choice` block, or a new chapter/passage are allowed. Additional prose, titles,
 effects, duplicate action blocks, or nested choices are errors.
 
@@ -187,7 +191,8 @@ after `*title` as the next nonblank directive, before every entry effect and all
 prose. It has no arguments and may appear only once per passage. It is immutable
 passage metadata, not an effect or a conditional command. It cannot appear in
 choices, conditional prose, input actions, or after another effect. A marked
-passage may otherwise have choices, Continue, text input, or no concluding action.
+passage may otherwise have choices, Continue, text input, or no concluding action,
+but cannot be a death passage.
 Whole-story parsing rejects invalid usage with source-line/passage context.
 
 ```text
@@ -242,7 +247,88 @@ current story definitions; the browser save envelope adds an explicit revision g
 
 The engine remains in memory and has no restore command in the story language or
 voluntary player checkpoint-return control. Stage 7B persists its checkpoint and
-provides startup Continue Game; future Try Again will use the same restoration.
+provides startup Continue Game; guarded Try Again uses the same restoration.
+
+## Death and recovery
+
+`*death` ends a death passage after its title and narrative. It has no arguments,
+can occur only once, and cannot coexist with choices, Continue, or text input.
+No further prose or commands are allowed before the next passage/chapter or EOF.
+It cannot precede the title or prose or be placed within conditional narrative.
+Finish a conditional paragraph with a blank line before the death action.
+At least one unconditional paragraph remains mandatory.
+
+A death passage cannot also have `*checkpoint`, and the first passage cannot
+be death because it automatically establishes the initial checkpoint. The parser
+validates these rules even in unreachable passages. Death is immutable passage
+metadata; it adds no variable or separate character/death state.
+
+This complete short route shows recovery from a marked camp:
+
+```text
+*var influence 0
+*item gold_coin "Gold Coin"
+
+*passage camp
+*title The Camp
+*checkpoint
+*add influence 2
+*add_item gold_coin 10
+
+You prepare for the journey.
+
+*choice
+  #Enter the ruins -> ruins
+  #Remain safe -> rest
+
+*passage ruins
+*title The Ruins
+*add influence 5
+
+You descend into the ruins.
+
+*continue fatal_trap
+
+*passage fatal_trap
+*title A Fatal Trap
+
+The floor gives way beneath your feet.
+
+*death
+
+*passage rest
+*title Rest
+
+You remain safely at camp.
+```
+
+The player sees the fatal narrative and a native Try Again button. The game
+waits for that action; it does not recover automatically or ask for confirmation.
+Journal, Skills, Inventory, New Game, and save warnings remain usable.
+Ordinary entry effects are allowed before death prose and execute atomically.
+Try Again discards all changes after the checkpoint, including death effects,
+and restores variables, journal text/chapters/order, acquired skills/order, and
+inventory/order together. Camp again yields influence 2 and ten coins, even
+after repeated death/retry cycles. The player can then choose the safe route.
+Authors must provide appropriate alternatives; narrative loops are not analyzed.
+
+Recovery uses the current in-memory pre-entry checkpoint, applies its effects
+once, and preserves the checkpoint itself. It neither reads nor writes storage.
+Death never saves dead state. If the latest automatic save failed, Try Again
+still uses that newer in-memory checkpoint and retains the warning; reopening
+instead resumes the older saved checkpoint. Play without saving supports the
+same recovery in memory. Failed recovery keeps the death passage and checkpoint
+unchanged and shows an accessible error so the player can retry.
+
+A name submitted before the checkpoint destination survives, including journal
+interpolation, without prompting again. If the checkpoint genuinely belongs to
+an input passage, its form reappears and permits a fresh submission. Drafts and
+input histories are never restored. There is no voluntary checkpoint-return
+command outside death.
+
+The optional watchtower additions in `src/example.story` preserve existing IDs,
+effects, chapters, declarations, and route outcomes. `STORY_REVISION` remains 1
+because existing gate/background snapshots remain compatible.
 
 ## Browser saving and startup
 
@@ -818,6 +904,7 @@ passage references are valid, and all destinations are checked before play.
 | `*passage City Gate` | Use `city_gate`, matching the identifier grammar. |
 | Missing `*title` or two titles | Supply exactly one nonempty title. |
 | `*checkpoint` with arguments, twice, or after effects/prose | Place one no-argument marker immediately after the title. |
+| `*death` before prose, with another action, or with `*checkpoint` | End a non-start, non-checkpoint passage with one no-argument death action after narrative. |
 | A title with no narrative | Add at least one nonblank paragraph. |
 | Empty chapter or no following passage | Supply a nonempty label and at least one passage per declaration. |
 | Variables, skills, or items after `*chapter` | Move all definitions before chapter metadata. |
@@ -858,25 +945,21 @@ referring actions. No partially validated story can initialize a game.
 
 Character attributes/UI and arithmetic expressions remain
 future work. Chapters, the journal, binary skills, inventory quantities,
-text input for story-driven character creation, in-memory checkpoints, and
-Stage 7B persistence/startup
+text input for story-driven character creation, in-memory checkpoints,
+persistence/startup, and death/Try Again recovery
 are implemented. Snapshots include complete variables, journal, skills, and
 inventory; definitions stay in static `Story` metadata.
 
-The remaining roadmap is:
-
-1. **Stage 7C:** `*death` and Try Again restoring the latest checkpoint. Death must
-   not save dead state over it; Try Again uses the existing pre-entry restore path.
-2. **Stage 8:** interface improvements and comprehensive end-to-end testing.
+Stage 8 remains future work: interface improvements, character-attribute
+presentation, authoring usability, and comprehensive end-to-end testing.
 
 Continue Game resumes the single checkpoint when reopening, and New Game confirms
 before replacing saved progress. Both are implemented in Stage 7B.
 
 There will be no traditional Undo, choice-history stack, manual rewind, Return to
-Checkpoint control, manual saves, or save slots. Future `*death` and Try Again are
-**not supported syntax or UI yet**. The `*checkpoint` marker, engine recovery,
-versioned browser persistence, and startup controls are supported. No death
-handling or Try Again is implemented.
+Checkpoint control, manual saves, or save slots. `*death`, guarded Try Again,
+the `*checkpoint` marker, engine recovery, versioned browser persistence,
+and startup controls are supported.
 See `docs/ENGINE.md` for the checkpoint boundary. Current `*continue id` remains
 ordinary navigation.
 
