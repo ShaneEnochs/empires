@@ -61,7 +61,7 @@ npm run build    # strict TypeScript check, then browser build in dist/
 npm run preview  # serve the production build locally
 ```
 
-GitHub Actions runs `npm ci`, `npm test`, `npm run build`, and `npm run test:e2e`
+GitHub Actions runs `npm ci`, `npm test`, `npm run check:stories`, `npm run build`, and `npm run test:e2e`
 on Node.js 22 for pull requests to `main` and pushes to `main`. It installs
 Playwright Chromium and its system dependencies, has a 10-minute job limit, and
 uploads browser diagnostics on failure. Repository contents remain read-only;
@@ -112,6 +112,52 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e
 
 The normal local setup and CI use Playwright's bundled Chromium. This override
 affects only the test runner, never the app.
+
+## Authoring preflight
+
+```sh
+npm run check:stories                       # both bundled .story files
+npm run check:stories -- path/to/your.story  # only the supplied file(s)
+```
+
+Preflight first uses the normal parser, then reports diagnostics grouped by file
+and passage, with codes, recommended actions, and concrete routes for reproduced
+entry failures. It reads files and creates private fresh Games; it never touches
+browser saves or an active game. No story/library configuration is needed for a
+separate file.
+
+| Severity | Meaning | Response |
+| --- | --- | --- |
+| Error | Syntax/reference failure or an eligible executed route whose entry failed. | Replay the route; fix syntax, resource budgets, or eligibility. The command exits nonzero. |
+| Warning | Structurally unreachable content or a potentially repeatable numeric/item effect on a graph cycle. | Check intended navigation and repeated rewards/expenses. Warnings are advisory. |
+| Information | Representative input, skipped re-entry, route limits, or analysis scope. | Playtest what the tool did not cover. |
+
+Structural reachability includes all authored conditional choices. An unreachable
+passage has no authored path from the start, but an authored path does not prove
+its gameplay conditions can be met. A cycle can be intentional: journal events
+already deduplicate, while numeric/item effects repeat on ordinary entry.
+
+Gameplay exploration replays eligible simple paths through Game, using
+`"Preflight Reader"` for text input. The default limit is 2,000 replayed route
+prefixes, including initial entry and failed attempts. An explicit information
+message reports any omitted prefixes. Repeated passage visits, other text values,
+and checkpoint recovery are not explored. **No-error output is not proof that
+every route is safe.** Keep the existing route/recovery tests and manual playtests.
+See [engine details and diagnostic codes](docs/ENGINE.md#authoring-preflight) and
+[author guidance](docs/SCRIPTING.md#preflight-and-playtesting).
+
+Current bundled-story findings:
+
+| Story | Errors | Warnings | Information | Replayed prefixes |
+| --- | --- | --- | --- | --- |
+| The City Gate | 0 | 0 | 2 | 14 |
+| Provincial Crisis | 0 | 0 | 3 | 1,086 |
+
+Neither story reached the default limit. Both report representative-name and
+scope limitations. Provincial Crisis also skips four eligible returns on its
+intentional journal-only queue/offer cycle; repeated visits remain covered by
+explicit playtests. These are analysis limitations and intentional authoring
+decisions, not confirmed defects. Neither story source nor revision was changed.
 
 ## Reading interface
 
@@ -534,7 +580,8 @@ recovery, selected character statistics, panel organization, and responsive read
 styles. Stage 8C adds permanent browser integration tests. Stage 8D adds an
 independent story/playtest example using the existing language. Stage 9A adds
 explicit story save identities and isolated persistence. Stage 9B adds the static
-two-story library and shared startup/gameplay presentation. Stage 9C is not implemented.
+two-story library and shared startup/gameplay presentation. Stage 9C adds separate
+authoring preflight diagnostics and its CLI, without changing gameplay.
 
 Traditional Undo, choice-history stacks, manual rewind, Return
 to Checkpoint controls, manual saves, and save slots remain excluded. In-story

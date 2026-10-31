@@ -1005,6 +1005,44 @@ Errors include one-based source lines and passage IDs when available. Missing
 titles point to their passage headers; missing destinations point to their
 referring actions. No partially validated story can initialize a game.
 
+## Preflight and playtesting
+
+Before publishing, run `npm run check:stories` for both bundled examples, or
+`npm run check:stories -- "path/to/my adventure.story"` for your own file.
+The command validates syntax/references with the normal parser, then supplements
+that with read-only graph checks and bounded gameplay exploration. It does not
+add commands, suppress entry effects, edit your story, or change saves.
+
+- **Errors** include source-line parser failures and concrete eligible routes
+  whose entry effects actually failed. For example, `start -> reward -> pay` is
+  replayed through the same Game navigation as the browser. Input steps print
+  their submitted value. Follow the route and check the destination's spending,
+  overflow, and eligibility. Earlier grants count: a removal larger than the
+  starting inventory is not automatically an error.
+- **Warnings** highlight structurally unreachable passages and cycle passages
+  with repeatable numeric/item effects. Check whether an incoming link is missing,
+  or whether repeated rewards/expenses are intended. A checkpoint does not turn
+  entry effects into one-time rewards. A journal-only return visit can be safe
+  because event IDs already deduplicate; cycles are not automatically bugs.
+- **Information** explains substituted text, skipped returns, limits, and scope.
+  The tool submits `"Preflight Reader"` wherever text input is encountered.
+  Playtest other names, especially if string conditions depend on them.
+
+Structural checks consider all conditional choices potentially traversable.
+Structurally unreachable means there is no authored path even with that assumption.
+A structural path does not establish that the player can satisfy its conditions.
+Normal endings and death terminate exploration and are not errors by themselves.
+
+Exploration follows currently eligible choices, Continue, and text input using
+Game, on simple paths that never revisit a passage. A 2,000-prefix limit also
+prevents excessive work and reports incomplete exploration explicitly if reached.
+Thus some repeated-entry failures may receive only a warning, and other input
+values or recovery sequences may remain untested. A clean report is not a safety
+guarantee. Use the existing route-test style and manual playtests to check
+revisits, recovery, resource promises, and alternative input values.
+The TypeScript `analyzeStory(story, maxRoutes)` API can increase the limit for a
+targeted review; it still does not cover non-simple paths or all text values.
+
 ## Future functionality, not current syntax
 
 Further character features and arithmetic expressions remain
@@ -1020,7 +1058,7 @@ syntax or gameplay. Stage 8D adds the independent
 [Provincial Crisis story/playtest](../examples/provincial-crisis.md) using this
 syntax. Stage 9A adds application-level save identity configuration without new
 syntax. Stage 9B adds the static browser story library without altering either
-story or this language. Stage 9C is not implemented.
+story or this language. Stage 9C adds authoring preflight tooling without new syntax.
 
 Continue Game resumes the single checkpoint when reopening, and New Game confirms
 before replacing saved progress. Both are implemented in Stage 7B.

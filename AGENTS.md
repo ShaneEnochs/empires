@@ -139,6 +139,18 @@ libraries. Use the existing checkout; no frontend framework is needed.
 - Every behavioral change requires appropriate tests. Keep documentation accurate
   when supported syntax or architecture changes. Test invalid input as well as
   successful paths, and validate a whole story before initializing a game.
+- Keep preflight in the separate `preflight.ts` module and CLI. Use the permissive
+  authored graph for structural reachability/cycle warnings, and fresh Game
+  replays for confirmed eligible failures. Never duplicate effect arithmetic or
+  condition evaluation, mutate an active game, fabricate snapshots for branching,
+  access storage, or import diagnostics into browser gameplay. Keep deterministic
+  ordering, explicit input values in failure routes, and a bounded queue of simple
+  prefixes (default 2,000). Report omissions and representative input
+  (`"Preflight Reader"`); never claim a clean report proves all routes safe.
+  Journal-only cycles are not accumulation errors. Warnings are advisory; only
+  parser/file errors and reproduced runtime failures make the CLI fail. Keep
+  authored route/recovery tests and review findings without automatically editing
+  stories or bumping revisions.
 - Preserve the Node suite under `tests/` and keep `npm test` dedicated to it.
   Committed Chromium integration tests live in `e2e/` and run with
   `npm run test:e2e` against a freshly built production preview on port 4175.
@@ -173,7 +185,9 @@ under `examples/` and test it through parser/Game APIs and isolated memory stora
 do not replace the shipped story or reuse its browser save slot. Stage 9A's
 explicit story save identities and shared-memory storage tests are implemented.
 Stage 9B's static browser library makes both stories playable through the same
-renderer/startup flow and isolated save identities. Do not begin Stage 9C.
+renderer/startup flow and isolated save identities. Stage 9C adds standalone
+authoring preflight, explicit diagnostic limitations, and a CLI. Do not start
+later stages without a request.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.
@@ -201,13 +215,15 @@ import/export, procedures, subroutines, loops, and plugin architectures.
 
 ## Commands
 
-Use Node.js 22.12+ and npm. Run `npm ci`, `npm test`, `npm run build`, and
+Use Node.js 22.12+ and npm. Run `npm ci`, `npm test`, `npm run check:stories`, `npm run build`, and
 `npm run test:e2e`; start development with `npm run dev`. Install the pinned
 Playwright Chromium with `npx playwright install chromium`, or
 `npx playwright install --with-deps chromium` on Linux when system libraries
 are needed. Tests automatically serve `dist/` at `127.0.0.1:4175`; rebuild after
 app changes and keep that port free. See README for the optional installed-browser
 override in restricted environments.
+`npm run check:stories -- path/to/file.story` checks explicit files instead of the
+two defaults. The CLI and its subprocess tests use the existing `tsx` dev dependency.
 
 CI runs those checks on Node.js 22 for pull requests to `main` and pushes to
 `main`, installs Chromium/system dependencies, and has a 10-minute job limit.
