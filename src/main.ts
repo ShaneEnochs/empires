@@ -1,5 +1,6 @@
 import type { Game } from './game';
 import { GameSession } from './session';
+import { DEFAULT_SAVE_IDENTITY } from './storage';
 import { createPanels } from './panels';
 import { parseStory } from './story';
 import { interpolate } from './interpolate';
@@ -24,7 +25,7 @@ try {
   const session = new GameSession(story, {
     getItem: key => window.localStorage.getItem(key),
     setItem: (key, value) => window.localStorage.setItem(key, value),
-  });
+  }, DEFAULT_SAVE_IDENTITY);
   let reportedNotice: unknown;
 
   function renderNotice(): void {

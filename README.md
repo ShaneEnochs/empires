@@ -122,8 +122,8 @@ Edit [src/example.story](src/example.story); read the full
 For a separate 30-passage adventure, see
 [Provincial Crisis](examples/provincial-crisis.story) and its
 [playtest routes, balances, and authoring findings](examples/provincial-crisis.md).
-Its 20 integration tests run with `npm test`; the browser continues to load the
-original shipped story. No save identity or application loader is changed.
+Its 20 playthrough tests and shared-storage identity tests run with `npm test`.
+The browser continues to load the original shipped story; there is no story selector.
 
 Authors use one small plain-text format:
 
@@ -373,9 +373,11 @@ Checkpoint control; browser startup uses the checkpoint constructor for Continue
 
 ## Persistent checkpoint and startup
 
-`src/storage.ts` uses exactly one namespaced localStorage key,
-`empires:checkpoint:empires-example`. The explicit constants are
-`SAVE_FORMAT_VERSION = 1`, `STORY_ID = 'empires-example'`, and `STORY_REVISION = 1`.
+`src/storage.ts` uses one namespaced localStorage key per configured story.
+The browser still launches the shipped example with `DEFAULT_SAVE_IDENTITY`:
+`storyId: 'empires-example'`, `storyRevision: 1`, and the unchanged key
+`empires:checkpoint:empires-example`. Existing revision-1 saves remain readable.
+`SAVE_FORMAT_VERSION = 1` remains an independent application-wide constant.
 Identity/revision stay outside GameState and `.story` syntax. The initial save
 envelope for the shipped example is:
 
@@ -396,7 +398,36 @@ envelope for the shipped example is:
 }
 ```
 
-Maintain stable IDs. **Bump `STORY_REVISION` when changing a story incompatibly**,
+For another story, pass explicit application configuration to the same session API:
+
+```ts
+import { GameSession } from './src/session';
+import { checkpointKey, validateSaveIdentity } from './src/storage';
+
+const identity = validateSaveIdentity({ storyId: 'provincial-crisis', storyRevision: 1 });
+const session = new GameSession(parsedStory, storage, identity);
+checkpointKey(identity); // empires:checkpoint:provincial-crisis
+```
+
+Here `parsedStory` is the corresponding parsed Story and `storage` implements
+`getItem` and `setItem`. `StorySaveIdentity` has only readonly `storyId` and
+`storyRevision` fields. Validation returns a frozen independent copy; GameSession
+also captures its own copy before reading storage. IDs match `^[a-z][a-z0-9_-]*$`:
+a lowercase ASCII letter followed by lowercase letters, digits, underscores, or
+hyphens. Revisions are positive safe integers. Invalid configurations throw before
+storage access; IDs are never inferred, trimmed, or normalized.
+
+Assign a unique stable ID to each independent story. Reusing an ID deliberately
+targets the same save record; no registry can determine whether two configured
+stories are actually the same work. Keys contain the ID, **not the revision**:
+a revision change finds the old record and reports incompatibility. A session
+only accesses its configured key. Low-level `loadCheckpoint(storage, story, identity)`
+and `saveCheckpoint(storage, story, checkpoint, identity)` accept the same config.
+Omitting it retains the shipped defaults, including the legacy `STORY_ID`,
+`STORY_REVISION`, and `STORAGE_KEY` exports. There is no browser story selection
+or Provincial Crisis loader yet.
+
+Maintain stable IDs. **Bump the configured story revision when changing a story incompatibly**,
 including variable declarations/types, passage/item/skill/journal identities or
 journal chapters, and entry effects that change saved-state behavior. Bump
 `SAVE_FORMAT_VERSION` for incompatible envelope changes. There are no migrations
@@ -466,7 +497,9 @@ Authors provide safe alternatives; the engine does not analyze narrative loops.
 Stages 7A–7C, 8A, and 8B are implemented, including persistent checkpoints, death
 recovery, selected character statistics, panel organization, and responsive reading
 styles. Stage 8C adds permanent browser integration tests. Stage 8D adds an
-independent story/playtest example using the existing language. Stage 9 has not begun.
+independent story/playtest example using the existing language. Stage 9A adds
+explicit story save identities and isolated persistence. Browser story selection
+remains future work; Stage 9B is not implemented.
 
 Traditional Undo, choice-history stacks, manual rewind, Return
 to Checkpoint controls, manual saves, and save slots remain excluded. In-story

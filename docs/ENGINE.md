@@ -439,12 +439,42 @@ never construct a Game, execute effects, or navigate. Browser adapters defer
 access to `window.localStorage` until a caught read/write operation, including
 when the localStorage getter itself throws.
 
-The one key is `empires:checkpoint:empires-example`, formed from `STORY_ID`.
-The exact JSON envelope fields are `formatVersion`, `storyId`, `storyRevision`,
-and `checkpoint`. Constants in `storage.ts` are `SAVE_FORMAT_VERSION = 1`,
-`STORY_ID = 'empires-example'`, and `STORY_REVISION = 1`. The checkpoint is the
-existing complete pre-entry snapshot, not current post-entry state. No extra
-state, definitions, timestamps, drafts, or version history are serialized.
+Stage 9A adds explicit `StorySaveIdentity` application configuration with readonly
+`storyId: string` and `storyRevision: number` fields. It belongs outside Story,
+GameState, snapshots, and scripting. `validateSaveIdentity` requires exactly these
+own data fields, an ID matching `^[a-z][a-z0-9_-]*$`, and a positive safe integer
+revision. It rejects accessors/inherited fields and returns a frozen copy.
+Configuration errors throw before storage reads or writes; they are developer
+errors, separate from unusable saved records and unavailable storage.
+
+`checkpointKey(identity)` returns `empires:checkpoint:` plus the unchanged ID,
+with no normalization or content/filename inference. Each independently identified
+story has one distinct key. Developers must allocate unique IDs: reusing one ID
+means sharing one record. Revision is deliberately absent from the key, so a
+revision change reports an incompatible save rather than an empty slot.
+Storage never enumerates keys, falls back to another story, or deletes records.
+
+`loadCheckpoint(storage, story, identity)` and
+`saveCheckpoint(storage, story, checkpoint, identity)` validate the supplied
+identity and use only that key. The exact JSON envelope fields remain
+`formatVersion`, `storyId`, `storyRevision`, and `checkpoint`. Configured ID and
+revision must match the envelope before full snapshot validation against that Story.
+`SAVE_FORMAT_VERSION = 1` remains application-wide and independent of story revisions.
+The checkpoint is the existing complete pre-entry snapshot, not current post-entry
+state. No extra state, definitions, timestamps, drafts, or version history are serialized.
+
+All identity arguments default to frozen `DEFAULT_SAVE_IDENTITY`, retaining
+`STORY_ID = 'empires-example'`, `STORY_REVISION = 1`, and
+`STORAGE_KEY = 'empires:checkpoint:empires-example'` for existing callers.
+`main.ts` explicitly supplies that default; the shipped story and compatible
+revision-1 saves are unchanged. No migration, format bump, browser selector, or
+Provincial Crisis browser loader is introduced.
+
+`new GameSession(story, storage, identity)` captures its own validated frozen
+identity before startup reads. All subsequent startup, New Game rechecks/replacement,
+and automatic checkpoint writes use that copy, even if the caller later changes
+its original configuration object. Continue, retry, and unsaved play retain their
+existing no-write behavior. `Game` has no identity or storage responsibilities.
 
 `loadCheckpoint` catches read/JSON errors, rejects missing/extra fields or
 mismatched versions/identity, then calls the existing full snapshot validator.
@@ -492,7 +522,7 @@ for that game, leaves existing stored progress untouched, and keeps a clear
 progress-loss notice. Cancellation/failure preserves the previous application.
 
 Maintain stable passage, item, skill, journal, and variable identifiers. Maintainers
-must deliberately bump `STORY_REVISION` for incompatible declarations, identity,
+must deliberately bump the configured story revision for incompatible declarations,
 chapter, or entry-effect changes, even if the old snapshot still passes structural
 validation. Bump `SAVE_FORMAT_VERSION` for incompatible envelope changes. A mismatch
 never migrates, repairs, or deletes the save; confirmed New Game replaces it.
@@ -546,7 +576,8 @@ Stage 8A adds read-only selected statistics and limited panel organization.
 Stage 8B adds responsive reading styles. Stage 8C adds permanent browser integration
 tests. Stage 8D adds the separate Provincial Crisis story and API playtests without
 engine changes. Its playtest notes document current language/deployment limits;
-Stage 9 has not begun.
+Stage 9A adds explicit story identity configuration and shared-storage isolation
+tests. Browser story selection remains future work; Stage 9B is not implemented.
 Continue Game, confirmed New Game, browser checkpoint storage, and death/Try Again
 are implemented. In-story Continue still follows its explicit destination.
 Traditional Undo, history stacks, manual
