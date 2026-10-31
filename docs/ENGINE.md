@@ -374,8 +374,8 @@ declared inventory IDs with positive safe integer quantities. Own-property check
 handle names such as `constructor`. Recorded journal text is retained as resolved
 data, never re-interpolated; ordinary string variables are not revalidated as
 player submissions. Invalid data is rejected, never repaired or defaulted.
-Validation uses current story definitions, without proving historical reachability
-or adding a persistent format/version policy.
+Validation uses current story definitions without proving historical reachability.
+The storage layer separately checks persistent envelope versions before calling it.
 
 Text submission supplies the accepted name before snapshot capture and destination
 effects. Restoring that destination preserves the name and does not prompt again;
@@ -383,22 +383,88 @@ journal effects execute once in their usual order. Restoring a genuine input
 passage instead makes its input action available when rendered. Unsubmitted form
 drafts are never gameplay state or checkpoint data.
 
-These are engine operations only. No player-facing return control or automatic
-DOM update is added; a future recovery handler will render after restoration,
-just as existing action handlers render after navigation/submission.
+These engine methods never touch browser storage or DOM. The application renders
+an activated restored Game on Continue, just as explicit actions render after
+navigation/submission. There is no voluntary Return to Checkpoint control.
+
+## Persistent checkpoints and application startup
+
+Stage 7B adds `storage.ts` and a small `GameSession` application coordinator.
+`Game`, `GameState`, `GameSnapshot`, snapshot validation, and story syntax remain
+unchanged. Storage functions accept an injected `getItem`/`setItem` interface and
+never construct a Game, execute effects, or navigate. Browser adapters defer
+access to `window.localStorage` until a caught read/write operation, including
+when the localStorage getter itself throws.
+
+The one key is `empires:checkpoint:empires-example`, formed from `STORY_ID`.
+The exact JSON envelope fields are `formatVersion`, `storyId`, `storyRevision`,
+and `checkpoint`. Constants in `storage.ts` are `SAVE_FORMAT_VERSION = 1`,
+`STORY_ID = 'empires-example'`, and `STORY_REVISION = 1`. The checkpoint is the
+existing complete pre-entry snapshot, not current post-entry state. No extra
+state, definitions, timestamps, drafts, or version history are serialized.
+
+`loadCheckpoint` catches read/JSON errors, rejects missing/extra fields or
+mismatched versions/identity, then calls the existing full snapshot validator.
+It returns empty, loaded, invalid, or unavailable status and never writes or
+deletes. `GameSession` also verifies actual entry with the restoration constructor
+before offering Continue. A structurally valid but infeasible checkpoint becomes
+unusable. The prepared Game is retained until selection and activated by Continue,
+so probing and clicking Continue do not run effects twice. No default new Game is
+constructed during empty startup. There is no second gameplay-state collection;
+the active/prepared Game owns its own immutable state and checkpoint.
+
+Startup renders a focused Empires heading and native New Game button, adding
+Continue Game only for a usable save. Invalid saves display a readable explanation
+without changing their bytes. Diagnostic errors are logged to the browser console.
+Continue performs no storage write and enters the saved destination directly,
+including accepted names or a genuine input action. Progress made in later ordinary
+passages is intentionally not resumed.
+
+New Game rechecks record presence on the explicit action and requests native
+confirmation for every existing record, usable or unusable. Cancellation changes
+neither the app nor saved data. A fresh candidate Game must initialize successfully
+before its initial checkpoint is written with one `setItem`. Only write success
+activates that candidate and resets the panels. Failed construction/write preserves
+the previous active Game and saved record; no deletion precedes replacement.
+An inaccessible read prevents a risky overwrite when presence cannot be checked.
+
+Navigation/submission wrappers capture the authoritative checkpoint reference,
+perform the Game action, and save once only when that reference changes. Legitimate
+same-ID checkpoint re-entry also writes. Failed actions throw before any write;
+ordinary transitions, getters, interpolation, renders, panel toggles, and field
+editing never save. `saveCheckpoint` validates/serializes the frozen checkpoint
+and catches write errors without managing gameplay. No separate save-event system
+or cache of current/post-entry state is introduced.
+
+Automatic write failure leaves successful gameplay and the new in-memory
+checkpoint committed. Native localStorage replacement is atomic, so failed writes
+leave old bytes intact. The app shows a persistent warning about losing progress
+since the last stored checkpoint. Ordinary renders retain it; a later real
+checkpoint write can succeed and clear it. There are no timers, polling, background
+sync, unload handlers, or retry writes from UI inspection.
+
+If storage is inaccessible, or New Game cannot be saved, an explicit Play without
+saving action asks for consent. It initializes a new Game, disables persistence
+for that game, leaves existing stored progress untouched, and keeps a clear
+progress-loss notice. Cancellation/failure preserves the previous application.
+
+Maintain stable passage, item, skill, journal, and variable identifiers. Maintainers
+must deliberately bump `STORY_REVISION` for incompatible declarations, identity,
+chapter, or entry-effect changes, even if the old snapshot still passes structural
+validation. Bump `SAVE_FORMAT_VERSION` for incompatible envelope changes. A mismatch
+never migrates, repairs, or deletes the save; confirmed New Game replaces it.
+There is no automatic release-compatibility or migration framework. Data belongs
+to one browser profile/origin; no cross-tab synchronization or cloud copy is added.
 
 ## Later stages — not implemented
 
-1. **Stage 7B:** persistent saving, Continue Game, confirmed New Game, storage keys,
-   format versioning, and changing-release compatibility policy.
-2. **Stage 7C:** `*death` and Try Again. Death must never replace the checkpoint
+1. **Stage 7C:** `*death` and Try Again. Death must never replace the checkpoint
    with dead state; Try Again will use the existing complete pre-entry restoration.
-3. **Stage 8:** interface improvements and end-to-end testing.
+2. **Stage 8:** interface improvements and comprehensive end-to-end testing.
 
-Future Continue Game resumes the single checkpoint on reopening. New Game must
-confirm before replacing progress. Currently refreshing starts over: there is no
-browser/cloud storage, title screen, death handling, or Try Again. In-story Continue
-still follows its explicit destination. Traditional Undo, history stacks, manual
+Continue Game, confirmed New Game, and browser checkpoint storage are implemented.
+Death handling and Try Again remain unimplemented. In-story Continue still follows
+its explicit destination. Traditional Undo, history stacks, manual
 rewind, Return to Checkpoint controls, manual saves, and multiple slots remain
 excluded. Static story metadata stays outside snapshots.
 
@@ -410,11 +476,12 @@ binary skill definitions/acquisition/revocation/viewing, interpolation, validate
 item definitions/quantities/conditions and inventory viewing,
 one-field player text input and story-driven character creation,
 in-memory checkpoint capture/validation/restoration,
+versioned localStorage checkpoint persistence and minimal startup,
 explicit navigation, and basic rendering. No dependencies or visual redesign are
 needed. Ordinary TypeScript iteration over data is not a story-language loop.
 
 Character attributes/UI, arithmetic expressions,
-and the later persistence/death roadmap require future tasks. Randomness,
+and the later death/interface roadmap require future tasks. Randomness,
 glossary, shops, skill purchasing, manual saves, save slots, import/export,
 procedures, subroutines, loops, and plugin systems remain excluded. System
 Awakening is reference only and its engine architecture is not imported.
@@ -436,6 +503,9 @@ exactly-once destination entry, and character-background routes.
 Checkpoint tests cover pre-entry capture, replacement/re-entry, direct fresh
 restoration, complete state/order recovery, untrusted data validation, deep
 immutability, and atomic failures.
+Persistence tests cover envelopes, version/identity gates, read/write failures,
+confirmation/cancellation, atomic New Game replacement, exactly-once loading,
+checkpoint-only writes, Unicode/order retention, and explicit unsaved play.
 `npm run build` checks source/tests
 with strict TypeScript and builds the app. Browser checks cover hidden content,
 rerendering, keyboard navigation, and inert HTML-like interpolation.
