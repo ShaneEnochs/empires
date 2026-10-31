@@ -1006,7 +1006,8 @@ are implemented. Snapshots include complete variables, journal, skills, and
 inventory; definitions stay in static `Story` metadata.
 
 Stage 8A's selected-stat panel and Stage 8B's responsive reading styles are
-implemented. Stage 8C and further authoring/usability work remain future tasks.
+implemented. Stage 8C adds permanent browser tests without changing authoring
+syntax or gameplay. Stage 8D remains future work.
 
 Continue Game resumes the single checkpoint when reopening, and New Game confirms
 before replacing saved progress. Both are implemented in Stage 7B.

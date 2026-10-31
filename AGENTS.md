@@ -122,6 +122,15 @@ libraries. Use the existing checkout; no frontend framework is needed.
 - Every behavioral change requires appropriate tests. Keep documentation accurate
   when supported syntax or architecture changes. Test invalid input as well as
   successful paths, and validate a whole story before initializing a game.
+- Preserve the Node suite under `tests/` and keep `npm test` dedicated to it.
+  Committed Chromium integration tests live in `e2e/` and run with
+  `npm run test:e2e` against a freshly built production preview on port 4175.
+  Playwright owns server start/stop and creates isolated contexts per test.
+  Use accessible selectors and retrying assertions; no sleeps, screenshot
+  baselines, test-only app routes, app hooks, or internal Game/session access.
+  Observe storage through native browser APIs when asserting writes. Keep the
+  responsive selection at 320/375/768/1280px and preserve native keyboard checks.
+  Do not weaken a failed test; distinguish a real defect from a test/setup issue.
 - Render authored content with `textContent`, never as HTML. Keep native keyboard
   access and the small UI; visual changes require a concrete request.
 - Use `Game.availableChoices` for display and enforce the same eligibility inside
@@ -141,7 +150,8 @@ capture, author-controlled `*checkpoint`, validated restoration, one versioned
 localStorage record, startup, Continue Game, confirmed New Game, and death/Try Again.
 Stage 8A's static stat-display metadata, read-only Character panel, and limited
 panel-code extraction are implemented, as are Stage 8B's responsive reading styles.
-Stage 8C and further authoring/usability work remain future tasks.
+Stage 8C's permanent production browser suite is implemented. Stage 8D remains
+future work.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.
@@ -169,8 +179,18 @@ import/export, procedures, subroutines, loops, and plugin architectures.
 
 ## Commands
 
-Use Node.js 22.12+ and npm. Run `npm ci`, `npm test`, and `npm run build`; start
-with `npm run dev`. CI runs the same checks on Node.js 22 for pull requests to
-`main` and pushes to `main`. Commit source and the lockfile; `dist/` and
-`node_modules/` are generated and ignored. Work on a feature branch and keep pull
-requests focused; do not commit directly to `main`.
+Use Node.js 22.12+ and npm. Run `npm ci`, `npm test`, `npm run build`, and
+`npm run test:e2e`; start development with `npm run dev`. Install the pinned
+Playwright Chromium with `npx playwright install chromium`, or
+`npx playwright install --with-deps chromium` on Linux when system libraries
+are needed. Tests automatically serve `dist/` at `127.0.0.1:4175`; rebuild after
+app changes and keep that port free. See README for the optional installed-browser
+override in restricted environments.
+
+CI runs those checks on Node.js 22 for pull requests to `main` and pushes to
+`main`, installs Chromium/system dependencies, and has a 10-minute job limit.
+Browser tests have zero retries and retain failure traces/screenshots; CI uploads
+`test-results/` and `playwright-report/` on failure for seven days. Both are ignored,
+as are `dist/` and `node_modules/`. Commit source/config and the lockfile, not
+generated reports. Work on a feature branch and keep pull requests focused;
+do not commit directly to `main`.
