@@ -87,8 +87,15 @@ libraries. Use the existing checkout; no frontend framework is needed.
   Do not add traditional Undo, a history stack, manual rewind, or a player-facing
   Return to Checkpoint command.
 - Keep `Game` and snapshot semantics independent of browser storage. `storage.ts`
-  reads/writes one localStorage key using the explicit format/story/revision
-  constants and full snapshot validation. Never persist current post-entry state,
+  reads/writes only `empires:checkpoint:<storyId>` for a validated explicit
+  `StorySaveIdentity`. IDs match `^[a-z][a-z0-9_-]*$`; revisions are positive safe
+  integers. Assign unique IDs to independent stories, never infer/normalize them.
+  Validate and copy/freeze configuration before any storage access. GameSession
+  retains that copy for every read/write, including rechecks and failure paths.
+  Revisions stay out of keys so old progress reports incompatibility. Never scan,
+  fall back to another story's key, or share the shipped slot for another story.
+  Preserve default `empires-example`, revision 1, its exact legacy key/exports,
+  format version 1, and full snapshot validation. Never persist current post-entry state,
   automatically repair a save, migrate it, or delete it before replacement.
 - `GameSession` prepares a restored Game once before offering Continue, then
   activates it without re-entering or writing. Empty startup must not construct a
@@ -112,10 +119,10 @@ libraries. Use the existing checkout; no frontend framework is needed.
   game/save. Automatic write failure instead keeps committed gameplay/checkpoint
   and displays a progress-loss warning. Inaccessible storage permits only explicit
   consent to play without saving; never imply reload survival in that mode.
-- Keep stable passage/item/skill/journal/variable IDs. Bump `STORY_REVISION` for
+- Keep stable passage/item/skill/journal/variable IDs. Bump the configured story revision for
   incompatible story changes, including entry-effect changes; bump
   `SAVE_FORMAT_VERSION` for incompatible envelope changes. Identity/revision are
-  application constants, never mutable gameplay fields or scripting directives.
+  explicit application configuration, never mutable gameplay fields or scripting directives.
 - Implement new features only when explicitly requested. Do not replace working
   features with elaborate abstractions without a demonstrated benefit. Keep one
   authoring format; avoid parser frameworks and hypothetical extension layers.
@@ -153,7 +160,10 @@ panel-code extraction are implemented, as are Stage 8B's responsive reading styl
 Stage 8C's permanent production browser suite and Stage 8D's independent
 Provincial Crisis authoring/playtest example are implemented. Keep that example
 under `examples/` and test it through parser/Game APIs and isolated memory storage;
-do not replace the shipped story or reuse its browser save slot. Stage 9 has not begun.
+do not replace the shipped story or reuse its browser save slot. Stage 9A's
+explicit story save identities and shared-memory storage tests are implemented.
+The browser still explicitly launches the example. Story selection and a
+Provincial Crisis browser loader remain unimplemented; do not begin Stage 9B.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.

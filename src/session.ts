@@ -1,6 +1,6 @@
 import { Game } from './game';
-import { loadCheckpoint, saveCheckpoint } from './storage';
-import type { CheckpointStorage } from './storage';
+import { DEFAULT_SAVE_IDENTITY, loadCheckpoint, saveCheckpoint, validateSaveIdentity } from './storage';
+import type { CheckpointStorage, StorySaveIdentity } from './storage';
 import type { Story } from './types';
 
 type Notice = { readonly message: string; readonly error?: unknown };
@@ -17,9 +17,11 @@ export class GameSession {
   private currentNotice?: Notice;
   private unsavedAvailable = false;
   private savingEnabled = true;
+  private readonly identity: StorySaveIdentity;
 
-  constructor(private readonly story: Story, private readonly storage: CheckpointStorage) {
-    const saved = loadCheckpoint(storage, story);
+  constructor(private readonly story: Story, private readonly storage: CheckpointStorage, identity: StorySaveIdentity = DEFAULT_SAVE_IDENTITY) {
+    this.identity = validateSaveIdentity(identity);
+    const saved = loadCheckpoint(storage, story, this.identity);
     if (saved.status === 'loaded') {
       try {
         this.preparedGame = new Game(story, { checkpoint: saved.checkpoint });
@@ -46,7 +48,7 @@ export class GameSession {
 
   newGame(confirmReplacement: () => boolean): StartResult {
     // Recheck presence on this explicit action, including records created after startup.
-    const saved = loadCheckpoint(this.storage, this.story);
+    const saved = loadCheckpoint(this.storage, this.story, this.identity);
     if (saved.status === 'unavailable') {
       this.unsavedAvailable = true;
       return this.failure('Saved progress could not be checked. A new saved game was not started.', saved.error);
@@ -54,7 +56,7 @@ export class GameSession {
     if (saved.status !== 'empty' && !confirmReplacement()) return 'cancelled';
     const candidate = this.prepareNewGame();
     if (candidate === undefined) return 'failed';
-    const result = saveCheckpoint(this.storage, this.story, candidate.checkpoint);
+    const result = saveCheckpoint(this.storage, this.story, candidate.checkpoint, this.identity);
     if (!result.ok) {
       this.unsavedAvailable = true;
       return this.failure('The new game was not started because it could not be saved. Any previous progress was kept.', result.error);
@@ -114,7 +116,7 @@ export class GameSession {
     const previousCheckpoint = game.checkpoint;
     action(game); // A rejected action throws before any persistence attempt.
     if (this.savingEnabled && game.checkpoint !== previousCheckpoint) {
-      const result = saveCheckpoint(this.storage, this.story, game.checkpoint);
+      const result = saveCheckpoint(this.storage, this.story, game.checkpoint, this.identity);
       this.currentNotice = result.ok ? undefined : {
         message: 'The latest checkpoint could not be saved. Closing this page may lose progress since the last saved checkpoint.',
         error: result.error,

@@ -402,15 +402,21 @@ does not accumulate rewards or duplicate journal events. A checkpoint at an inpu
 passage still offers its form; a saved accepted name at its destination is retained
 without prompting. The current post-entry passage state is not separately saved.
 
-The fixed application constants live in `src/storage.ts`, not `.story` declarations
-or GameState: `SAVE_FORMAT_VERSION = 1`, `STORY_ID = 'empires-example'`,
-`STORY_REVISION = 1`, and key `empires:checkpoint:empires-example`.
+Save identity is explicit application configuration in `src/storage.ts`, never
+`.story` declarations or GameState. `StorySaveIdentity` supplies a stable `storyId`
+matching `^[a-z][a-z0-9_-]*$` and a positive safe integer `storyRevision`.
+Developers pass it to GameSession/storage APIs; see README for setup. Independent
+stories require distinct IDs and use `empires:checkpoint:<storyId>`. Revision is
+not part of the key, so incompatible old progress remains detectable.
+The browser still uses `DEFAULT_SAVE_IDENTITY`, with legacy
+`STORY_ID = 'empires-example'`, `STORY_REVISION = 1`, and exact key
+`empires:checkpoint:empires-example`. `SAVE_FORMAT_VERSION = 1` is independent.
 The JSON envelope has exactly `formatVersion`, `storyId`, `storyRevision`, and
 `checkpoint` (the complete existing `{ state: GameState }` representation).
 See README for an actual initial-save example.
 
 **Keep passage, item, skill, journal, and variable IDs stable.** Maintainers must
-bump `STORY_REVISION` for incompatible identity/declaration/type, journal-chapter,
+bump the configured story revision for incompatible declaration/type, journal-chapter,
 or entry-effect changes. Matching versions do not bypass snapshot validation.
 Change `SAVE_FORMAT_VERSION` intentionally for incompatible envelope changes.
 There are no automatic migrations or version histories; saves from another story,
@@ -1009,7 +1015,8 @@ Stage 8A's selected-stat panel and Stage 8B's responsive reading styles are
 implemented. Stage 8C adds permanent browser tests without changing authoring
 syntax or gameplay. Stage 8D adds the independent
 [Provincial Crisis story/playtest](../examples/provincial-crisis.md) using this
-syntax. Stage 9 has not begun.
+syntax. Stage 9A adds application-level save identity configuration without new
+syntax. Browser story selection remains future work; Stage 9B is not implemented.
 
 Continue Game resumes the single checkpoint when reopening, and New Game confirms
 before replacing saved progress. Both are implemented in Stage 7B.

@@ -155,10 +155,14 @@ explicitly warned about and have safe alternatives.
 Fresh `Game` restoration and `GameSession` JSON round trips test these boundaries.
 Session tests use a new injected **memory-only** storage object each time.
 They verify no writes on retry/Continue, complete ordered state reconstruction,
-and successful onward play. Never connect this fixture to the shipped app's
-localStorage slot: the current persistence module's identity is configured for
-`empires-example`, not this adventure. No alternate browser save ID, key,
-revision, or envelope was introduced here.
+and successful onward play. The original isolated-memory playtests retain the
+default session API. Stage 9A adds `tests/story-identity.test.ts`, which uses
+`{ storyId: 'provincial-crisis', storyRevision: 1 }` and tests both real stories
+against one shared fake storage. It verifies independent keys, full restoration,
+revision rejection, failed-write isolation, and death/retry without save writes.
+Run all routes and identity tests with `npm test`; no browser storage is used.
+Never connect this fixture to the shipped app's save slot. Explicit configuration
+now supports its separate key, but the browser still loads only the shipped story.
 
 ## Authoring findings and priorities
 
@@ -185,22 +189,23 @@ engine changes. These distinctions matter:
   literal item operands. Finite preauthored tiers are possible; this story uses
   explicit fixed cohorts and allocations. Dynamic logistics would need a
   separately specified feature, not an invented command in this example.
-- **Deployment limitation:** Game/Story are reusable, but browser save identity
-  remains application configuration. Testing another Story is safe with injected
-  memory storage; publishing it into the same browser slot is not a supported
-  multi-story arrangement.
+- **Deployment follow-up:** Stage 9A resolves independent save identity through
+  explicit application configuration. A browser loader or story selector is
+  still absent. Publishing this story must use its own ID, never `empires-example`.
 
 Recommended future work, ranked by practical importance:
 
-1. **Explicit save-identity configuration before publishing another story.**
-   Protect existing progress before adding any loader or selection interface.
-2. **Author preflight diagnostics for re-entry and resource budgets.** A parse
+Explicit save-identity configuration is now implemented in Stage 9A. Browser
+loading/selection remains a separate stage. Remaining authoring priorities:
+
+1. **Author preflight diagnostics for re-entry and resource budgets.** A parse
    proves syntax/references, not that every authored resource promise is payable.
    The explicit routes here currently provide that assurance.
-3. **Evaluate small compound-condition ergonomics against real author use.**
+2. **Evaluate small compound-condition ergonomics against real author use.**
    They could reduce passage count, but the current staged decisions work;
    avoid jumping to a general expression evaluator.
-4. **Consider computed quantities only for an actual logistics requirement.**
+3. **Consider computed quantities only for an actual logistics requirement.**
    They are not necessary for this adventure and would enlarge validation scope.
 
-These are findings for later planning, not Stage 9 implementations.
+These remaining authoring improvements are findings for later planning, not
+implemented features.
