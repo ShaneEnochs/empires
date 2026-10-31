@@ -4,7 +4,7 @@ import { checkpointKey, STORAGE_KEY } from '../src/storage';
 import {
   checkpointRecord, chooseName, confirmNewGame, expectCharacter,
   expectItems, expectPassage, openPanel, panelNames, selectStory, startGame,
-  returnToStory,
+  returnToStory, choose,
 } from './helpers';
 import type { StoryTitle } from './helpers';
 
@@ -12,7 +12,11 @@ const crisisKey = checkpointKey({ storyId: 'provincial-crisis', storyRevision: 1
 const titles: StoryTitle[] = ['The City Gate', 'Provincial Crisis'];
 
 async function action(page: Page, label: string, title: string): Promise<void> {
-  await page.getByRole('button', { name: label, exact: true }).click();
+  if (['New Game', 'Continue', 'Continue Game', 'Back to Stories', 'Try Again'].includes(label)) {
+    await page.getByRole('button', { name: label, exact: true }).click();
+  } else {
+    await choose(page, label);
+  }
   await expectPassage(page, title);
 }
 
@@ -34,7 +38,7 @@ async function nameAndBriefing(page: Page, name = 'Rowan 周'): Promise<void> {
 
 async function councilWithEvidence(page: Page): Promise<void> {
   await action(page, 'Investigate the mill accounts', 'The Mill Yard');
-  await expect(page.getByRole('button', { name: 'Negotiate a protected statement', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Negotiate a protected statement', exact: true })).toHaveCount(0);
   await action(page, 'Pay two coins for attested accounts', 'Ink Paid For');
   await action(page, 'Continue', 'The Unshored Gate');
   await action(page, 'Read the new watermarks from the bank', 'The High-Water Line');
@@ -211,7 +215,7 @@ test('Provincial Crisis naming, selected metadata, conditional choices, and spen
   await expectItems(page, 'Inventory', ['Dispatch Coin × 2', 'Grain Sack × 8', 'Attested Grain Accounts × 1']);
   await expect(page.getByText('Your seal can no longer turn an instruction into law. Every promise now needs willing hands or armed enforcement.', { exact: true })).toBeVisible();
   await action(page, 'Present the attested grain accounts', 'Accounts Read Aloud');
-  await expect(page.getByRole('button', { name: 'Negotiate a supervised civic compact', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Negotiate a supervised civic compact', exact: true })).toHaveCount(0);
   await action(page, 'Let trusted local delegates carry the compact', 'A Table With More Seats');
   await crisisCharacter(page, [name, '5', '4', 'Civic compact']);
   await expectItems(page, 'Inventory', ['Dispatch Coin × 2', 'Grain Sack × 2', 'Attested Grain Accounts × 1']);
@@ -252,7 +256,7 @@ for (const checkpoint of ['briefing', 'night_council']) {
         await expect(page.getByText("The river takes the commission's bearer before the council can meet.", { exact: true })).toBeVisible();
       } else {
         await action(page, 'Plan an evacuation of the lower town', 'Boats Before Possessions');
-        await expect(page.getByRole('button', { name: 'Hire the ferry hands for three coins', exact: true })).toHaveCount(0);
+        await expect(page.getByRole('radio', { name: 'Hire the ferry hands for three coins', exact: true })).toHaveCount(0);
         await action(page, 'Force the damaged sluice as a shortcut despite the risk', 'The Gate Gives Way');
         await expect(page.getByText('The meeting has ended. The river has not.', { exact: true })).toBeVisible();
       }

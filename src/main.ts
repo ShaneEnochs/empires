@@ -5,6 +5,7 @@ import type { CatalogStory } from './catalog';
 import { createPanels } from './panels';
 import { parseStory } from './story';
 import { interpolate } from './interpolate';
+import { validatePeople } from './people';
 import './style.css';
 
 const container = document.querySelector<HTMLElement>('#app');
@@ -20,24 +21,19 @@ function showError(error: unknown): void {
   (root.querySelector('#story-content') ?? root).append(message);
 }
 
-function appHeader(title?: string): HTMLElement {
+function appHeader(): HTMLElement {
   const header = document.createElement('header');
   header.className = 'app-header';
   const brand = document.createElement('p');
   brand.className = 'brand';
   brand.textContent = 'Empires';
   header.append(brand);
-  if (title) {
-    const identity = document.createElement('p');
-    identity.className = 'story-identity';
-    identity.textContent = title;
-    header.append(identity);
-  }
   return header;
 }
 
 function selectStory(entry: CatalogStory): void {
   const story = parseStory(entry.source);
+  const people = validatePeople(story, entry.people);
   const session = new GameSession(story, {
     getItem: key => window.localStorage.getItem(key),
     setItem: (key, value) => window.localStorage.setItem(key, value),
@@ -71,7 +67,7 @@ function selectStory(entry: CatalogStory): void {
       });
       section.append(play);
     }
-    root.insertBefore(section, root.querySelector('.view-navigation')?.nextSibling ?? null);
+    root.insertBefore(section, root.querySelector('.reading-header')?.nextSibling ?? null);
   }
 
   function startNewGame(): void {
@@ -131,11 +127,16 @@ function selectStory(entry: CatalogStory): void {
     storyButton.textContent = 'Story';
     storyButton.setAttribute('aria-controls', 'story-content');
     storyButton.addEventListener('click', () => selectView('Story'));
-    const panels = createPanels(story, game, selectView);
+    const panels = createPanels(story, game, people, selectView);
     const navigation = document.createElement('nav');
     navigation.className = 'view-navigation';
     navigation.setAttribute('aria-label', 'Reading views');
     navigation.append(storyButton, ...panels.buttons);
+    const chapter = document.createElement('p');
+    chapter.className = 'chapter-label';
+    const header = document.createElement('header');
+    header.className = 'reading-header';
+    header.append(navigation, chapter);
     function selectView(name: string): void {
       storyContent.hidden = name !== 'Story';
       storyButton.setAttribute('aria-pressed', String(name === 'Story'));
@@ -175,7 +176,7 @@ function selectStory(entry: CatalogStory): void {
       actions.className = 'passage-actions';
       actions.setAttribute('aria-label', 'Passage actions');
 
-      function addAction(label: string, action: () => void): void {
+      function addAction(label: string, action: () => void): HTMLButtonElement {
         const button = document.createElement('button');
         button.type = 'button';
         button.textContent = label;
@@ -188,12 +189,44 @@ function selectStory(entry: CatalogStory): void {
           }
         });
         actions.append(button);
+        return button;
       }
 
       if (passage.death) {
         addAction('Try Again', () => session.retryAfterDeath());
       } else {
-        for (const choice of game.availableChoices) addAction(choice.label, () => session.navigate(choice.destinationId));
+        const choices = game.availableChoices;
+        if (choices.length > 0) {
+          const group = document.createElement('fieldset');
+          group.className = 'choices';
+          const legend = document.createElement('legend');
+          legend.className = 'visually-hidden';
+          legend.textContent = 'Choose an action';
+          group.append(legend);
+          let selected: typeof choices[number] | undefined;
+          const next = addAction('Next', () => {
+            if (selected !== undefined) session.navigate(selected.destinationId);
+          });
+          next.disabled = true;
+          for (const [index, choice] of choices.entries()) {
+            const row = document.createElement('label');
+            row.className = 'choice-row';
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'passage-choice';
+            // Use the option index: distinct authored choices may share a destination.
+            radio.value = String(index);
+            radio.addEventListener('change', () => {
+              selected = choice;
+              next.disabled = false;
+            });
+            const text = document.createElement('span');
+            text.textContent = choice.label;
+            row.append(radio, text);
+            group.append(row);
+          }
+          actions.prepend(group);
+        }
         const destination = passage.continueTo;
         if (destination !== undefined) addAction('Continue', () => session.navigate(destination));
       }
@@ -231,11 +264,9 @@ function selectStory(entry: CatalogStory): void {
         actions.append(form);
       }
 
-      const chapter = document.createElement('p');
-      chapter.className = 'chapter-label';
       chapter.textContent = passage.chapter;
-      storyContent.replaceChildren(chapter, heading, ...paragraphs, actions);
-      root.replaceChildren(appHeader(entry.title), navigation, storyContent, ...panels.sections, utilities);
+      storyContent.replaceChildren(heading, ...paragraphs, actions);
+      root.replaceChildren(header, storyContent, ...panels.sections, utilities);
       selectView('Story');
       renderNotice();
       heading.focus();

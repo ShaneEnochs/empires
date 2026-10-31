@@ -2,6 +2,8 @@ import cityGateSource from './example.story?raw';
 import provincialCrisisSource from '../examples/provincial-crisis.story?raw';
 import { DEFAULT_SAVE_IDENTITY, validateSaveIdentity } from './storage';
 import type { StorySaveIdentity } from './storage';
+import { cityGatePeople, provincialCrisisPeople } from './people';
+import type { PersonReference } from './people';
 
 export interface CatalogStory {
   readonly id: string;
@@ -9,6 +11,7 @@ export interface CatalogStory {
   readonly description: string;
   readonly source: string;
   readonly identity: StorySaveIdentity;
+  readonly people: readonly PersonReference[];
 }
 
 /** Static application configuration; importing the catalog never reads saves or enters passages. */
@@ -19,6 +22,7 @@ export const storyCatalog: readonly CatalogStory[] = Object.freeze([
     description: 'A short introductory adventure involving a city council, an optional character background, and a dangerous watchtower.',
     source: cityGateSource,
     identity: DEFAULT_SAVE_IDENTITY,
+    people: cityGatePeople,
   },
   {
     id: 'provincial-crisis',
@@ -26,6 +30,7 @@ export const storyCatalog: readonly CatalogStory[] = Object.freeze([
     description: 'An envoy must respond to a flood, disputed grain supplies, and competing political interests.',
     source: provincialCrisisSource,
     identity: { storyId: 'provincial-crisis', storyRevision: 1 },
+    people: provincialCrisisPeople,
   },
 ].map(entry => Object.freeze({ ...entry, identity: validateSaveIdentity(entry.identity) })));
 

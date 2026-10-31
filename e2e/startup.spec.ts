@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { STORAGE_KEY } from '../src/storage';
 import {
-  arrival, checkpointRecord, checkpointWrites, chooseName, confirmNewGame,
+  choose, arrival, checkpointRecord, checkpointWrites, chooseName, confirmNewGame,
   expectCharacter, expectGateState, expectItems, expectPassage, observeCheckpointWrites, selectStory, startGame,
 } from './helpers';
 
@@ -28,7 +28,7 @@ test('Continue resumes the initial checkpoint and drops ordinary unsaved passage
   await observeCheckpointWrites(page);
   await startGame(page);
   const saved = await checkpointRecord(page);
-  await page.getByRole('button', { name: 'Speak to the messenger', exact: true }).click();
+  await choose(page, 'Speak to the messenger');
   await expectPassage(page, 'A Quiet Warning');
   await expectCharacter(page, ['Alexander', '3', '4', 'Yes']);
   expect(await checkpointRecord(page)).toBe(saved);
@@ -48,7 +48,7 @@ test('a new page continues the authored checkpoint with its name, not the later 
   await startGame(page);
   await chooseName(page, 'Eleanor');
   const saved = await checkpointRecord(page);
-  await page.getByRole('button', { name: 'Raised among nobility', exact: true }).click();
+  await choose(page, 'Raised among nobility');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expectPassage(page, 'The Empty Chair');
   await expectCharacter(page, ['Eleanor', '2.5', '5', 'No']);
@@ -73,7 +73,7 @@ test('a new page continues the authored checkpoint with its name, not the later 
 test('New Game cancellation preserves progress; confirmation replaces it with fresh progress', async ({ page }) => {
   await startGame(page);
   await chooseName(page, 'Eleanor');
-  await page.getByRole('button', { name: 'Raised among nobility', exact: true }).click();
+  await choose(page, 'Raised among nobility');
   await expectPassage(page, 'A Noble Upbringing');
   const saved = await checkpointRecord(page);
 
