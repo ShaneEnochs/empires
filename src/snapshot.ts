@@ -45,7 +45,9 @@ export function validateSnapshot(value: unknown, story: Story): GameSnapshot {
   const state = record(snapshot.state, 'State');
   fields(state, ['passageId', 'variables', 'journal', 'skills', 'inventory'], 'State');
   const passageId = state.passageId;
-  if (typeof passageId !== 'string' || !story.passages.some(passage => passage.id === passageId)) invalid('Unknown passage ID.');
+  const passage = story.passages.find(passage => passage.id === passageId);
+  if (typeof passageId !== 'string' || !passage) invalid('Unknown passage ID.');
+  if (passage.death) invalid('Checkpoint destination cannot be a death passage.');
 
   const sourceVariables = record(state.variables, 'Variables');
   fields(sourceVariables, Object.keys(story.initialVariables), 'Variables');

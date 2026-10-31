@@ -10,10 +10,10 @@ fixed types. Variable names and stable passage IDs share
 `[a-z][a-z0-9_-]*`. IDs are authored, never derived from titles, text, or randomness.
 The first passage is the start; all later navigation uses explicit destinations.
 
-A `Passage` contains its ID, static `chapter`, title, optional `checkpoint: true`
+A `Passage` contains its ID, static `chapter`, title, optional `checkpoint: true` or `death: true`
 designation, ordered literal effects, `paragraphs`, choices,
 and optional Continue destination or `textInput` action. A passage has exactly
-one concluding category: choices, Continue, text input, or terminal. Each paragraph has one uniform record,
+one concluding category: choices, Continue, text input, death, or terminal. Each paragraph has one uniform record,
 in place of the old `Passage.text` string array. `ChoiceCondition` was renamed
 `Condition` because both paragraphs and choices use exactly the same data:
 
@@ -367,7 +367,7 @@ hidden/extra fields, inherited data, and exotic containers are rejected without
 executing accessor callbacks. The snapshot has exactly `state`, and state has
 exactly `passageId`, `variables`, `journal`, `skills`, and `inventory`.
 
-Validation requires an existing passage, exact declared variable names and
+Validation requires an existing non-death passage, exact declared variable names and
 matching primitive types, finite numbers, unique declared journal event IDs with
 their source passages' chapters and string text, unique declared skill IDs, and
 declared inventory IDs with positive safe integer quantities. Own-property checks
@@ -390,8 +390,8 @@ navigation/submission. There is no voluntary Return to Checkpoint control.
 ## Persistent checkpoints and application startup
 
 Stage 7B adds `storage.ts` and a small `GameSession` application coordinator.
-`Game`, `GameState`, `GameSnapshot`, snapshot validation, and story syntax remain
-unchanged. Storage functions accept an injected `getItem`/`setItem` interface and
+Browser persistence leaves `GameState` and `GameSnapshot` unchanged and adds no
+save scripting directives. Storage functions accept an injected `getItem`/`setItem` interface and
 never construct a Game, execute effects, or navigate. Browser adapters defer
 access to `window.localStorage` until a caught read/write operation, including
 when the localStorage getter itself throws.
@@ -456,15 +456,54 @@ never migrates, repairs, or deletes the save; confirmed New Game replaces it.
 There is no automatic release-compatibility or migration framework. Data belongs
 to one browser profile/origin; no cross-tab synchronization or cloud copy is added.
 
+## Death and checkpoint recovery
+
+`*death` is one concluding action after title and narrative, stored only as
+immutable `Passage.death?: true`. It has no arguments and cannot coexist with
+choices, Continue, input, or authored checkpoint metadata. It must end the passage,
+and cannot occur before prose or within conditional prose; a blank line finishes
+a conditional paragraph before the action. Whole-story parsing rejects invalid
+and unreachable declarations with line/passage context, including an initial
+death passage. Every passage still needs unconditional prose.
+
+A death destination follows the same atomic entry path and entry-effect ordering
+as every other passage. Its title and visible prose render before a native
+Try Again button; no restoration happens on entry or rendering. It has no normal
+outgoing action, so existing navigation/input guards remain effective.
+Journal, Skills, Inventory, New Game, and storage warnings remain available.
+
+`Game.retryAfterDeath()` verifies the current passage marker, then calls the
+existing `restoreCheckpoint()`. No target/snapshot argument, runtime death mode,
+history, or recovery registry is added. Restoration validates, prepares, and
+commits through the existing path, preserving the checkpoint object. Accepted
+names, original journal text/chapters/order, skills/order, inventory/order, and
+all variables are restored together. Effects execute once from pre-entry values,
+so repeated death/retry cycles give the same resulting state. Failed recovery
+leaves death and checkpoint untouched and exposes an error without falling back
+to New Game. The browser retains the death passage and Try Again button and focuses
+the restored heading only after success.
+
+`GameSession.retryAfterDeath()` directly calls the guarded engine operation,
+without the navigation/submission persistence wrapper. It performs no storage
+read/write, never clears a save-failure notice, and never captures dead state.
+If checkpoint B is current in memory but its write failed after saved checkpoint A,
+retry uses B while reload/Continue uses A. A later successful normal checkpoint
+write may clear the warning. Explicit unsaved play recovers wholly in memory.
+Snapshot validation rejects death destinations because no legitimate initial or
+authored capture can target one. No save schema/envelope version changes are needed.
+
+The example adds only optional watchtower choices/passages; original IDs,
+declarations, chapters, effects, and route outcomes stay intact. Revision 1 remains
+compatible, so `STORY_REVISION` is deliberately unchanged. Authors choose safe
+alternatives; the engine does not prove narrative survivability.
+
 ## Later stages — not implemented
 
-1. **Stage 7C:** `*death` and Try Again. Death must never replace the checkpoint
-   with dead state; Try Again will use the existing complete pre-entry restoration.
-2. **Stage 8:** interface improvements and comprehensive end-to-end testing.
-
-Continue Game, confirmed New Game, and browser checkpoint storage are implemented.
-Death handling and Try Again remain unimplemented. In-story Continue still follows
-its explicit destination. Traditional Undo, history stacks, manual
+Stage 8 covers interface improvements, character-attribute presentation, authoring
+usability, and comprehensive end-to-end testing. None is added in Stage 7C.
+Continue Game, confirmed New Game, browser checkpoint storage, and death/Try Again
+are implemented. In-story Continue still follows its explicit destination.
+Traditional Undo, history stacks, manual
 rewind, Return to Checkpoint controls, manual saves, and multiple slots remain
 excluded. Static story metadata stays outside snapshots.
 
@@ -477,11 +516,12 @@ item definitions/quantities/conditions and inventory viewing,
 one-field player text input and story-driven character creation,
 in-memory checkpoint capture/validation/restoration,
 versioned localStorage checkpoint persistence and minimal startup,
+author-controlled death and guarded Try Again recovery,
 explicit navigation, and basic rendering. No dependencies or visual redesign are
 needed. Ordinary TypeScript iteration over data is not a story-language loop.
 
 Character attributes/UI, arithmetic expressions,
-and the later death/interface roadmap require future tasks. Randomness,
+and the later interface/authoring roadmap require future tasks. Randomness,
 glossary, shops, skill purchasing, manual saves, save slots, import/export,
 procedures, subroutines, loops, and plugin systems remain excluded. System
 Awakening is reference only and its engine architecture is not imported.
@@ -506,6 +546,9 @@ immutability, and atomic failures.
 Persistence tests cover envelopes, version/identity gates, read/write failures,
 confirmation/cancellation, atomic New Game replacement, exactly-once loading,
 checkpoint-only writes, Unicode/order retention, and explicit unsaved play.
+Death tests cover syntax/metadata, guarded full-state recovery, exactly-once
+effects across repeated cycles, failed recovery, accepted names/input checkpoints,
+unchanged persistent bytes, newer unsaved checkpoints, and retained warnings.
 `npm run build` checks source/tests
 with strict TypeScript and builds the app. Browser checks cover hidden content,
 rerendering, keyboard navigation, and inert HTML-like interpolation.

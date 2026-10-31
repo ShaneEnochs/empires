@@ -31,6 +31,12 @@ export class Game {
     this.currentState = this.enterPassage(snapshot.state);
   }
 
+  /** Player recovery is available only after reading an authored death passage. */
+  retryAfterDeath(): void {
+    if (!this.passage.death) throw new Error('Try Again is only available on a death passage.');
+    this.restoreCheckpoint();
+  }
+
   get passage(): Passage {
     return this.findPassage(this.currentState.passageId);
   }
