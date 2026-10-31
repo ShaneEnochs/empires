@@ -294,8 +294,19 @@ its new state.
 
 The renderer consumes these views directly, never evaluates conditions itself,
 and creates no elements for hidden paragraphs or choices. Native headings,
-paragraphs and buttons retain their appearance and keyboard behavior. All display
+paragraphs and buttons retain their semantics and keyboard behavior. All display
 content uses `textContent`; heading focus follows navigation.
+
+Stage 8B adds CSS hooks for startup, passage actions, death presentation, and
+the four info panels, plus a labeled `role="group"` wrapper for utility buttons.
+`style.css` provides a bounded responsive reading column, stacked story actions,
+wrapping utility controls, minimum 44px touch targets, visible focus, and consistent
+panel/form/error/warning styling. Long content wraps naturally; panels have no
+fixed heights or internal scrolling. No animations or scripted scroll behavior
+are added, and the viewport remains zoomable.
+These are presentation changes only: event handlers, text rendering, independent
+panel visibility, focus/error handling, session semantics, and persistence timing
+are unchanged. No state, parser, snapshot, save-envelope, or revision changes occur.
 
 Input passages render one native form inside passage actions, with an associated
 label, single-line field initialized from the committed string, and Continue
@@ -532,8 +543,8 @@ alternatives; the engine does not prove narrative survivability.
 ## Later stages — not implemented
 
 Stage 8A adds read-only selected statistics and limited panel organization.
-Stage 8B and further interface/authoring usability and comprehensive end-to-end
-testing work remain unimplemented.
+Stage 8B adds responsive reading styles. Stage 8C and further authoring/usability
+work remain unimplemented.
 Continue Game, confirmed New Game, browser checkpoint storage, and death/Try Again
 are implemented. In-story Continue still follows its explicit destination.
 Traditional Undo, history stacks, manual

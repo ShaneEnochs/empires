@@ -62,6 +62,11 @@ libraries. Use the existing checkout; no frontend framework is needed.
   pairs, Yes/No booleans, and ordinary number/string text. Toggling any panel must
   not execute effects, navigate, submit drafts, or access persistence. Preserve
   existing action/focus/error handling in main; do not build a component system.
+- Keep responsive reading changes in CSS and small presentation hooks. Preserve
+  the separate passage-action/tools groups, independent panel visibility, native
+  focus and error handling, at least 44px touch targets, and browser zoom. Wrap
+  long content without hiding page overflow, truncating data, or adding nested
+  panel scrolling. Do not add animations or change gameplay/save semantics for UI.
 - Passage IDs are authored, unique, and stable. Never derive them from order,
   titles, prose, timestamps, or random values. Preserve IDs for navigation and
   future checkpoint compatibility.
@@ -135,8 +140,8 @@ Stages 7A–7C are implemented: one in-memory checkpoint, automatic initial
 capture, author-controlled `*checkpoint`, validated restoration, one versioned
 localStorage record, startup, Continue Game, confirmed New Game, and death/Try Again.
 Stage 8A's static stat-display metadata, read-only Character panel, and limited
-panel-code extraction are implemented. Stage 8B and further interface/authoring
-usability and comprehensive end-to-end testing remain future work.
+panel-code extraction are implemented, as are Stage 8B's responsive reading styles.
+Stage 8C and further authoring/usability work remain future tasks.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.

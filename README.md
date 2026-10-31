@@ -48,6 +48,27 @@ GitHub Actions runs `npm ci`, `npm test`, and `npm run build` on Node.js 22 for
 pull requests to `main` and pushes to `main`. It grants only read access to
 repository contents and does not deploy, publish, or merge anything.
 
+## Reading interface
+
+Empires keeps its Georgia type and warm background in a responsive reading
+column, capped at 40rem with roomier lines and paragraph spacing. Story choices,
+Continue, and Try Again use stacked primary buttons; Character, Journal, Skills,
+Inventory, and New Game sit in a separate labeled tools group.
+
+Native buttons have at least 44px touch targets and a visible keyboard focus
+ring. The four independently expandable panels share headings, spacing, and
+borders. Long labels, journal entries, and inventory lists wrap in normal page
+flow, without nested scrolling or fixed-height clipping.
+
+Startup, text input, validation errors, save warnings, and death passages share
+the same restrained styling. Expanded tools are highlighted. Heading focus after
+navigation/recovery and input focus after validation errors are unchanged.
+There are no animations or scripted scrolling additions. The viewport remains
+zoomable, and labels/content still render as safe text.
+
+These changes are presentation only: story routes, syntax, state, checkpoint
+timing, Continue Game, Try Again, and existing saves are unchanged.
+
 ## Write a story
 
 Edit [src/example.story](src/example.story); read the full
@@ -390,10 +411,9 @@ Authors provide safe alternatives; the engine does not analyze narrative loops.
 
 ## Roadmap
 
-Stages 7A–7C and 8A are implemented, including persistent checkpoints, death
-recovery, selected character statistics, and a limited panel-code extraction.
-Stage 8B and further interface/authoring usability and comprehensive testing work
-remain future tasks.
+Stages 7A–7C, 8A, and 8B are implemented, including persistent checkpoints, death
+recovery, selected character statistics, panel organization, and responsive reading
+styles. Stage 8C and further authoring/usability work remain future tasks.
 
 Traditional Undo, choice-history stacks, manual rewind, Return
 to Checkpoint controls, manual saves, and save slots remain excluded. In-story
