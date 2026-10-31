@@ -1,5 +1,5 @@
 import { interpolate } from './interpolate';
-import type { Choice, ComparisonOperator, Condition, ItemDefinition, NarrativeParagraph, Passage, PassageEffect, SkillDefinition, Story, TextInputAction, Variables, VariableValue } from './types';
+import type { Choice, ComparisonOperator, Condition, ItemDefinition, NarrativeParagraph, Passage, PassageEffect, SkillDefinition, StatDisplay, Story, TextInputAction, Variables, VariableValue } from './types';
 
 function syntaxError(message: string, line: number, passageId?: string): Error {
   return new Error(`Line ${line}${passageId ? `, passage "${passageId}"` : ''}: ${message}`);
@@ -88,6 +88,7 @@ export function parseStory(source: string): Story {
   const initialVariables: Record<string, VariableValue> = {};
   const skills: SkillDefinition[] = [];
   const items: ItemDefinition[] = [];
+  const stats: StatDisplay[] = [];
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
     id: string; chapter: string; line: number; title?: string; checkpoint?: true; paragraphs: NarrativeParagraph[];
@@ -206,8 +207,8 @@ export function parseStory(source: string): Story {
         current.effects.push(Object.freeze({ kind: directive === '*add_item' ? 'add_item' : 'remove_item', itemId, quantity }));
         continue;
       }
-      if (directive === '*var' || directive === '*skill' || directive === '*item' || directive === '*set' || directive === '*add' || directive === '*journal') {
-        const declaration = directive === '*var' || directive === '*skill' || directive === '*item';
+      if (directive === '*var' || directive === '*skill' || directive === '*item' || directive === '*stat' || directive === '*set' || directive === '*add' || directive === '*journal') {
+        const declaration = directive === '*var' || directive === '*skill' || directive === '*item' || directive === '*stat';
         if (declaration && (current || passages.length > 0 || pendingChapterLine !== undefined)) {
           throw syntaxError(`${directive} declarations must precede the first passage and all chapter declarations.`, line, current?.id);
         }
@@ -219,7 +220,12 @@ export function parseStory(source: string): Story {
         const context = directive === '*journal' ? 'Journal event ID' : directive === '*skill' ? 'Skill ID' : directive === '*item' ? 'Item ID' : 'Variable name';
         const variable = id(parts[1]!, context, line, current?.id);
         const value = literal(parts[2]!, line, current?.id);
-        if (directive === '*item') {
+        if (directive === '*stat') {
+          if (!Object.hasOwn(initialVariables, variable)) throw syntaxError(`Undeclared stat variable "${variable}". Declare it with *var first.`, line);
+          if (typeof value !== 'string' || value.trim() === '') throw syntaxError('*stat requires a nonempty double-quoted display label.', line);
+          if (stats.some(stat => stat.variable === variable)) throw syntaxError(`Duplicate stat display for "${variable}".`, line);
+          stats.push(Object.freeze({ variable, label: value }));
+        } else if (directive === '*item') {
           if (typeof value !== 'string' || value.trim() === '') throw syntaxError('*item requires a nonempty double-quoted display name.', line);
           if (items.some(item => item.id === variable)) throw syntaxError(`Duplicate item ID "${variable}".`, line);
           items.push(Object.freeze({ id: variable, name: value }));
@@ -360,5 +366,5 @@ export function parseStory(source: string): Story {
       throw syntaxError(`Missing destination "${reference.destinationId}".`, reference.line, reference.passageId);
     }
   }
-  return Object.freeze({ startId: first.id, initialVariables: Object.freeze(initialVariables), skills: Object.freeze(skills), items: Object.freeze(items), passages: Object.freeze(passages) });
+  return Object.freeze({ startId: first.id, initialVariables: Object.freeze(initialVariables), skills: Object.freeze(skills), items: Object.freeze(items), stats: Object.freeze(stats), passages: Object.freeze(passages) });
 }

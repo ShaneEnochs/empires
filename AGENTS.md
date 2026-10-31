@@ -51,6 +51,17 @@ libraries. Use the existing checkout; no frontend framework is needed.
   choices and normal effects for backgrounds. Do not add a CharacterState model,
   allocation engine, or form framework. Draft text may live in the native input
   until submission, but rendering and panel controls must never submit it.
+- `*stat variable "Label"` is presentation metadata only. References require an
+  earlier own `*var` declaration; labels use nonempty JSON strings, and each
+  variable may be displayed once. Keep author order and freeze `Story.stats`
+  and its entries. Never add stat definitions/values to gameplay state or saves.
+  Presentation-only stat edits do not require a story-revision change.
+- Keep `panels.ts` limited to the four fixed read-only sections and their small
+  shared native rendering helpers. Read current GameState for every refresh;
+  never cache variable values. Character uses text-only semantic name/value
+  pairs, Yes/No booleans, and ordinary number/string text. Toggling any panel must
+  not execute effects, navigate, submit drafts, or access persistence. Preserve
+  existing action/focus/error handling in main; do not build a component system.
 - Passage IDs are authored, unique, and stable. Never derive them from order,
   titles, prose, timestamps, or random values. Preserve IDs for navigation and
   future checkpoint compatibility.
@@ -123,8 +134,9 @@ libraries. Use the existing checkout; no frontend framework is needed.
 Stages 7A–7C are implemented: one in-memory checkpoint, automatic initial
 capture, author-controlled `*checkpoint`, validated restoration, one versioned
 localStorage record, startup, Continue Game, confirmed New Game, and death/Try Again.
-Stage 8 remains future work: interface improvements, character-attribute
-presentation, authoring usability, and comprehensive end-to-end testing.
+Stage 8A's static stat-display metadata, read-only Character panel, and limited
+panel-code extraction are implemented. Stage 8B and further interface/authoring
+usability and comprehensive end-to-end testing remain future work.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.
@@ -132,7 +144,7 @@ Try Again restores the existing complete pre-entry snapshot.
 Submitted names and character attributes are ordinary variables; a checkpoint at
 their destination already includes them. Restoring a genuine input passage permits
 a new submission when rendered. There are no manual save slots or rewind controls.
-Character attributes/UI and expressions still require separate requests.
+Further character features and expressions still require separate requests.
 Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
 are implemented, as are single typed conditions on choices and narrative
 paragraphs, chapter metadata, the chapter-organized journal, binary skills, item
@@ -144,7 +156,7 @@ Skills have no levels, experience, purchasing, rarity, cooldowns, passive bonuse
 or progression trees. Keep these small without expanding into a general evaluator
 or event framework.
 Text input remains one string field per passage; exclude numeric inputs, complex
-forms, point-buy, portraits, visual customization, and a character-sheet UI.
+forms, point-buy, portraits, visual customization, and an editable character sheet.
 
 Unless a future task explicitly changes the requirements, exclude random
 mechanics, glossary systems, shops, skill purchasing, manual saving, save slots,

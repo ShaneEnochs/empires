@@ -20,6 +20,9 @@ or **gate → council**, with different influence, honor, and loyalty values.
 The messenger's Continue explicitly targets `council`; the council is terminal.
 The Journal button shows recorded events grouped by chapter. The messenger route
 records an extra event; journal text keeps the values present when recorded.
+The Character button shows the author's selected variables in display order:
+Name, Influence, Honor, and Loyal in the example. It reads current values without
+changing gameplay; booleans display as Yes or No.
 The Skills button lists acquired skills in acquisition order. Both routes start
 with Composure, which is revoked at the council. Speaking to the messenger grants
 Diplomacy and changes the council's visible prose.
@@ -57,6 +60,9 @@ plain-text format:
 *item gold_coin "Gold Coin"
 *var loyal false
 *var character_name "Unknown"
+*stat character_name "Name"
+*stat influence "Influence"
+*stat loyal "Loyal"
 
 *chapter Prologue
 
@@ -201,6 +207,29 @@ The parser validates the whole story before play, including unreachable content,
 and reports errors with source lines and passage IDs. See the
 [engine design and pre-passage snapshot boundary](docs/ENGINE.md) and
 [contributor rules](AGENTS.md). No new dependencies were needed for these features.
+
+## Character panel
+
+Declare `*stat influence "Influence"` in the initial metadata section, before
+every chapter/passage and after that variable's `*var` declaration. Each variable
+may be selected once; the nonempty label uses JSON double-quoted string rules.
+Declarations may interleave with variables, skills, and items, and their order
+determines display order. Strings, finite numbers, and booleans are supported.
+Labels remain literal, without interpolation.
+
+Character is a native expandable section beside Journal, Skills, and Inventory.
+It lists labels and current committed values as semantic name/value pairs.
+Booleans display as Yes/No; numbers and strings use their ordinary text without
+changing stored values. All content uses `textContent`. An unconfigured story
+shows “No character statistics configured.”
+
+Open panels update after navigation, text submission, Continue Game, and Try Again.
+Viewing/toggling changes neither gameplay nor persistence and does not submit
+draft input. `Story.stats` holds frozen presentation metadata only; no stat values
+are copied into UI state or added to `GameState` or checkpoints. Adding, reordering,
+or relabeling displays alone needs no snapshot/envelope or story-revision change.
+There are no formulas, derived stats, categories, progress bars, allocation, or
+conditional visibility.
 
 ## Player text and character creation
 
@@ -361,13 +390,14 @@ Authors provide safe alternatives; the engine does not analyze narrative loops.
 
 ## Roadmap
 
-Stages 7A–7C are implemented, including persistent checkpoints and death recovery.
-Stage 8 remains future work: interface improvements, character-attribute
-presentation, authoring usability, and comprehensive end-to-end testing.
+Stages 7A–7C and 8A are implemented, including persistent checkpoints, death
+recovery, selected character statistics, and a limited panel-code extraction.
+Stage 8B and further interface/authoring usability and comprehensive testing work
+remain future tasks.
 
 Traditional Undo, choice-history stacks, manual rewind, Return
 to Checkpoint controls, manual saves, and save slots remain excluded. In-story
-Continue only follows its explicit destination. Character attributes/UI and
+Continue only follows its explicit destination. Further character features and
 arithmetic expressions still require separate requests.
 
 Excluded unless requirements explicitly change: random mechanics, glossary,
@@ -379,4 +409,4 @@ cooldowns, passive bonuses, or progression trees.
 Inventory has no shops, buying/selling systems, equipment, crafting, weight,
 capacity, rarity, durability, categories, descriptions, or automatic bonuses.
 Text input has no numeric mode, multiple fields, general forms, point-buy,
-portraits, visual customization, or character sheet.
+portraits, visual customization, or editable character sheet.

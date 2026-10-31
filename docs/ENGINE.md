@@ -4,8 +4,9 @@
 
 `parseStory` reads one `.story` authoring format into a complete immutable `Story`
 before `new Game` can run. The story contains `initialVariables`, `skills`, `items`,
-`startId`, and `passages`. Variable, skill, and item declarations may be interleaved
-before all chapters and passages. Primitive variable initial values establish
+`stats`, `startId`, and `passages`. Variable, skill, item, and stat declarations may
+be interleaved before all chapters and passages. Each stat references a variable
+already declared with `*var`. Primitive variable initial values establish
 fixed types. Variable names and stable passage IDs share
 `[a-z][a-z0-9_-]*`. IDs are authored, never derived from titles, text, or randomness.
 The first passage is the start; all later navigation uses explicit destinations.
@@ -46,7 +47,7 @@ with no DOM nodes, callbacks, validators, or executable instructions.
 and is copied into each following passage until another declaration. A chapter
 can close a valid previous passage, but cannot bypass missing titles, prose,
 choices, or a pending `*show_if`. Every declaration needs a following passage,
-and variable/skill/item declarations must come before chapters and the first passage.
+and variable/skill/item/stat declarations must come before chapters and the first passage.
 Labels are nonempty literal text, not interpolated values; repeated labels are
 allowed. There is no mutable runtime `currentChapter`, so navigation order cannot
 change a passage's chapter affiliation.
@@ -252,6 +253,37 @@ multiple appends followed by overflow and failed initial entry. Successful retri
 record events normally because failed attempts leave no hidden deduplication state.
 
 ## Read-only presentation
+
+`StatDisplay` contains only readonly `variable` and `label` strings.
+`Story.stats` is a frozen array of frozen displays in author order. `*stat`
+reuses the existing identifier and JSON literal rules, requires a previously
+declared own variable and non-whitespace string label, and rejects duplicate
+variable references and misplaced declarations with source-line context.
+Labels remain literal. String, number, and boolean variable behavior is unchanged.
+This metadata adds no state fields, effects, conditions, formulas, categories,
+or conditional visibility.
+
+`panels.ts` owns the four fixed Character/Journal/Skills/Inventory sections.
+A small private helper shares native button/section setup, heading creation,
+`hidden`, and `aria-expanded`/`aria-controls`/`aria-labelledby` behavior.
+Another helper shares plain text lists; journal chapter grouping/order is retained.
+This is limited rendering code, with no component registry or screen framework.
+`main.ts` retains startup, actions, input, errors, notices, and heading focus.
+
+`characterStats(story, state)` derives disposable display text from committed
+variables without caching. Character renders it in `dl`/`dt`/`dd` elements using
+`textContent` for labels and values. Booleans become Yes/No; numbers/strings use
+`String(value)` without mutating their values. No configuration shows
+“No character statistics configured.” Panels retain only their open/closed DOM
+state; each refresh reads current gameplay data. All panels update after
+navigation, submission, Continue Game activation, and successful death recovery.
+Toggles never navigate, execute effects, submit drafts, read/write storage, or
+change state; focus/error behavior stays in the existing action handlers.
+
+Stat metadata is never persisted. The snapshot schema, save envelope, key, and
+`STORY_REVISION = 1` remain unchanged. Adding/removing/reordering/relabeling stat
+displays alone is compatible with previous checkpoints. Changes to the underlying
+variable declarations/effects still follow the existing revision policy.
 
 `game.passage.paragraphs` and `.choices` retain all authored content in source
 order. `game.visibleParagraphs` and `game.availableChoices` return fresh frozen
@@ -499,8 +531,9 @@ alternatives; the engine does not prove narrative survivability.
 
 ## Later stages — not implemented
 
-Stage 8 covers interface improvements, character-attribute presentation, authoring
-usability, and comprehensive end-to-end testing. None is added in Stage 7C.
+Stage 8A adds read-only selected statistics and limited panel organization.
+Stage 8B and further interface/authoring usability and comprehensive end-to-end
+testing work remain unimplemented.
 Continue Game, confirmed New Game, browser checkpoint storage, and death/Try Again
 are implemented. In-story Continue still follows its explicit destination.
 Traditional Undo, history stacks, manual
@@ -517,10 +550,11 @@ one-field player text input and story-driven character creation,
 in-memory checkpoint capture/validation/restoration,
 versioned localStorage checkpoint persistence and minimal startup,
 author-controlled death and guarded Try Again recovery,
+static stat-display declarations and read-only Character viewing,
 explicit navigation, and basic rendering. No dependencies or visual redesign are
 needed. Ordinary TypeScript iteration over data is not a story-language loop.
 
-Character attributes/UI, arithmetic expressions,
+Further character features, arithmetic expressions,
 and the later interface/authoring roadmap require future tasks. Randomness,
 glossary, shops, skill purchasing, manual saves, save slots, import/export,
 procedures, subroutines, loops, and plugin systems remain excluded. System
@@ -530,7 +564,7 @@ bonuses, and progression trees are excluded.
 Inventory excludes shops, buying/selling systems, equipment, crafting, weight,
 capacity, rarity, durability, categories, descriptions, and passive effects.
 Numeric input, multiple fields, complex forms, point-buy, portraits, visual
-customization, and a character sheet are excluded.
+customization, and an editable character sheet are excluded.
 
 `npm test` covers parsing, shared comparisons, paragraph boundaries, visibility
 and eligibility after effects/re-entry, interpolation, immutability, exactly-once
@@ -549,6 +583,8 @@ checkpoint-only writes, Unicode/order retention, and explicit unsaved play.
 Death tests cover syntax/metadata, guarded full-state recovery, exactly-once
 effects across repeated cycles, failed recovery, accepted names/input checkpoints,
 unchanged persistent bytes, newer unsaved checkpoints, and retained warnings.
+Stat tests cover earlier-variable references, labels, order/immutability, primitive
+formatting, state updates, read-only inspection, and pre-existing save compatibility.
 `npm run build` checks source/tests
 with strict TypeScript and builds the app. Browser checks cover hidden content,
 rerendering, keyboard navigation, and inert HTML-like interpolation.

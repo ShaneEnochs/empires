@@ -6,6 +6,10 @@
 *var character_name "Unknown"
 *skill composure "Composure"
 *item gate_token "Gate Token"
+*stat character_name "Name"
+*stat influence "Influence"
+*stat honor "Honor"
+*stat loyal "Loyal"
 
 *chapter Prologue
 
