@@ -64,6 +64,7 @@ try {
   }
 
   function renderStartup(): void {
+    root.className = 'startup';
     const heading = document.createElement('h1');
     heading.textContent = 'Empires';
     heading.tabIndex = -1;
@@ -71,6 +72,7 @@ try {
     const startup = session.startup;
     if (startup.status === 'invalid' || startup.status === 'unavailable') {
       const message = document.createElement('p');
+      message.className = 'startup-message';
       message.textContent = startup.status === 'invalid'
         ? 'A saved game was found, but it cannot be loaded.' : 'Saved progress could not be checked.';
       const reason = document.createElement('p');
@@ -79,6 +81,7 @@ try {
       console.warn('Saved game unavailable:', startup.error);
     }
     const actions = document.createElement('nav');
+    actions.className = 'startup-actions';
     actions.setAttribute('aria-label', 'Game startup');
     if (startup.status === 'ready') {
       const resume = document.createElement('button');
@@ -102,6 +105,7 @@ try {
 
     function render(): void {
       const passage = game.passage;
+      root.className = passage.death ? 'reading death' : 'reading';
       const heading = document.createElement('h1');
       heading.textContent = passage.title;
       heading.tabIndex = -1;
@@ -113,6 +117,7 @@ try {
       });
 
       const actions = document.createElement('nav');
+      actions.className = 'passage-actions';
       actions.setAttribute('aria-label', 'Passage actions');
 
       function addAction(label: string, action: () => void): void {
@@ -171,7 +176,7 @@ try {
         actions.append(form);
       }
 
-      root.replaceChildren(heading, ...paragraphs, actions, ...panels.buttons, newGameButton, ...panels.sections);
+      root.replaceChildren(heading, ...paragraphs, actions, utilities, ...panels.sections);
       panels.render();
       renderNotice();
       heading.focus();
@@ -181,6 +186,11 @@ try {
     newGameButton.type = 'button';
     newGameButton.textContent = 'New Game';
     newGameButton.addEventListener('click', startNewGame);
+    const utilities = document.createElement('div');
+    utilities.className = 'utility-controls';
+    utilities.setAttribute('role', 'group');
+    utilities.setAttribute('aria-label', 'Game tools');
+    utilities.append(...panels.buttons, newGameButton);
     render();
   }
 

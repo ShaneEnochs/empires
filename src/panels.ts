@@ -16,6 +16,7 @@ function panel(id: string, title: string, renderContent: (section: HTMLElement) 
   button.setAttribute('aria-controls', id);
   button.setAttribute('aria-expanded', 'false');
   const section = document.createElement('section');
+  section.className = 'info-panel';
   section.id = id;
   section.hidden = true;
   section.setAttribute('aria-labelledby', id + '-heading');

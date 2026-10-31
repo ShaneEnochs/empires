@@ -189,6 +189,11 @@ needs no story revision change; incompatible variable changes still do.
 No derived stats, formulas, categories, progress bars, point allocation,
 or conditional stat visibility are supported.
 
+The responsive interface separates story actions from utility buttons. Panels
+remain independently expandable; long labels and entries wrap without truncation.
+Responsive styling adds no authoring directives and changes no story routes,
+effects, saved data, checkpoint timing, or recovery behavior.
+
 ## Chapters and journal events
 
 `*chapter Label` is a top-level authoring declaration. Its literal label applies
@@ -1000,8 +1005,8 @@ persistence/startup, and death/Try Again recovery
 are implemented. Snapshots include complete variables, journal, skills, and
 inventory; definitions stay in static `Story` metadata.
 
-Stage 8A's selected-stat panel is implemented. Stage 8B and further interface/
-authoring usability and comprehensive end-to-end testing remain future work.
+Stage 8A's selected-stat panel and Stage 8B's responsive reading styles are
+implemented. Stage 8C and further authoring/usability work remain future tasks.
 
 Continue Game resumes the single checkpoint when reopening, and New Game confirms
 before replacing saved progress. Both are implemented in Stage 7B.
