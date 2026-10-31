@@ -6,10 +6,12 @@ import { GameSession } from '../src/session';
 import { interpolate } from '../src/interpolate';
 import { characterStats } from '../src/panels';
 import { parseStory } from '../src/story';
-import { SAVE_FORMAT_VERSION, STORY_ID, STORY_REVISION, STORAGE_KEY } from '../src/storage';
+import { checkpointKey, SAVE_FORMAT_VERSION, validateSaveIdentity } from '../src/storage';
 import type { CheckpointStorage } from '../src/storage';
 
 const story = parseStory(readFileSync(new URL('../examples/provincial-crisis.story', import.meta.url), 'utf8'));
+const identity = validateSaveIdentity({ storyId: 'provincial-crisis', storyRevision: 1 });
+const storageKey = checkpointKey(identity);
 
 function walk(game: Game, ...destinations: string[]): void {
   for (const destination of destinations) game.navigate(destination);
@@ -281,18 +283,18 @@ test('night death restores evidence, accepted name, journal order, and the curre
   assert.equal(game.state.variables.plan, 'Civic compact');
 });
 
-// Only injected memory storage: never put this separate story in the app's browser save.
+// Only injected memory storage, using this story's actual save identity.
 class MemoryStorage implements CheckpointStorage {
   record: string | null = null;
   writes = 0;
-  getItem(key: string): string | null { assert.equal(key, STORAGE_KEY); return this.record; }
-  setItem(key: string, value: string): void { assert.equal(key, STORAGE_KEY); this.writes++; this.record = value; }
+  getItem(key: string): string | null { assert.equal(key, storageKey); return this.record; }
+  setItem(key: string, value: string): void { assert.equal(key, storageKey); this.writes++; this.record = value; }
 }
 
 for (const destination of ['briefing', 'night_council']) {
   test('GameSession serializes, retries, and freshly continues the independent ' + destination + ' checkpoint', () => {
     const storage = new MemoryStorage();
-    const session = new GameSession(story, storage);
+    const session = new GameSession(story, storage, identity);
     assert.equal(session.newGame(() => false), 'started');
     session.navigate('choose_name');
     session.submitText('  Éléonore  ');
@@ -308,8 +310,8 @@ for (const destination of ['briefing', 'night_council']) {
     const envelope = JSON.parse(record);
     assert.deepEqual(Object.keys(envelope), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint']);
     assert.equal(envelope.formatVersion, SAVE_FORMAT_VERSION);
-    assert.equal(envelope.storyId, STORY_ID);
-    assert.equal(envelope.storyRevision, STORY_REVISION);
+    assert.equal(envelope.storyId, identity.storyId);
+    assert.equal(envelope.storyRevision, identity.storyRevision);
     assert.deepEqual(envelope.checkpoint, checkpoint);
     assert.equal(envelope.checkpoint.state.variables.envoy_name, 'Éléonore');
 
@@ -324,7 +326,7 @@ for (const destination of ['briefing', 'night_council']) {
 
     const copiedStorage = new MemoryStorage();
     copiedStorage.record = JSON.stringify(JSON.parse(record));
-    const reopened = new GameSession(story, copiedStorage);
+    const reopened = new GameSession(story, copiedStorage, identity);
     assert.equal(reopened.startup.status, 'ready');
     const continued = reopened.continueGame();
     assert.deepEqual(continued.state, expected);

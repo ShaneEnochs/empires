@@ -155,14 +155,18 @@ explicitly warned about and have safe alternatives.
 Fresh `Game` restoration and `GameSession` JSON round trips test these boundaries.
 Session tests use a new injected **memory-only** storage object each time.
 They verify no writes on retry/Continue, complete ordered state reconstruction,
-and successful onward play. The original isolated-memory playtests retain the
-default session API. Stage 9A adds `tests/story-identity.test.ts`, which uses
+and successful onward play. These isolated-memory playtests now pass the actual
+Provincial Crisis identity explicitly. Stage 9A adds `tests/story-identity.test.ts`, which uses
 `{ storyId: 'provincial-crisis', storyRevision: 1 }` and tests both real stories
 against one shared fake storage. It verifies independent keys, full restoration,
 revision rejection, failed-write isolation, and death/retry without save writes.
 Run all routes and identity tests with `npm test`; no browser storage is used.
 Never connect this fixture to the shipped app's save slot. Explicit configuration
-now supports its separate key, but the browser still loads only the shipped story.
+supports its separate key. Stage 9B makes this existing story playable from the
+browser library, using that same explicit identity and the existing renderer.
+`e2e/library.spec.ts` covers naming, independent saves, the civic ending, both
+checkpoint recoveries, and a failed automatic save. Run `npm run build` and
+`npm run test:e2e` to exercise that production browser flow.
 
 ## Authoring findings and priorities
 
@@ -189,14 +193,13 @@ engine changes. These distinctions matter:
   literal item operands. Finite preauthored tiers are possible; this story uses
   explicit fixed cohorts and allocations. Dynamic logistics would need a
   separately specified feature, not an invented command in this example.
-- **Deployment follow-up:** Stage 9A resolves independent save identity through
-  explicit application configuration. A browser loader or story selector is
-  still absent. Publishing this story must use its own ID, never `empires-example`.
+- **Deployment:** Stages 9A–9B provide explicit save identity and a static browser
+  library. This story uses its own `provincial-crisis` ID, never `empires-example`.
 
 Recommended future work, ranked by practical importance:
 
-Explicit save-identity configuration is now implemented in Stage 9A. Browser
-loading/selection remains a separate stage. Remaining authoring priorities:
+Explicit save identity and static browser selection are now implemented in
+Stages 9A–9B. Remaining authoring priorities:
 
 1. **Author preflight diagnostics for re-entry and resource budgets.** A parse
    proves syntax/references, not that every authored resource promise is payable.

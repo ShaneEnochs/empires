@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   arrival, checkpointRecord, checkpointWrites, chooseName, enterWatchtower, expectCharacter,
-  expectGateState, expectItems, expectPassage, observeCheckpointWrites, startGame,
+  expectGateState, expectItems, expectPassage, observeCheckpointWrites, selectStory, startGame,
 } from './helpers';
 
 test('death before an authored checkpoint restores initial state without reward accumulation or save writes', async ({ page }) => {
@@ -51,7 +51,7 @@ test('retry preserves a checkpointed name and complete acquired state; reload af
 
   await enterWatchtower(page);
   await page.reload();
-  await expectPassage(page, 'Empires');
+  await selectStory(page);
   await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
   await expectPassage(page, 'Choose Your Background');
   await expectCharacter(page, ['Eleanor', '1', '5', 'No']);

@@ -5,6 +5,7 @@ import { STORAGE_KEY } from '../src/storage';
 export const arrival = 'Alexander reached the city with influence 1.';
 export const panelNames = ['Character', 'Journal', 'Skills', 'Inventory'] as const;
 type PanelName = typeof panelNames[number];
+export type StoryTitle = 'The City Gate' | 'Provincial Crisis';
 
 export async function expectPassage(page: Page, title: string): Promise<void> {
   const heading = page.getByRole('heading', { level: 1, name: title, exact: true });
@@ -14,9 +15,16 @@ export async function expectPassage(page: Page, title: string): Promise<void> {
 
 export async function startGame(page: Page): Promise<void> {
   await page.goto('/');
-  await expectPassage(page, 'Empires');
+  await selectStory(page);
   await page.getByRole('button', { name: 'New Game', exact: true }).click();
   await expectPassage(page, 'The City Gate');
+}
+
+export async function selectStory(page: Page, title: StoryTitle = 'The City Gate'): Promise<void> {
+  await expectPassage(page, 'Empires');
+  await page.getByRole('button', { name: 'Select ' + title, exact: true }).click();
+  await expectPassage(page, title);
+  await expect(page.getByRole('navigation', { name: 'Game startup' })).toBeVisible();
 }
 
 export async function openPanel(page: Page, name: PanelName) {
@@ -62,8 +70,8 @@ export async function enterWatchtower(page: Page): Promise<void> {
   await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveText(['Try Again']);
 }
 
-export async function checkpointRecord(page: Page): Promise<string | null> {
-  return page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
+export async function checkpointRecord(page: Page, key = STORAGE_KEY): Promise<string | null> {
+  return page.evaluate(key => localStorage.getItem(key), key);
 }
 
 export async function confirmNewGame(page: Page, accept: boolean): Promise<void> {

@@ -1,10 +1,10 @@
 import type { Game } from './game';
 import { GameSession } from './session';
-import { DEFAULT_SAVE_IDENTITY } from './storage';
+import { storyCatalog } from './catalog';
+import type { CatalogStory } from './catalog';
 import { createPanels } from './panels';
 import { parseStory } from './story';
 import { interpolate } from './interpolate';
-import exampleStory from './example.story?raw';
 import './style.css';
 
 const container = document.querySelector<HTMLElement>('#app');
@@ -20,12 +20,12 @@ function showError(error: unknown): void {
   root.append(message);
 }
 
-try {
-  const story = parseStory(exampleStory);
+function selectStory(entry: CatalogStory): void {
+  const story = parseStory(entry.source);
   const session = new GameSession(story, {
     getItem: key => window.localStorage.getItem(key),
     setItem: (key, value) => window.localStorage.setItem(key, value),
-  }, DEFAULT_SAVE_IDENTITY);
+  }, entry.identity);
   let reportedNotice: unknown;
 
   function renderNotice(): void {
@@ -67,7 +67,7 @@ try {
   function renderStartup(): void {
     root.className = 'startup';
     const heading = document.createElement('h1');
-    heading.textContent = 'Empires';
+    heading.textContent = entry.title;
     heading.tabIndex = -1;
     root.replaceChildren(heading);
     const startup = session.startup;
@@ -96,6 +96,11 @@ try {
     start.textContent = 'New Game';
     start.addEventListener('click', startNewGame);
     actions.append(start);
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.textContent = 'Back to Stories';
+    back.addEventListener('click', renderLibrary);
+    actions.append(back);
     root.append(actions);
     renderNotice();
     heading.focus();
@@ -196,6 +201,34 @@ try {
   }
 
   renderStartup();
-} catch (error) {
-  showError(error);
 }
+
+function renderLibrary(): void {
+  root.className = 'startup';
+  const heading = document.createElement('h1');
+  heading.textContent = 'Empires';
+  heading.tabIndex = -1;
+  const introduction = document.createElement('p');
+  introduction.textContent = 'Choose a story.';
+  const stories = document.createElement('ul');
+  stories.className = 'story-library';
+  for (const entry of storyCatalog) {
+    const item = document.createElement('li');
+    const title = document.createElement('h2');
+    title.textContent = entry.title;
+    const description = document.createElement('p');
+    description.textContent = entry.description;
+    const select = document.createElement('button');
+    select.type = 'button';
+    select.textContent = 'Select ' + entry.title;
+    select.addEventListener('click', () => {
+      try { selectStory(entry); } catch (error) { showError(error); }
+    });
+    item.append(title, description, select);
+    stories.append(item);
+  }
+  root.replaceChildren(heading, introduction, stories);
+  heading.focus();
+}
+
+renderLibrary();
