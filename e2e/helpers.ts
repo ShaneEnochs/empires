@@ -21,7 +21,7 @@ export async function startGame(page: Page): Promise<void> {
 }
 
 export async function selectStory(page: Page, title: StoryTitle = 'The City Gate'): Promise<void> {
-  await expectPassage(page, 'Empires');
+  await expectPassage(page, 'Your next story');
   await page.getByRole('button', { name: 'Select ' + title, exact: true }).click();
   await expectPassage(page, title);
   await expect(page.getByRole('navigation', { name: 'Game startup' })).toBeVisible();
@@ -29,21 +29,28 @@ export async function selectStory(page: Page, title: StoryTitle = 'The City Gate
 
 export async function openPanel(page: Page, name: PanelName) {
   const button = page.getByRole('button', { name, exact: true });
-  if (await button.getAttribute('aria-expanded') === 'false') await button.click();
+  if (await button.getAttribute('aria-pressed') !== 'true') await button.click();
   const section = page.getByRole('region', { name, exact: true });
   await expect(section).toBeVisible();
   return section;
+}
+
+export async function returnToStory(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Story', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Story', exact: true })).toHaveAttribute('aria-pressed', 'true');
 }
 
 export async function expectCharacter(page: Page, values: string[]): Promise<void> {
   const panel = await openPanel(page, 'Character');
   await expect(panel.locator('dt')).toHaveText(['Name', 'Influence', 'Honor', 'Loyal']);
   await expect(panel.locator('dd')).toHaveText(values);
+  await returnToStory(page);
 }
 
 export async function expectItems(page: Page, name: Exclude<PanelName, 'Character'>, items: string[]): Promise<void> {
   const panel = await openPanel(page, name);
   await expect(panel.getByRole('listitem')).toHaveText(items);
+  await returnToStory(page);
 }
 
 export async function expectGateState(page: Page): Promise<void> {

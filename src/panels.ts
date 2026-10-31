@@ -9,12 +9,12 @@ export function characterStats(story: Story, state: GameState): { label: string;
   });
 }
 
-function panel(id: string, title: string, renderContent: (section: HTMLElement) => void) {
+function panel(id: string, title: string, select: (title: string) => void, renderContent: (section: HTMLElement) => void) {
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = title;
   button.setAttribute('aria-controls', id);
-  button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-pressed', 'false');
   const section = document.createElement('section');
   section.className = 'info-panel';
   section.id = id;
@@ -25,15 +25,12 @@ function panel(id: string, title: string, renderContent: (section: HTMLElement) 
     const heading = document.createElement('h2');
     heading.id = id + '-heading';
     heading.textContent = title;
+    heading.tabIndex = -1;
     section.replaceChildren(heading);
     renderContent(section);
   }
 
-  button.addEventListener('click', () => {
-    section.hidden = !section.hidden;
-    button.setAttribute('aria-expanded', String(!section.hidden));
-    if (!section.hidden) render();
-  });
+  button.addEventListener('click', () => select(title));
   return { button, section, render };
 }
 
@@ -54,8 +51,8 @@ function list(section: HTMLElement, entries: readonly string[], emptyText: strin
 }
 
 /** The four fixed read-only panels; passage actions and focus stay in main.ts. */
-export function createPanels(story: Story, game: Game) {
-  const character = panel('character', 'Character', section => {
+export function createPanels(story: Story, game: Game, select: (title: string) => void) {
+  const character = panel('character', 'Character', select, section => {
     if (story.stats.length === 0) {
       const empty = document.createElement('p');
       empty.textContent = 'No character statistics configured.';
@@ -73,7 +70,7 @@ export function createPanels(story: Story, game: Game) {
     section.append(stats);
   });
 
-  const journal = panel('journal', 'Journal', section => {
+  const journal = panel('journal', 'Journal', select, section => {
     if (game.state.journal.length === 0) {
       list(section, [], 'No journal entries yet.');
       return;
@@ -94,12 +91,12 @@ export function createPanels(story: Story, game: Game) {
     }
   });
 
-  const skills = panel('skills', 'Skills', section => {
+  const skills = panel('skills', 'Skills', select, section => {
     list(section, game.state.skills.map(id => story.skills.find(skill => skill.id === id)!.name),
       'No skills acquired yet.');
   });
 
-  const inventory = panel('inventory', 'Inventory', section => {
+  const inventory = panel('inventory', 'Inventory', select, section => {
     list(section, Object.entries(game.state.inventory).map(([id, quantity]) =>
       story.items.find(item => item.id === id)!.name + ' × ' + quantity),
       'No items in inventory.');
@@ -109,6 +106,6 @@ export function createPanels(story: Story, game: Game) {
   return {
     buttons: panels.map(panel => panel.button),
     sections: panels.map(panel => panel.section),
-    render(): void { for (const panel of panels) panel.render(); },
+    render(title: string): void { panels.find(panel => panel.button.textContent === title)!.render(); },
   };
 }

@@ -4,6 +4,7 @@ import { checkpointKey, STORAGE_KEY } from '../src/storage';
 import {
   checkpointRecord, chooseName, confirmNewGame, expectCharacter,
   expectItems, expectPassage, openPanel, panelNames, selectStory, startGame,
+  returnToStory,
 } from './helpers';
 import type { StoryTitle } from './helpers';
 
@@ -44,6 +45,7 @@ async function crisisCharacter(page: Page, values: string[]): Promise<void> {
   const panel = await openPanel(page, 'Character');
   await expect(panel.locator('dt')).toHaveText(['Envoy', 'Authority', 'Public trust', 'Settlement']);
   await expect(panel.locator('dd')).toHaveText(values);
+  await returnToStory(page);
 }
 
 async function seedBoth(page: Page): Promise<void> {
@@ -87,7 +89,7 @@ async function storageAccess(page: Page): Promise<{ operation: string; key: stri
 test('library lists both stories without storage access; selecting and going back only reads the selected save', async ({ page }) => {
   await observeStorage(page);
   await page.goto('/');
-  await expectPassage(page, 'Empires');
+  await expectPassage(page, 'Your next story');
   await expect(page.getByText('Choose a story.', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2 })).toHaveText(titles);
   await expect(page.getByRole('button')).toHaveText(titles.map(title => 'Select ' + title));
@@ -99,12 +101,12 @@ test('library lists both stories without storage access; selecting and going bac
   await expectPassage(page, 'The City Gate');
   await expect(page.getByRole('group', { name: 'Game tools' })).toHaveCount(0);
   expect(await storageAccess(page)).toEqual([{ operation: 'read', key: STORAGE_KEY }]);
-  await action(page, 'Back to Stories', 'Empires');
+  await action(page, 'Back to Stories', 'Your next story');
   expect(await storageAccess(page)).toEqual([{ operation: 'read', key: STORAGE_KEY }]);
   await selectStory(page, 'Provincial Crisis');
   await expect(page.getByRole('navigation', { name: 'Game startup' }).getByRole('button'))
     .toHaveText(['New Game', 'Back to Stories']);
-  await action(page, 'Back to Stories', 'Empires');
+  await action(page, 'Back to Stories', 'Your next story');
   expect(await storageAccess(page)).toEqual([
     { operation: 'read', key: STORAGE_KEY }, { operation: 'read', key: crisisKey },
   ]);
@@ -123,10 +125,10 @@ test('both stories keep independent checkpoints across reloads, startup switchin
   expect(await storageAccess(page)).toEqual([]);
   await selectStory(page);
   await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toBeVisible();
-  await action(page, 'Back to Stories', 'Empires');
+  await action(page, 'Back to Stories', 'Your next story');
   await selectStory(page, 'Provincial Crisis');
   await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toBeVisible();
-  await action(page, 'Back to Stories', 'Empires');
+  await action(page, 'Back to Stories', 'Your next story');
   expect(await storageAccess(page)).toEqual([
     { operation: 'read', key: STORAGE_KEY }, { operation: 'read', key: crisisKey },
   ]);
@@ -181,7 +183,7 @@ for (const title of titles) {
     await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toHaveCount(0);
     await confirmNewGame(page, false);
     expect(await checkpointRecord(page, selectedKey)).toBe('{broken');
-    await action(page, 'Back to Stories', 'Empires');
+    await action(page, 'Back to Stories', 'Your next story');
     await selectStory(page, title === 'The City Gate' ? 'Provincial Crisis' : 'The City Gate');
     await action(page, 'Continue Game', title === 'The City Gate' ? 'Six Sacks and a Day' : 'Choose Your Background');
     expect(await checkpointRecord(page, selectedKey)).toBe('{broken');
@@ -218,6 +220,7 @@ test('Provincial Crisis naming, selected metadata, conditional choices, and spen
   await expect(journal.getByRole('heading', { level: 3 })).toHaveText(['The Writ', 'The River', 'Night Council']);
   await expect(journal.getByRole('listitem')).toHaveCount(8);
   await expect(journal.getByRole('listitem').last()).toHaveText(name + ' secured a civic compact and committed six sacks to public kitchens.');
+  await returnToStory(page);
   await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveCount(0);
   await expect(page.locator('main b, main img, main script')).toHaveCount(0);
   expect(await checkpointRecord(page, crisisKey)).toBe(saved);
@@ -239,6 +242,7 @@ for (const checkpoint of ['briefing', 'night_council']) {
     const heading = checkpoint === 'briefing' ? 'Six Sacks and a Day' : 'When the Seal Expires';
     const journal = await openPanel(page, 'Journal');
     const expectedJournal = await journal.getByRole('listitem').allTextContents();
+    await returnToStory(page);
     for (let cycle = 0; cycle < 2; cycle++) {
       if (checkpoint === 'briefing') {
         await action(page, 'Investigate the mill accounts', 'The Mill Yard');
@@ -290,6 +294,11 @@ test('failed Provincial Crisis automatic save keeps its in-memory recovery and w
   await councilWithEvidence(page);
   const warning = 'The latest checkpoint could not be saved. Closing this page may lose progress since the last saved checkpoint.';
   await expect(page.getByRole('alert')).toHaveText(warning);
+  for (const name of panelNames) {
+    await openPanel(page, name);
+    await expect(page.getByRole('alert')).toHaveText(warning);
+  }
+  await returnToStory(page);
   expect(await records(page)).toEqual(saved);
   await action(page, 'Plan an evacuation of the lower town', 'Boats Before Possessions');
   await action(page, 'Force the damaged sluice as a shortcut despite the risk', 'The Gate Gives Way');
@@ -309,7 +318,7 @@ for (const width of [320, 375]) {
   test('story library and both startup screens remain accessible at ' + width + 'px', async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    await expectPassage(page, 'Empires');
+    await expectPassage(page, 'Your next story');
     for (const title of titles) {
       const button = page.getByRole('button', { name: 'Select ' + title, exact: true });
       for (let tab = 0; tab < (title === 'The City Gate' ? 1 : 2); tab++) await page.keyboard.press('Tab');
@@ -329,7 +338,7 @@ for (const width of [320, 375]) {
       await page.keyboard.press('Enter');
       await expectPassage(page, title);
       await expect(page.getByRole('button', { name: 'New Game', exact: true })).toBeInViewport();
-      await action(page, 'Back to Stories', 'Empires');
+      await action(page, 'Back to Stories', 'Your next story');
     }
     await selectStory(page, 'Provincial Crisis');
     await action(page, 'New Game', 'The Last Ferry');
@@ -338,7 +347,9 @@ for (const width of [320, 375]) {
     await expect(field).toBeInViewport();
     await field.fill('Mobile Reader');
     for (const name of panelNames) await openPanel(page, name);
+    await returnToStory(page);
     await expect(field).toHaveValue('Mobile Reader');
+    await returnToStory(page);
     await field.press('Enter');
     await expectPassage(page, 'What You Bring');
     await crisisCharacter(page, ['Mobile Reader', '2', '0', 'Undecided']);

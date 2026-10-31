@@ -205,24 +205,23 @@ bound. No new defect was found. Neither story source nor revision was changed.
 
 ## Reading interface
 
-Empires keeps its Georgia type and warm background in a responsive reading
-column, capped at 40rem with roomier lines and paragraph spacing. Story choices,
-Continue, and Try Again use stacked primary buttons; Character, Journal, Skills,
-Inventory, and New Game sit in a separate labeled tools group.
+Empires uses the same centered, 46rem maximum reading surface on phone and desktop.
+A compact application header and selected story title precede wrapping navigation:
+**Story, Character, Journal, Skills, Inventory**. Chapter labels, serif passage
+headings/prose, and a separated choice area make reading the primary activity.
+System sans-serif controls and statistics use one muted neutral palette. Native
+buttons have 44px minimum targets and visible focus. There are no themes,
+animations, transitions, drawers, sidebars, or nested scrolling containers.
 
-Native buttons have at least 44px touch targets and a visible keyboard focus
-ring. The four independently expandable panels share headings, spacing, and
-borders. Long labels, journal entries, and inventory lists wrap in normal page
-flow, without nested scrolling or fixed-height clipping.
+One view is active at a time. Information replaces the story inline; select Story
+or Return to Story to resume the exact same passage. The story DOM remains hidden
+and intact, retaining unfinished input, validation messages, and form state.
+Viewing information never enters passages or touches saves. Heading focus follows
+view selection; successful gameplay navigation and Try Again return to Story and
+focus the passage heading. Validation focuses the retained input. Critical save
+warnings and confirmed New Game remain available across views.
 
-Startup, text input, validation errors, save warnings, and death passages share
-the same restrained styling. Expanded tools are highlighted. Heading focus after
-navigation/recovery and input focus after validation errors are unchanged.
-There are no animations or scripted scrolling additions. The viewport remains
-zoomable, and labels/content still render as safe text.
-
-These changes are presentation only: story routes, syntax, state, checkpoint
-timing, Continue Game, Try Again, and existing saves are unchanged.
+Story content, saves, identities, revisions, and recovery semantics are unchanged.
 
 ## Write a story
 
@@ -412,7 +411,7 @@ Declarations may interleave with variables, skills, and items, and their order
 determines display order. Strings, finite numbers, and booleans are supported.
 Labels remain literal, without interpolation.
 
-Character is a native expandable section beside Journal, Skills, and Inventory.
+Character is a native inline information view alongside Journal, Skills, and Inventory.
 It lists labels and current committed values as semantic name/value pairs.
 Booleans display as Yes/No; numbers and strings use their ordinary text without
 changing stored values. All content uses `textContent`. An unconfigured story

@@ -174,12 +174,12 @@ without interpolation. Malformed labels, unknown/duplicate references, and
 declarations in passages or after chapters are source-line errors.
 
 Strings and numbers display as text; booleans display Yes or No. The native
-Character button toggles a labeled section with keyboard access,
-`aria-controls`, and `aria-expanded`. Labels and values are inert `textContent`,
+Character button selects a labeled inline view with keyboard access,
+`aria-controls`, and `aria-pressed`. Labels and values are inert `textContent`,
 even when they contain HTML-like text. No stats shows
 “No character statistics configured.”
-Open panels update after successful navigation, input, Continue Game, and
-Try Again. Opening or closing a panel never changes gameplay, repeats effects,
+Views read the current state when presented after navigation, input, Continue Game,
+or Try Again. Opening or closing a panel never changes gameplay, repeats effects,
 submits draft input, or writes storage.
 
 Frozen `Story.stats` stores presentation references/labels only. Current values
@@ -190,7 +190,7 @@ No derived stats, formulas, categories, progress bars, point allocation,
 or conditional stat visibility are supported.
 
 The responsive interface separates story actions from utility buttons. Panels
-remain independently expandable; long labels and entries wrap without truncation.
+remain single active inline; long labels and entries wrap without truncation.
 Responsive styling adds no authoring directives and changes no story routes,
 effects, saved data, checkpoint timing, or recovery behavior.
 
@@ -230,7 +230,7 @@ journal before initial effects, which may immediately record entries. All effect
 are atomic: failure rolls back every candidate append, variable change, and skill change. Failed
 attempts leave no hidden deduplication history.
 
-The Journal button toggles a read-only section without navigation or effects.
+The Journal button selects a read-only view without navigation or effects.
 Chapter groups appear in first-recorded order; entries within a group retain
 recording order. Later events in an earlier chapter join its existing group.
 An open journal updates after successful navigation. Empty journals display
@@ -517,11 +517,11 @@ revocation, journal append, variable change, or new passage ID commits. Earlier
 states and other games stay unchanged. Initial entry follows the same rule.
 Reads, condition checks, and rendering never execute skill effects.
 
-The native Skills button opens/closes an accessible section independently of
-Journal, with `aria-expanded` reflecting its visibility. Names come from static
+The native Skills button selects an accessible section in place of Story or
+Journal, with `aria-pressed` reflecting its visibility. Names come from static
 definitions and IDs from current state, in acquisition order; no UI copy of
-acquired skills exists. Empty lists show “No skills acquired yet.” Open sections
-update after navigation, including removal. Toggling either control changes no
+acquired skills exists. Empty lists show “No skills acquired yet.” Selected views
+reflect navigation changes, including removal. Toggling either control changes no
 gameplay state. Skill names use `textContent`, so HTML-like names remain inert.
 
 ## Items and inventory
@@ -607,8 +607,8 @@ the same eligibility rules, including shared destinations. No compounds, logical
 operators, parentheses, variable operands, expressions, or conditional effects
 are added. Existing variable/skill conditions and Continue remain unchanged.
 
-The Inventory button toggles a native labeled section beside Journal and Skills,
-with `aria-controls`, `aria-expanded`, and keyboard access. It derives names from
+The Inventory button selects a native labeled view alongside Journal and Skills,
+with `aria-controls`, `aria-pressed`, and keyboard access. It derives names from
 `Story.items` and quantities/order from `GameState.inventory`, listing only owned
 items as `Name × quantity`. Empty inventory shows “No items in inventory.” Open
 sections update after navigation, including items removed at zero. Toggling any
@@ -1087,3 +1087,22 @@ ordinary navigation.
 Random mechanics, glossary, shops, skill purchasing, manual saves, save slots,
 import/export, procedures, subroutines, loops, and plugin systems remain excluded
 unless a future task explicitly changes the requirements.
+
+
+## Unified reading views (Stage 10A)
+
+The browser presents a compact application header, selected story identity,
+wrapping Story/Character/Journal/Skills/Inventory navigation, and one active
+content section in the same centered column at every viewport width. Native
+buttons expose aria-pressed; hidden subtrees are removed from keyboard and
+assistive navigation. Information headings receive focus on selection; Story
+returns focus to the passage heading. This is presentation only, with no new
+story directives or persisted state.
+
+Main retains the story DOM while information is shown, so unsubmitted text and
+validation errors survive. It refreshes only the selected read-only view through
+panels.ts. View selection never runs GameSession actions, rerenders the passage,
+or touches storage. New Game and save warnings stay outside the hidden content.
+Successful navigation/input/retry rebuild the passage and select Story. Checkpoint
+and save compatibility remain unchanged. The muted palette uses system fonts;
+there are no animations, overlays, sidebars, or separate mobile navigation.
