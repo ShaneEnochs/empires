@@ -156,6 +156,10 @@ input[aria-invalid='true'] { border: 2px solid #8c3c2f; }
 .startup-actions { max-inline-size: 24rem; }
 .startup-message { color: #6e3027; font-weight: bold; }
 
+.story-library { list-style: none; margin: 0; padding: 0; }
+.story-library li { border-block-start: 1px solid #c8cfc9; padding-block: 1.5rem; }
+.story-library h2 { margin: 0 0 0.75rem; font-size: 1.5rem; }
+
 .death > h1 { color: #6e3027; }
 .death .passage-actions button { background: #69443d; border-color: #69443d; }
 

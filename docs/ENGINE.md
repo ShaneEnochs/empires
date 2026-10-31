@@ -466,9 +466,10 @@ state. No extra state, definitions, timestamps, drafts, or version history are s
 All identity arguments default to frozen `DEFAULT_SAVE_IDENTITY`, retaining
 `STORY_ID = 'empires-example'`, `STORY_REVISION = 1`, and
 `STORAGE_KEY = 'empires:checkpoint:empires-example'` for existing callers.
-`main.ts` explicitly supplies that default; the shipped story and compatible
-revision-1 saves are unchanged. No migration, format bump, browser selector, or
-Provincial Crisis browser loader is introduced.
+The City Gate catalog entry supplies that default; Provincial Crisis supplies
+`{ storyId: 'provincial-crisis', storyRevision: 1 }` and uses
+`empires:checkpoint:provincial-crisis`. Both authored stories and compatible
+revision-1 saves are unchanged; there is no migration or format bump.
 
 `new GameSession(story, storage, identity)` captures its own validated frozen
 identity before startup reads. All subsequent startup, New Game rechecks/replacement,
@@ -486,7 +487,7 @@ so probing and clicking Continue do not run effects twice. No default new Game i
 constructed during empty startup. There is no second gameplay-state collection;
 the active/prepared Game owns its own immutable state and checkpoint.
 
-Startup renders a focused Empires heading and native New Game button, adding
+After story selection, startup renders a focused story-title heading and native New Game button, adding
 Continue Game only for a usable save. Invalid saves display a readable explanation
 without changing their bytes. Diagnostic errors are logged to the browser console.
 Continue performs no storage write and enters the saved destination directly,
@@ -528,6 +529,42 @@ validation. Bump `SAVE_FORMAT_VERSION` for incompatible envelope changes. A mism
 never migrates, repairs, or deletes the save; confirmed New Game replaces it.
 There is no automatic release-compatibility or migration framework. Data belongs
 to one browser profile/origin; no cross-tab synchronization or cloud copy is added.
+
+## Static story library
+
+Stage 9B adds `src/catalog.ts` with two bundled sources: The City Gate
+(`src/example.story`) and Provincial Crisis (`examples/provincial-crisis.story`).
+Entries contain a stable application `id`, title, description, Vite `?raw` source,
+and explicit `StorySaveIdentity`. Catalog/entry/identity data is frozen. Initialization
+rejects invalid/duplicate catalog IDs and duplicate save IDs, even if revisions differ.
+Catalog IDs need not equal save IDs: `city-gate` deliberately keeps the established
+`empires-example` save identity. Titles/files/content never determine either ID.
+
+`renderLibrary` builds text and native selection buttons without parsing stories,
+constructing sessions/Games, or accessing storage. A selection calls `selectStory`,
+which parses only that source and creates its GameSession with the entry's identity.
+The selected Story/session live together in that invocation's closure; all existing
+gameplay handlers and `createPanels(story, game)` use those same objects. No second
+renderer or mutable active-story registry is needed.
+
+Startup keeps the existing Continue/New Game/unusable-save/unsaved-play behavior.
+Back to Stories replaces the pre-game DOM with the library without initializing a
+Game or accessing storage. Removed startup handlers do not remain attached to the
+new screen. Selecting a saved story prepares its restored Game through the existing
+session validation; going back discards that startup without activating gameplay
+or changing saved bytes. Library/startup/gameplay headings retain native focus behavior.
+
+After gameplay starts, there is no story-switch or checkpoint-return control.
+Reloading/reopening returns to the library, where each story independently offers
+its latest saved checkpoint. New Game checks/confirms/replaces only the selected
+record; corrupt progress in one story does not disable the other. Death/retry keeps
+using the selected session's newest in-memory checkpoint and never writes a save.
+Panels and accepted player names remain story-specific; nothing transfers between games.
+
+To add a bundled story, explicitly import its raw source and add a static catalog
+entry with unique catalog/save IDs and an intentional compatible revision. Keep
+the existing source/API playtests and add browser coverage. No dynamic discovery,
+URL routing, content service, plugin system, or third-party runtime is introduced.
 
 ## Death and checkpoint recovery
 
@@ -577,7 +614,8 @@ Stage 8B adds responsive reading styles. Stage 8C adds permanent browser integra
 tests. Stage 8D adds the separate Provincial Crisis story and API playtests without
 engine changes. Its playtest notes document current language/deployment limits;
 Stage 9A adds explicit story identity configuration and shared-storage isolation
-tests. Browser story selection remains future work; Stage 9B is not implemented.
+tests. Stage 9B adds the static two-story browser library with independent startup
+and progress. Stage 9C is not implemented.
 Continue Game, confirmed New Game, browser checkpoint storage, and death/Try Again
 are implemented. In-story Continue still follows its explicit destination.
 Traditional Undo, history stacks, manual
@@ -592,7 +630,7 @@ binary skill definitions/acquisition/revocation/viewing, interpolation, validate
 item definitions/quantities/conditions and inventory viewing,
 one-field player text input and story-driven character creation,
 in-memory checkpoint capture/validation/restoration,
-versioned localStorage checkpoint persistence and minimal startup,
+versioned localStorage checkpoint persistence, static story library, and per-story startup,
 author-controlled death and guarded Try Again recovery,
 static stat-display declarations and read-only Character viewing,
 explicit navigation, and basic rendering. No dependencies or visual redesign are

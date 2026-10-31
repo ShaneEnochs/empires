@@ -408,9 +408,12 @@ matching `^[a-z][a-z0-9_-]*$` and a positive safe integer `storyRevision`.
 Developers pass it to GameSession/storage APIs; see README for setup. Independent
 stories require distinct IDs and use `empires:checkpoint:<storyId>`. Revision is
 not part of the key, so incompatible old progress remains detectable.
-The browser still uses `DEFAULT_SAVE_IDENTITY`, with legacy
+The City Gate catalog entry uses `DEFAULT_SAVE_IDENTITY`, with legacy
 `STORY_ID = 'empires-example'`, `STORY_REVISION = 1`, and exact key
 `empires:checkpoint:empires-example`. `SAVE_FORMAT_VERSION = 1` is independent.
+Provincial Crisis has its own revision-1 identity/key. Players choose either story
+from the static browser library; selection and Back to Stories are application
+controls, not story commands. Progress and character data do not transfer.
 The JSON envelope has exactly `formatVersion`, `storyId`, `storyRevision`, and
 `checkpoint` (the complete existing `{ state: GameState }` representation).
 See README for an actual initial-save example.
@@ -1016,7 +1019,8 @@ implemented. Stage 8C adds permanent browser tests without changing authoring
 syntax or gameplay. Stage 8D adds the independent
 [Provincial Crisis story/playtest](../examples/provincial-crisis.md) using this
 syntax. Stage 9A adds application-level save identity configuration without new
-syntax. Browser story selection remains future work; Stage 9B is not implemented.
+syntax. Stage 9B adds the static browser story library without altering either
+story or this language. Stage 9C is not implemented.
 
 Continue Game resumes the single checkpoint when reopening, and New Game confirms
 before replacing saved progress. Both are implemented in Stage 7B.

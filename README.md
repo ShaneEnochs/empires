@@ -12,10 +12,13 @@ npm ci
 npm run dev
 ```
 
-Open the address printed by Vite. Startup offers **New Game**, plus **Continue Game**
-when a usable checkpoint exists. New Game asks before replacing existing saved
+Open the address printed by Vite and choose **The City Gate** or **Provincial Crisis**
+from the story library. The selected story's startup offers **New Game**, plus
+**Continue Game** when its usable checkpoint exists. New Game asks before replacing that story's saved
 progress. Continue resumes the **last checkpoint**, not the last visited passage.
-The example offers **gate → messenger → council**
+Back to Stories is available before gameplay and leaves both saves untouched.
+To choose a different story after starting, reopen or reload the application.
+The City Gate offers **gate → messenger → council**
 or **gate → council**, with different influence, honor, and loyalty values.
 The messenger's Continue explicitly targets `council`; the council is terminal.
 The Journal button shows recorded events grouped by chapter. The messenger route
@@ -36,7 +39,21 @@ An optional watchtower route ends in authored death prose. **Try Again** returns
 to the initial gate, or to the background checkpoint if a name was submitted.
 Variables, journal entries, acquired skills, and inventory persist across passages.
 Successful checkpoints are saved automatically in this browser. Refreshing shows
-startup again; ordinary progress after the last saved checkpoint is not restored.
+the library again; select the same story and Continue to resume its checkpoint.
+Ordinary progress after the last saved checkpoint is not restored.
+
+## Playable stories
+
+| Story | Experience | Save ID | Revision |
+| --- | --- | --- | --- |
+| The City Gate | A short council adventure with an optional name/background and a dangerous watchtower. | `empires-example` | 1 |
+| Provincial Crisis | A 30-passage political adventure about flooding and disputed grain, with three endings and two authored checkpoints. | `provincial-crisis` | 1 |
+
+Each story has its own Continue Game, confirmed New Game, automatic checkpoint,
+and Try Again recovery. Opening the library does not read or write saves.
+Choosing a story checks only its record; a corrupt save cannot block the other.
+Character, Journal, Skills, and Inventory use the selected story's definitions.
+There are no shared characters, statistics, inventory, or transfers between stories.
 
 ```sh
 npm test          # parsing, validation, state effects, interpolation, navigation
@@ -74,7 +91,10 @@ at desktop size; a focused selection also runs at 320, 375, 768, and 1280px.
 Coverage includes startup, checkpoint Continue, confirmed/canceled New Game,
 invalid saved data, original routes, conditional prose, all panels, names/input,
 death/retry, persistent bytes/write counts, responsive controls, and keyboard focus.
-Tests drive the shipped example via accessible controls without app hooks or
+The original 19 browser workflows explicitly select The City Gate. Additional
+library tests cover both stories' startup, isolated saves/corruption, Provincial
+Crisis naming, a complete ending, both checkpoint recoveries, failed automatic
+saves, and narrow-screen selection. Tests drive both stories via accessible controls without app hooks or
 test-only routes. There are no screenshot baselines, sleeps, or automatic retries.
 
 Failures retain screenshots and traces in `test-results/` plus an HTML report in
@@ -123,7 +143,19 @@ For a separate 30-passage adventure, see
 [Provincial Crisis](examples/provincial-crisis.story) and its
 [playtest routes, balances, and authoring findings](examples/provincial-crisis.md).
 Its 20 playthrough tests and shared-storage identity tests run with `npm test`.
-The browser continues to load the original shipped story; there is no story selector.
+Both stories are playable through the browser library without changing either
+authored source.
+
+The small static catalog lives in `src/catalog.ts`. To bundle another story,
+add a Vite `?raw` import and one entry containing an explicit unique catalog `id`,
+`title`, `description`, `source`, and `identity: { storyId, storyRevision }`.
+The catalog freezes its entries/identities and checks unique catalog IDs and
+unique save IDs at initialization. Catalog IDs identify application entries;
+`identity.storyId` selects persistent progress, and `storyRevision` declares save
+compatibility. Neither is inferred from the title, source, or filename.
+Reuse an established save ID only for the same story; use a distinct ID for a new
+independent game. Add route and browser tests for the new entry. This is a bundled
+list, with no downloads, discovery, uploads, or external content system.
 
 Authors use one small plain-text format:
 
@@ -374,9 +406,11 @@ Checkpoint control; browser startup uses the checkpoint constructor for Continue
 ## Persistent checkpoint and startup
 
 `src/storage.ts` uses one namespaced localStorage key per configured story.
-The browser still launches the shipped example with `DEFAULT_SAVE_IDENTITY`:
+The City Gate catalog entry uses `DEFAULT_SAVE_IDENTITY`:
 `storyId: 'empires-example'`, `storyRevision: 1`, and the unchanged key
-`empires:checkpoint:empires-example`. Existing revision-1 saves remain readable.
+`empires:checkpoint:empires-example`. Provincial Crisis uses ID `provincial-crisis`,
+revision 1, and key `empires:checkpoint:provincial-crisis`. Existing City Gate
+revision-1 saves remain readable.
 `SAVE_FORMAT_VERSION = 1` remains an independent application-wide constant.
 Identity/revision stay outside GameState and `.story` syntax. The initial save
 envelope for the shipped example is:
@@ -424,8 +458,8 @@ a revision change finds the old record and reports incompatibility. A session
 only accesses its configured key. Low-level `loadCheckpoint(storage, story, identity)`
 and `saveCheckpoint(storage, story, checkpoint, identity)` accept the same config.
 Omitting it retains the shipped defaults, including the legacy `STORY_ID`,
-`STORY_REVISION`, and `STORAGE_KEY` exports. There is no browser story selection
-or Provincial Crisis loader yet.
+`STORY_REVISION`, and `STORAGE_KEY` exports. The browser passes each selected
+catalog entry's identity explicitly.
 
 Maintain stable IDs. **Bump the configured story revision when changing a story incompatibly**,
 including variable declarations/types, passage/item/skill/journal identities or
@@ -433,13 +467,13 @@ journal chapters, and entry effects that change saved-state behavior. Bump
 `SAVE_FORMAT_VERSION` for incompatible envelope changes. There are no migrations
 or version histories. Matching versions still require complete snapshot validation.
 
-Startup parses the story, reads/validates the envelope and snapshot, and verifies
+Selecting a story parses that source, reads/validates its envelope and snapshot, and verifies
 saved entry through `new Game(story, { checkpoint })`. Continue activates that
 prepared Game without another entry or write. No fresh game starts automatically.
 Unusable saves remain untouched, Continue is omitted, and a readable reason is
 shown. Technical details are available in the browser console.
 
-New Game confirms before replacing any existing record, including a corrupt one.
+New Game confirms before replacing the selected story's existing record, including a corrupt one.
 It constructs a fresh Game, writes its initial pre-entry checkpoint once using
 one `setItem`, then activates it. Cancel, construction failure, or replacement
 failure preserves the old game/save. New Game is also available beside the panels.
@@ -457,7 +491,8 @@ loss on closing the page. A later successful checkpoint write clears the warning
 there are no timer, background, or unload retries. Blocked storage or a failed
 New Game save offers **Play without saving**, requiring explicit confirmation and
 keeping existing saved bytes untouched. That mode clearly warns that progress
-will be lost on closing. Saves are local to this browser profile and origin.
+will be lost on closing. Saves are local to this browser profile and origin;
+clearing site data removes them. There is no cloud backup or cross-device sync.
 
 ## Death and Try Again
 
@@ -498,8 +533,8 @@ Stages 7A–7C, 8A, and 8B are implemented, including persistent checkpoints, de
 recovery, selected character statistics, panel organization, and responsive reading
 styles. Stage 8C adds permanent browser integration tests. Stage 8D adds an
 independent story/playtest example using the existing language. Stage 9A adds
-explicit story save identities and isolated persistence. Browser story selection
-remains future work; Stage 9B is not implemented.
+explicit story save identities and isolated persistence. Stage 9B adds the static
+two-story library and shared startup/gameplay presentation. Stage 9C is not implemented.
 
 Traditional Undo, choice-history stacks, manual rewind, Return
 to Checkpoint controls, manual saves, and save slots remain excluded. In-story

@@ -102,6 +102,16 @@ libraries. Use the existing checkout; no frontend framework is needed.
   new Game. Explicit actions compare checkpoint references and write once only
   after replacement; ordinary transitions, failed actions, renders, panel controls,
   and form edits never save. No timers or unload saves.
+- Keep the browser library a static `catalog.ts` list of explicit ID, title,
+  description, raw source, and save identity. Freeze configuration and validate
+  distinct catalog/save IDs. Preserve The City Gate's `empires-example` and
+  Provincial Crisis's `provincial-crisis`, both revision 1. Never infer identities.
+  Library rendering must not parse/enter stories, construct sessions, or inspect
+  storage. Only selection constructs the corresponding session. Keep its Story,
+  session, Game, handlers, and panel metadata together in the selection closure.
+  Back to Stories exists only before gameplay and performs no storage work or
+  Game initialization. Do not add in-game switching, cross-story state, discovery,
+  a content-management framework, or a second renderer.
 - `*death` is immutable passage metadata and one concluding action after prose.
   Reject arguments, duplicates, other actions, conditional placement, a checkpoint
   in the same passage, and a starting death passage. No `isDead` state/history.
@@ -162,8 +172,8 @@ Provincial Crisis authoring/playtest example are implemented. Keep that example
 under `examples/` and test it through parser/Game APIs and isolated memory storage;
 do not replace the shipped story or reuse its browser save slot. Stage 9A's
 explicit story save identities and shared-memory storage tests are implemented.
-The browser still explicitly launches the example. Story selection and a
-Provincial Crisis browser loader remain unimplemented; do not begin Stage 9B.
+Stage 9B's static browser library makes both stories playable through the same
+renderer/startup flow and isolated save identities. Do not begin Stage 9C.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.

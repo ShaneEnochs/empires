@@ -2,13 +2,13 @@ import { expect, test } from '@playwright/test';
 import { STORAGE_KEY } from '../src/storage';
 import {
   arrival, checkpointRecord, checkpointWrites, chooseName, confirmNewGame,
-  expectCharacter, expectGateState, expectItems, expectPassage, observeCheckpointWrites, startGame,
+  expectCharacter, expectGateState, expectItems, expectPassage, observeCheckpointWrites, selectStory, startGame,
 } from './helpers';
 
 test('first visit offers New Game and captures the initial pre-entry checkpoint', async ({ page }) => {
   await page.goto('/');
-  await expectPassage(page, 'Empires');
-  await expect(page.getByRole('navigation', { name: 'Game startup' }).getByRole('button')).toHaveText(['New Game']);
+  await selectStory(page);
+  await expect(page.getByRole('navigation', { name: 'Game startup' }).getByRole('button')).toHaveText(['New Game', 'Back to Stories']);
   expect(await checkpointRecord(page)).toBeNull();
 
   await page.getByRole('button', { name: 'New Game', exact: true }).click();
@@ -35,7 +35,7 @@ test('Continue resumes the initial checkpoint and drops ordinary unsaved passage
   expect(await checkpointWrites(page)).toBe(1);
 
   await page.reload();
-  await expectPassage(page, 'Empires');
+  await selectStory(page);
   await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
   await expectPassage(page, 'The City Gate');
@@ -57,7 +57,7 @@ test('a new page continues the authored checkpoint with its name, not the later 
   await observeCheckpointWrites(reopened);
   for (let load = 0; load < 2; load++) {
     await reopened.goto('/');
-    await expectPassage(reopened, 'Empires');
+    await selectStory(reopened);
     await reopened.getByRole('button', { name: 'Continue Game', exact: true }).click();
     await expectPassage(reopened, 'Choose Your Background');
     await expectCharacter(reopened, ['Eleanor', '1', '5', 'No']);
@@ -99,7 +99,7 @@ test('invalid stored checkpoint explains the problem, preserves its bytes, and r
   await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key: STORAGE_KEY, raw });
   await page.reload();
 
-  await expectPassage(page, 'Empires');
+  await selectStory(page);
   await expect(page.getByText('A saved game was found, but it cannot be loaded.', { exact: true })).toBeVisible();
   await expect(page.getByText('The saved checkpoint is not compatible with this story.', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toHaveCount(0);
