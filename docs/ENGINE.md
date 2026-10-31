@@ -544,7 +544,9 @@ alternatives; the engine does not prove narrative survivability.
 
 Stage 8A adds read-only selected statistics and limited panel organization.
 Stage 8B adds responsive reading styles. Stage 8C adds permanent browser integration
-tests. Stage 8D remains unimplemented.
+tests. Stage 8D adds the separate Provincial Crisis story and API playtests without
+engine changes. Its playtest notes document current language/deployment limits;
+Stage 9 has not begun.
 Continue Game, confirmed New Game, browser checkpoint storage, and death/Try Again
 are implemented. In-story Continue still follows its explicit destination.
 Traditional Undo, history stacks, manual

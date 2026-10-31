@@ -1007,7 +1007,9 @@ inventory; definitions stay in static `Story` metadata.
 
 Stage 8A's selected-stat panel and Stage 8B's responsive reading styles are
 implemented. Stage 8C adds permanent browser tests without changing authoring
-syntax or gameplay. Stage 8D remains future work.
+syntax or gameplay. Stage 8D adds the independent
+[Provincial Crisis story/playtest](../examples/provincial-crisis.md) using this
+syntax. Stage 9 has not begun.
 
 Continue Game resumes the single checkpoint when reopening, and New Game confirms
 before replacing saved progress. Both are implemented in Stage 7B.

@@ -150,8 +150,10 @@ capture, author-controlled `*checkpoint`, validated restoration, one versioned
 localStorage record, startup, Continue Game, confirmed New Game, and death/Try Again.
 Stage 8A's static stat-display metadata, read-only Character panel, and limited
 panel-code extraction are implemented, as are Stage 8B's responsive reading styles.
-Stage 8C's permanent production browser suite is implemented. Stage 8D remains
-future work.
+Stage 8C's permanent production browser suite and Stage 8D's independent
+Provincial Crisis authoring/playtest example are implemented. Keep that example
+under `examples/` and test it through parser/Game APIs and isolated memory storage;
+do not replace the shipped story or reuse its browser save slot. Stage 9 has not begun.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.

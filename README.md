@@ -117,8 +117,15 @@ timing, Continue Game, Try Again, and existing saves are unchanged.
 ## Write a story
 
 Edit [src/example.story](src/example.story); read the full
-[authoring guide](docs/SCRIPTING.md) for supported syntax. Authors use one small
-plain-text format:
+[authoring guide](docs/SCRIPTING.md) for supported syntax.
+
+For a separate 30-passage adventure, see
+[Provincial Crisis](examples/provincial-crisis.story) and its
+[playtest routes, balances, and authoring findings](examples/provincial-crisis.md).
+Its 20 integration tests run with `npm test`; the browser continues to load the
+original shipped story. No save identity or application loader is changed.
+
+Authors use one small plain-text format:
 
 ```text
 *var influence 4
@@ -458,7 +465,8 @@ Authors provide safe alternatives; the engine does not analyze narrative loops.
 
 Stages 7A–7C, 8A, and 8B are implemented, including persistent checkpoints, death
 recovery, selected character statistics, panel organization, and responsive reading
-styles. Stage 8C adds permanent browser integration tests. Stage 8D remains future work.
+styles. Stage 8C adds permanent browser integration tests. Stage 8D adds an
+independent story/playtest example using the existing language. Stage 9 has not begun.
 
 Traditional Undo, choice-history stacks, manual rewind, Return
 to Checkpoint controls, manual saves, and save slots remain excluded. In-story
