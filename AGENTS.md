@@ -278,3 +278,16 @@ Browser tests have zero retries and retain failure traces/screenshots; CI upload
 as are `dist/` and `node_modules/`. Commit source/config and the lockfile, not
 generated reports. Work on a feature branch and keep pull requests focused;
 do not commit directly to `main`.
+
+## Local authoring toolkit (Stage 11A)
+
+VS Code snippets/tasks use existing syntax and the existing preflight CLI; process
+arguments preserve paths containing spaces. `author.html` is development-only and
+must stay out of production builds and public navigation. `author.ts` parses local
+File API input only on selection, and uses the shared `reader.ts` with GameSession
+and a fresh memory adapter per preview/restart. Never access production storage,
+upload drafts, write source files, assign production identities, add catalog entries,
+or run continuous analysis. People metadata cannot be inferred from draft prose.
+The searchable passage index reads parsed structure only; never teleport, fabricate
+state, or navigate from it. Keep `npm run test:author` separate from production
+browser tests and preserve all existing regression suites. See docs/AUTHORING.md.

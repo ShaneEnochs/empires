@@ -1,0 +1,3 @@
+.author-tools { max-inline-size: 46rem; margin: 1rem auto; padding: 1rem; overflow-wrap: anywhere; }
+.author-tools label { display: block; margin-block: 1rem; }
+.author-tools ul { padding-inline-start: 1.25rem; }

@@ -25,6 +25,7 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - run: npm run test:author
       - run: npm run build:pages
       - uses: actions/upload-artifact@v7
         if: failure()
@@ -32,6 +33,7 @@ jobs:
           name: browser-test-diagnostics
           path: |
             test-results/
+            test-results-author/
             playwright-report/
           if-no-files-found: ignore
           retention-days: 7

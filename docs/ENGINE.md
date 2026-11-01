@@ -812,3 +812,13 @@ People render. Any listed event establishes discovery; missing events reveal
 nothing. Recovery naturally removes references whose events were rolled back.
 Definitions describe only authored encounters; prose alone adds no tracking.
 They are never fields in Story, GameState, snapshots, or save envelopes.
+
+## Local author preview (Stage 11A)
+
+`reader.ts` shares the existing startup, actions, information views, errors, and
+focus handling. `main.ts` supplies the public catalog story and localStorage
+adapter; development-only `author.ts` supplies a parsed local file and fresh
+in-memory storage. The preview index reads structural metadata only and never
+navigates Game. File selection alone parses; restart reuses that immutable Story.
+The production build has only index.html; Pages checks exclude author.html and
+its code. VS Code tasks reuse the bounded CLI. See [AUTHORING.md](AUTHORING.md).

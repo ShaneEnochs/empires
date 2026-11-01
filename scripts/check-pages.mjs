@@ -11,3 +11,9 @@ for (const path of assets) {
   assert.ok(existsSync(resolve('dist', path.slice('/empires/'.length))), 'Missing built asset: ' + path);
 }
 console.log('Pages JavaScript and CSS paths verified under /empires/.');
+
+assert.equal(existsSync('dist/author.html'), false, 'Author preview must not be published');
+for (const asset of assets.filter(path => path.endsWith('.js'))) {
+  const bundle = readFileSync(resolve('dist', asset.slice('/empires/'.length)), 'utf8');
+  assert.ok(!bundle.includes('Local story preview'), 'Author code must not be bundled in Pages');
+}
