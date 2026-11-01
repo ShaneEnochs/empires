@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
 import { choose, expectPassage, openPanel, returnToStory, expectStartup, startGame } from './helpers';
 
@@ -40,7 +41,7 @@ test('Provincial references wait for recording and checkpoint recovery removes l
   // Return to the saved briefing checkpoint on reload, before these encounters.
   await page.reload();
   await expectStartup(page);
-  await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
   await expectPassage(page, 'Six Sacks and a Day');
   people = await openPanel(page, 'People');
   await expect(people.getByRole('heading', { level: 3 })).toHaveText(['The customs keeper']);

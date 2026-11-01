@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import {
@@ -16,7 +17,7 @@ const legacyCitySave = JSON.stringify({
 });
 
 async function action(page: Page, label: string, title: string): Promise<void> {
-  if (['New Game', 'Continue', 'Continue Game', 'Try Again'].includes(label)) {
+  if ([titlePage.newGameLabel, 'Continue', titlePage.continueGameLabel, 'Try Again'].includes(label)) {
     await page.getByRole('button', { name: label, exact: true }).click();
   } else {
     await choose(page, label);
@@ -67,9 +68,9 @@ test('direct startup reads only Provincial Crisis and never reads a retired City
   await observeStorage(page);
   await page.reload();
   await expectStartup(page);
-  await expect(page.getByRole('button')).toHaveText(['New Game']);
+  await expect(page.getByRole('button')).toHaveText([titlePage.newGameLabel]);
   expect(await storageAccess(page)).toEqual([{ operation: 'read', key: crisisKey }]);
-  await action(page, 'New Game', 'The Last Ferry');
+  await action(page, titlePage.newGameLabel, 'The Last Ferry');
   expect(await storageAccess(page)).toEqual([
     { operation: 'read', key: crisisKey }, { operation: 'read', key: crisisKey }, { operation: 'write', key: crisisKey },
   ]);
@@ -85,7 +86,7 @@ test('reload and Continue preserve both saved records without writing or replayi
   for (let reload = 0; reload < 2; reload++) {
     await page.reload();
     await expectStartup(page);
-    await action(page, 'Continue Game', 'Six Sacks and a Day');
+    await action(page, titlePage.continueGameLabel, 'Six Sacks and a Day');
     await crisisCharacter(page, ['Rowan 周', '3', '1', 'Undecided']);
     await expectItems(page, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
     await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
@@ -120,7 +121,7 @@ test('corrupt Provincial Crisis data stays isolated and requires explicit replac
   await page.reload();
   await expectStartup(page);
   await expect(page.getByText('The saved data is not readable.', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: titlePage.continueGameLabel, exact: true })).toHaveCount(0);
   await confirmNewGame(page, false);
   expect(await checkpointRecord(page)).toBe('{broken');
   expect(await checkpointRecord(page, cityKey)).toBe(legacyCitySave);
@@ -205,7 +206,7 @@ for (const checkpoint of ['briefing', 'night_council']) {
     }
     await page.reload();
     await expectStartup(page);
-    await action(page, 'Continue Game', heading);
+    await action(page, titlePage.continueGameLabel, heading);
     await expectItems(page, 'Journal', expectedJournal);
     await expectItems(page, 'Skills', expectedSkills);
     await expectItems(page, 'Inventory', expectedItems);
@@ -242,7 +243,7 @@ test('failed Provincial Crisis automatic save keeps its in-memory recovery and w
   expect(await records(page)).toEqual(saved);
   await page.reload();
   await expectStartup(page);
-  await action(page, 'Continue Game', 'Six Sacks and a Day');
+  await action(page, titlePage.continueGameLabel, 'Six Sacks and a Day');
   await crisisCharacter(page, ['Rowan 周', '3', '1', 'Undecided']);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });

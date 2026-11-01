@@ -1,3 +1,4 @@
+import type { TitlePage } from './title-page';
 import type { Game } from './game';
 import type { Story } from './types';
 import { GameSession } from './session';
@@ -7,7 +8,7 @@ import { interpolate } from './interpolate';
 import { validatePeople } from './people';
 import type { PersonReference } from './people';
 
-interface ReaderEntry { readonly title: string; readonly description?: string; readonly identity: StorySaveIdentity; readonly people: readonly PersonReference[]; }
+interface ReaderEntry { readonly title: string; readonly titlePage?: TitlePage; readonly description?: string; readonly identity: StorySaveIdentity; readonly people: readonly PersonReference[]; }
 
 export function showError(root: HTMLElement, error: unknown): void {
   root.querySelector('#story-error')?.remove();
@@ -18,12 +19,12 @@ export function showError(root: HTMLElement, error: unknown): void {
   (root.querySelector('#story-content') ?? root).append(message);
 }
 
-export function appHeader(): HTMLElement {
+export function appHeader(branding = 'Empires'): HTMLElement {
   const header = document.createElement('header');
   header.className = 'app-header';
   const brand = document.createElement('p');
   brand.className = 'brand';
-  brand.textContent = 'Empires';
+  brand.textContent = branding;
   header.append(brand);
   return header;
 }
@@ -123,7 +124,7 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
     const heading = document.createElement('h1');
     heading.textContent = entry.title;
     heading.tabIndex = -1;
-    root.replaceChildren(appHeader(), heading);
+    root.replaceChildren(appHeader(entry.titlePage?.brand), heading);
     if (entry.description) {
       const description = document.createElement('p');
       description.className = 'startup-description'; description.textContent = entry.description;
@@ -146,14 +147,14 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
     if (startup.status === 'ready') {
       const resume = document.createElement('button');
       resume.type = 'button';
-      resume.textContent = 'Continue Game';
+      resume.textContent = entry.titlePage?.continueGameLabel ?? 'Continue Game';
       resume.className = 'primary-action';
       resume.addEventListener('click', () => showGameplay(session.continueGame()));
       actions.append(resume);
     }
     const start = document.createElement('button');
     start.type = 'button';
-    start.textContent = 'New Game';
+    start.textContent = entry.titlePage?.newGameLabel ?? 'New Game';
     if (startup.status !== 'ready') start.className = 'primary-action';
     start.addEventListener('click', () => startNewGame(start));
     actions.append(start);

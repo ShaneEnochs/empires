@@ -1,3 +1,4 @@
+import { titlePage } from './title-page';
 import { storyCatalog } from './catalog';
 import type { CatalogStory } from './catalog';
 import { parseStory } from './story';
@@ -8,7 +9,7 @@ const root = document.querySelector<HTMLElement>('#app')!;
 if (!root) throw new Error('Missing story container.');
 
 function selectStory(entry: CatalogStory): void {
-  mountReader(root, entry, parseStory(entry.source), {
+  mountReader(root, { ...entry, titlePage }, parseStory(entry.source), {
     getItem: key => window.localStorage.getItem(key),
     setItem: (key, value) => window.localStorage.setItem(key, value),
   }, storyCatalog.length > 1 ? renderLibrary : undefined);

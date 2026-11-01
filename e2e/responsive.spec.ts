@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import {
@@ -59,7 +60,7 @@ for (const width of [320, 375, 768, 1280]) {
         await expectLayout(page);
       }
       await expect(page.getByRole('group', { name: 'Game tools' })).toHaveCount(0);
-      await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
       await returnToStory(page);
       await choose(page, 'Keep the name Mara Vale and begin');
       await choose(page, 'You surveyed these river channels');

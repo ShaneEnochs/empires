@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
 import {
   choose, checkpointRecord, chooseName, expectCharacter, expectItems, expectPassage,
@@ -36,7 +37,7 @@ for (const ending of ['guard', 'refuge'] as const) {
     }
     await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Try Again', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
     expect(await checkpointRecord(page)).toBe(saved);
   });
 }

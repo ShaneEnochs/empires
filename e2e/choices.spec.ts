@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
 import { checkpointKey } from '../src/storage';
 import {
@@ -40,7 +41,7 @@ for (const width of [320, 375, 768, 1280]) {
     for (const name of panelNames) {
       await openPanel(page, name);
       await expect(page.getByRole('navigation', { name: 'Passage actions' })).toHaveCount(0);
-      await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
       await returnToStory(page);
       await expect(keep).toBeChecked();
       await expect(advance).toBeEnabled();
@@ -100,12 +101,12 @@ test('reload discards an uncommitted choice and in-game restart controls are abs
   await page.getByRole('radio', { name: 'Investigate the mill accounts', exact: true }).check();
   for (const name of panelNames) {
     await openPanel(page, name);
-    await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
     await expect(page.getByRole('group', { name: 'Game tools' })).toHaveCount(0);
   }
   await page.reload();
   await expectStartup(page);
-  await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
   await expectPassage(page, 'Six Sacks and a Day');
   await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
@@ -114,7 +115,7 @@ test('reload discards an uncommitted choice and in-game restart controls are abs
 test('successive authored choice passages clear selection and expose only eligible options', async ({ page }) => {
   await page.goto('/');
   await expectStartup(page);
-  await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.newGameLabel, exact: true }).click();
   await choose(page, 'Keep the name Mara Vale and begin');
   await expectPassage(page, 'What You Bring');
   await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
@@ -133,7 +134,7 @@ test('successive authored choice passages clear selection and expose only eligib
 test('failed Continue retains its selection and error, with no effects or save write', async ({ page }) => {
   await page.goto('/');
   await expectStartup(page);
-  await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.newGameLabel, exact: true }).click();
   await choose(page, 'Keep the name Mara Vale and begin');
   await choose(page, 'You mediated disputes at the provincial court');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
@@ -151,7 +152,7 @@ test('failed Continue retains its selection and error, with no effects or save w
   }, key);
   await page.reload();
   await expectStartup(page);
-  await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
   await choose(page, 'Present the attested grain accounts');
   const saved = await checkpointRecord(page, key);
   const character = await openPanel(page, 'Character');

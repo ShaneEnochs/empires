@@ -1,3 +1,4 @@
+import { titlePage } from './title-page';
 import provincialCrisisSource from '../examples/provincial-crisis.story?raw';
 import { validateSaveIdentity } from './storage';
 import type { StorySaveIdentity } from './storage';
@@ -17,8 +18,8 @@ export interface CatalogStory {
 export const storyCatalog: readonly CatalogStory[] = Object.freeze([
   {
     id: 'provincial-crisis',
-    title: 'Provincial Crisis',
-    description: 'An envoy must respond to a flood, disputed grain supplies, and competing political interests.',
+    title: titlePage.title,
+    description: titlePage.description,
     source: provincialCrisisSource,
     identity: { storyId: 'provincial-crisis', storyRevision: 1 },
     people: provincialCrisisPeople,
