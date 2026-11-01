@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
 import {
   choose, expectPassage, expectStartup, openPanel, panelNames, reachBriefing,
@@ -13,7 +14,7 @@ for (const width of [320, 375, 768, 1280]) {
     const base = await startup.evaluate(element => ({ size: parseFloat(getComputedStyle(element).fontSize), align: getComputedStyle(element).textAlign }));
     expect(base.align).toBe('center');
     await page.keyboard.press('Tab');
-    const newGame = page.getByRole('button', { name: 'New Game', exact: true });
+    const newGame = page.getByRole('button', { name: titlePage.newGameLabel, exact: true });
     await expect(newGame).toBeFocused();
     await expect(newGame).toBeInViewport();
     await page.keyboard.press('Enter');
@@ -70,7 +71,7 @@ for (const width of [320, 375, 768, 1280]) {
       }));
       expect(indicators.filter(indicator => indicator.color !== 'rgba(0, 0, 0, 0)')).toHaveLength(1);
       expect(indicators.find(indicator => indicator.pressed === 'true')!.width).toBe(3);
-      await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
     }
     await navigation.getByRole('button', { name: 'Story', exact: true }).focus();
     await page.keyboard.press('Tab');
@@ -82,7 +83,7 @@ for (const width of [320, 375, 768, 1280]) {
     const heading = page.locator('#passage-heading');
     await expect(heading).toHaveCSS('text-align', 'center');
     const size = await heading.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
-    const expectedSize = Math.max(1.98 * 16, Math.min(width * 0.044, 2.64 * 16));
+    const expectedSize = Math.max(1.75 * 16, Math.min(width * 0.04, 2.3 * 16));
     expect(Math.abs(size - expectedSize)).toBeLessThan(0.1);
     const chapter = page.locator('.chapter-label');
     await expect(chapter).toHaveCSS('text-align', 'center');

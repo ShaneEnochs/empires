@@ -49,3 +49,40 @@ Cloning does not install it. `.story` files and all 20 workspace snippets now us
 Without installation, select Plain Text manually to edit. Automatic diagnostics
 stop at the first parser error; the existing preflight tasks remain the deeper
 analysis workflow. The local browser preview and public game are unchanged.
+
+## Editing the public title page
+
+Edit `content/title-page.json` as UTF-8 in Notepad++, VS Code, or another text
+editor. This is the single source for the public startup text:
+
+```json
+{
+  "brand": "Empires",
+  "title": "Provincial Crisis",
+  "description": "An envoy must respond to a flood, disputed grain supplies, and competing political interests.",
+  "continueGameLabel": "Continue Game",
+  "newGameLabel": "New Game"
+}
+```
+
+Change `brand` for the small branding, `title` for the displayed story title,
+`description` for the introduction, and the last two fields for startup button
+labels. Keep all five fields as nonempty strings, quoted with double quotes;
+escape embedded quotes as `\"` and do not add trailing commas. Values render as
+plain text, never HTML. Invalid fields produce errors during initialization and
+validation tests; malformed JSON fails the build.
+
+Run `npm run dev` and save the JSON to see Vite update the local page. To publish,
+commit the JSON edit on a feature branch in GitHub, open a pull request, and merge
+after checks pass. The existing main-branch Pages workflow publishes the build.
+Display names are not save identities: Provincial Crisis remains story ID
+`provincial-crisis`, revision 1, with its existing checkpoint key. No migration is
+needed. Local author preview retains the uploaded story's own title and isolated
+memory storage.
+
+Narrative text and headings use the locally bundled Source Serif 4 Latin variable
+WOFF2 (Fontsource distribution 5.2.8, SIL Open Font License in `src/fonts/OFL.txt`).
+Only one normal-style asset is shipped; declared weights are 400–600. System UI
+fonts remain on controls and statistics. `font-display: swap` keeps text visible
+while loading; Georgia and generic serif cover loading failures and characters
+outside the Latin subset. No external font service is contacted.

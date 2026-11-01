@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
 import { choose, expectPassage, openPanel, returnToStory, expectStartup, reachBriefing, councilWithEvidence } from './helpers';
 
@@ -8,7 +9,7 @@ for (const width of [320, 375, 768, 1280]) {
     await page.goto('/');
     await expect(page.locator('.chapter-label')).toHaveCount(0);
     await expectStartup(page);
-    await page.getByRole('button', { name: 'New Game', exact: true }).click();
+    await page.getByRole('button', { name: titlePage.newGameLabel, exact: true }).click();
     const navigation = page.getByRole('navigation', { name: 'Reading views' });
     await expect(navigation.getByRole('button')).toHaveText(['Story', 'Character', 'Journal', 'People']);
     const dimensions = await navigation.getByRole('button').evaluateAll(buttons => buttons.map(button => {

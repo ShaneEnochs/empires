@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { checkpointKey, STORAGE_KEY } from '../src/storage';
@@ -15,12 +16,12 @@ export async function expectPassage(page: Page, title: string): Promise<void> {
   await expect(heading).toBeFocused();
   if (await heading.getAttribute('id') === 'passage-heading') {
     await expect(heading).toHaveCSS('text-align', 'center');
-    await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
   }
 }
 
 export async function expectStartup(page: Page): Promise<void> {
-  await expectPassage(page, 'Provincial Crisis');
+  await expectPassage(page, titlePage.title);
   await expect(page.getByRole('navigation', { name: 'Game startup' })).toBeVisible();
   await expect(page.getByRole('button', { name: /Select |Back to Stories/ })).toHaveCount(0);
   await expect(page.getByText('The City Gate', { exact: true })).toHaveCount(0);
@@ -30,9 +31,9 @@ export async function expectStartup(page: Page): Promise<void> {
 export async function startGame(page: Page): Promise<void> {
   await page.goto('/');
   await expectStartup(page);
-  await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.newGameLabel, exact: true }).click();
   await expectPassage(page, 'The Last Ferry');
-  await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
 }
 
 export async function openPanel(page: Page, name: PanelName | CharacterSection): Promise<Locator> {
@@ -121,7 +122,7 @@ export async function checkpointRecord(page: Page, key = crisisKey): Promise<str
 }
 
 export async function confirmNewGame(page: Page, accept: boolean): Promise<void> {
-  await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.newGameLabel, exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Start a new game?', exact: true });
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Starting over will replace your existing saved progress.');

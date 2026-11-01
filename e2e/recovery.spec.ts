@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
 import {
   arrival, checkpointRecord, checkpointWrites, enterSluiceDeath, expectCharacter,
@@ -38,7 +39,7 @@ test('reload after death resumes the existing complete checkpoint and never prom
   await enterSluiceDeath(page);
   await page.reload();
   await expectStartup(page);
-  await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
   await expectPassage(page, 'Six Sacks and a Day');
   await expectCharacter(page, ['Eleanor', '3', '1', 'Undecided']);
   await expectItems(page, 'Journal', [arrival, 'Eleanor returned as a former river surveyor.', 'Eleanor accepted six public grain sacks with authority 3.']);

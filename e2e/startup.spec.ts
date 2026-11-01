@@ -1,3 +1,4 @@
+import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
 import {
   arrival, checkpointRecord, checkpointWrites, choose, confirmNewGame, crisisKey,
@@ -8,9 +9,9 @@ import {
 test('first visit directly offers Provincial Crisis startup and captures its initial pre-entry checkpoint', async ({ page }) => {
   await page.goto('/');
   await expectStartup(page);
-  await expect(page.getByRole('navigation', { name: 'Game startup' }).getByRole('button')).toHaveText(['New Game']);
+  await expect(page.getByRole('navigation', { name: 'Game startup' }).getByRole('button')).toHaveText([titlePage.newGameLabel]);
   expect(await checkpointRecord(page)).toBeNull();
-  await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.newGameLabel, exact: true }).click();
   await expectPassage(page, 'The Last Ferry');
   await expectInitialState(page);
   const save = JSON.parse((await checkpointRecord(page))!);
@@ -36,7 +37,7 @@ test('Continue Game resumes the initial checkpoint and drops ordinary unsaved pa
   expect(await checkpointWrites(page)).toBe(1);
   await page.reload();
   await expectStartup(page);
-  await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
   await expectPassage(page, 'The Last Ferry');
   await expectInitialState(page);
   expect(await checkpointRecord(page)).toBe(saved);
@@ -55,7 +56,7 @@ test('a new page resumes a revision-1 authored checkpoint, accepted name, and co
   for (let load = 0; load < 2; load++) {
     await reopened.goto('/');
     await expectStartup(reopened);
-    await reopened.getByRole('button', { name: 'Continue Game', exact: true }).click();
+    await reopened.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
     await expectPassage(reopened, 'Six Sacks and a Day');
     await expectCharacter(reopened, ['Eleanor', '3', '1', 'Undecided']);
     await expectItems(reopened, 'Journal', [arrival, 'Eleanor returned as a former river surveyor.', 'Eleanor accepted six public grain sacks with authority 3.']);
@@ -71,15 +72,15 @@ test('startup New Game cancellation retains progress and confirmation replaces o
   await startGame(page);
   await reachBriefing(page, 'Eleanor');
   const saved = await checkpointRecord(page);
-  await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
   await page.reload();
   await expectStartup(page);
   await confirmNewGame(page, false);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Provincial Crisis');
-  await expect(page.getByRole('button', { name: 'New Game', exact: true })).toBeFocused();
-  await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(titlePage.title);
+  await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: titlePage.continueGameLabel, exact: true })).toBeVisible();
   expect(await checkpointRecord(page)).toBe(saved);
-  await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
+  await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
   await expectPassage(page, 'Six Sacks and a Day');
   await expectCharacter(page, ['Eleanor', '3', '1', 'Undecided']);
   await page.reload();
@@ -101,7 +102,7 @@ test('an invalid checkpoint is explained and kept until confirmed replacement', 
   await expectStartup(page);
   await expect(page.getByText('A saved game was found, but it cannot be loaded.', { exact: true })).toBeVisible();
   await expect(page.getByText('The saved checkpoint is not compatible with this story.', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: titlePage.continueGameLabel, exact: true })).toHaveCount(0);
   expect(await checkpointRecord(page)).toBe(raw);
   await confirmNewGame(page, false);
   expect(await checkpointRecord(page)).toBe(raw);
