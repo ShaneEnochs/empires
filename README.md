@@ -671,3 +671,11 @@ Inventory has no shops, buying/selling systems, equipment, crafting, weight,
 capacity, rarity, durability, categories, descriptions, or automatic bonuses.
 Text input has no numeric mode, multiple fields, general forms, point-buy,
 portraits, visual customization, or editable character sheet.
+
+## Local authoring toolkit
+
+See [the practical authoring guide](docs/AUTHORING.md) for VS Code `emp-` snippets,
+preflight tasks, the local `/author.html` file preview, and its searchable passage
+reference. The preview uses the same reader with memory-only progress; it never
+uploads, publishes, registers drafts, or touches public saves. Re-select saved
+files after external edits. Run `npm run test:author` for its separate browser tests.

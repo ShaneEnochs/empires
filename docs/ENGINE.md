@@ -269,13 +269,13 @@ A small private helper shares native button/section setup, heading creation,
 `hidden`, and `aria-pressed`/`aria-controls`/`aria-labelledby` behavior.
 Another helper shares plain text lists; journal chapter grouping/order is retained.
 This is limited rendering code, with no component registry or screen framework.
-`main.ts` retains startup, actions, input, errors, notices, and heading focus.
+`reader.ts` retains startup, actions, input, errors, notices, and heading focus.
 
 `characterStats(story, state)` derives disposable display text from committed
 variables without caching. Character renders it in `dl`/`dt`/`dd` elements using
 `textContent` for labels and values. Booleans become Yes/No; numbers/strings use
 `String(value)` without mutating their values. No configuration shows
-“No character statistics configured.” Main retains transient active-view selection; each presented view reads current
+“No character statistics configured.” The shared reader retains transient active-view selection; each presented view reads current
 gameplay data. Navigation, submission, Continue Game, and recovery select Story;
 information reflects the latest committed data when presented again.
 Toggles never navigate, execute effects, submit drafts, read/write storage, or
@@ -782,7 +782,7 @@ assistive navigation. Information headings receive focus on selection; Story
 returns focus to the passage heading. This is presentation only, with no new
 story directives or persisted state.
 
-Main retains the story DOM while information is shown, so unsubmitted text,
+The shared reader retains the story DOM while information is shown, so unsubmitted text,
 validation errors, and selected choices survive. It refreshes only the selected read-only view through
 panels.ts. View selection never runs GameSession actions, rerenders the passage,
 or touches storage. Save warnings stay outside the hidden content. New Game is
@@ -812,3 +812,13 @@ People render. Any listed event establishes discovery; missing events reveal
 nothing. Recovery naturally removes references whose events were rolled back.
 Definitions describe only authored encounters; prose alone adds no tracking.
 They are never fields in Story, GameState, snapshots, or save envelopes.
+
+## Local author preview (Stage 11A)
+
+`reader.ts` shares the existing startup, actions, information views, errors, and
+focus handling. `main.ts` supplies the public catalog story and localStorage
+adapter; development-only `author.ts` supplies a parsed local file and fresh
+in-memory storage. The preview index reads structural metadata only and never
+navigates Game. File selection alone parses; restart reuses that immutable Story.
+The production build has only index.html; Pages checks exclude author.html and
+its code. VS Code tasks reuse the bounded CLI. See [AUTHORING.md](AUTHORING.md).

@@ -1105,7 +1105,7 @@ assistive navigation. Information headings receive focus on selection; Story
 returns focus to the passage heading. This is presentation only, with no new
 story directives or persisted state.
 
-Main retains the story DOM while information is shown, so unsubmitted text,
+The shared reader retains the story DOM while information is shown, so unsubmitted text,
 validation errors, and selected choices survive. It refreshes only the selected read-only view through
 panels.ts. View selection never runs GameSession actions, rerenders the passage,
 or touches storage. Save warnings stay outside the hidden content. New Game is

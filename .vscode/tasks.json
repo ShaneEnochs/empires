@@ -1,0 +1,86 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Empires: Check Current Story",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "scripts/check-stories.ts",
+        "${file}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "empires",
+          "severity": "error",
+          "fileLocation": "absolute",
+          "pattern": [
+            {
+              "regexp": "^(.+\\.story)$",
+              "file": 1
+            },
+            {
+              "regexp": "^  ERROR PARSE_ERROR: Line (\\d+)(?:, passage \"[^\"]+\")?: (.*)$",
+              "line": 1,
+              "message": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Empires: Check Bundled Stories",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "scripts/check-stories.ts"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "empires",
+          "severity": "error",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": [
+            {
+              "regexp": "^(.+\\.story)$",
+              "file": 1
+            },
+            {
+              "regexp": "^  ERROR PARSE_ERROR: Line (\\d+)(?:, passage \"[^\"]+\")?: (.*)$",
+              "line": 1,
+              "message": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Empires: Start Local Preview",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "node_modules/vite/bin/vite.js",
+        "--host",
+        "127.0.0.1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}
