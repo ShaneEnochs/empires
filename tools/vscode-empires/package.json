@@ -1,0 +1,50 @@
+{
+  "name": "empires-story",
+  "displayName": "Empires Story",
+  "description": "Local syntax highlighting and parser diagnostics for Empires stories.",
+  "version": "0.1.0",
+  "publisher": "empires-local",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:empires-story"
+  ],
+  "main": "./src/extension.cjs",
+  "contributes": {
+    "languages": [
+      {
+        "id": "empires-story",
+        "aliases": [
+          "Empires Story"
+        ],
+        "extensions": [
+          ".story"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "empires-story",
+        "scopeName": "source.empires-story",
+        "path": "./syntaxes/empires.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "test": "npm run build && node --test test/*.test.cjs",
+    "package": "npm run build && vsce package --allow-missing-repository --skip-license"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "4.1.0",
+    "esbuild": "0.28.2",
+    "vscode-oniguruma": "2.0.1",
+    "vscode-textmate": "9.3.2"
+  }
+}

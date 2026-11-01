@@ -291,3 +291,14 @@ or run continuous analysis. People metadata cannot be inferred from draft prose.
 The searchable passage index reads parsed structure only; never teleport, fabricate
 state, or navigate from it. Keep `npm run test:author` separate from production
 browser tests and preserve all existing regression suites. See docs/AUTHORING.md.
+
+## VS Code language support (Stage 11B)
+
+`tools/vscode-empires` is an independent locally packaged extension. Bundle the
+existing parser for open/save diagnostics; do not duplicate syntax validation or
+run bounded preflight on edits. Keep exact parser messages and zero-based ranges
+only for reliable source lines, isolate documents, and clear corrected/closed files.
+TextMate highlighting is presentation, not validation. Keep all 20 workspace
+snippets as the single source under empires-story; do not contribute a duplicate
+extension snippet set. Extension dependencies/build/VSIX files stay outside the
+player bundle. Never publish automatically or alter game/preview/save semantics.
