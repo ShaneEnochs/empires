@@ -1,18 +1,22 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { checkpointKey, STORAGE_KEY } from '../src/storage';
 import {
-  checkpointRecord, chooseName, confirmNewGame, expectCharacter,
-  expectItems, expectPassage, openPanel, panelNames, selectStory, startGame,
-  returnToStory, choose,
+  checkpointRecord, confirmNewGame, expectCharacter as crisisCharacter,
+  expectItems, expectPassage, openPanel, panelNames, expectStartup, startGame as startCrisis,
+  returnToStory, choose, crisisKey, cityKey, reachBriefing as nameAndBriefing, councilWithEvidence,
 } from './helpers';
-import type { StoryTitle } from './helpers';
 
-const crisisKey = checkpointKey({ storyId: 'provincial-crisis', storyRevision: 1 });
-const titles: StoryTitle[] = ['The City Gate', 'Provincial Crisis'];
+// An exact revision-1 City Gate initial save, retained as opaque legacy browser data.
+const legacyCitySave = JSON.stringify({
+  formatVersion: 1, storyId: 'empires-example', storyRevision: 1,
+  checkpoint: { state: {
+    passageId: 'gate', variables: { influence: 0, honor: 5, loyal: false, character_name: 'Unknown' },
+    journal: [], skills: [], inventory: {},
+  } },
+});
 
 async function action(page: Page, label: string, title: string): Promise<void> {
-  if (['New Game', 'Continue', 'Continue Game', 'Back to Stories', 'Try Again'].includes(label)) {
+  if (['New Game', 'Continue', 'Continue Game', 'Try Again'].includes(label)) {
     await page.getByRole('button', { name: label, exact: true }).click();
   } else {
     await choose(page, label);
@@ -20,47 +24,14 @@ async function action(page: Page, label: string, title: string): Promise<void> {
   await expectPassage(page, title);
 }
 
-async function startCrisis(page: Page): Promise<void> {
-  await page.goto('/');
-  await selectStory(page, 'Provincial Crisis');
-  await action(page, 'New Game', 'The Last Ferry');
-}
-
-async function nameAndBriefing(page: Page, name = 'Rowan 周'): Promise<void> {
-  await action(page, 'Enter a different name in the public record', 'The Public Record');
-  const field = page.getByRole('textbox', { name: 'Name for the public record', exact: true });
-  await field.fill(name);
-  await field.press('Enter');
-  await expectPassage(page, 'What You Bring');
-  await action(page, 'You surveyed these river channels', 'Old Watermarks');
-  await action(page, 'Continue', 'Six Sacks and a Day');
-}
-
-async function councilWithEvidence(page: Page): Promise<void> {
-  await action(page, 'Investigate the mill accounts', 'The Mill Yard');
-  await expect(page.getByRole('radio', { name: 'Negotiate a protected statement', exact: true })).toHaveCount(0);
-  await action(page, 'Pay two coins for attested accounts', 'Ink Paid For');
-  await action(page, 'Continue', 'The Unshored Gate');
-  await action(page, 'Read the new watermarks from the bank', 'The High-Water Line');
-  await action(page, 'Continue', 'When the Seal Expires');
-}
-
-async function crisisCharacter(page: Page, values: string[]): Promise<void> {
-  const panel = await openPanel(page, 'Character');
-  await expect(panel.locator('dt')).toHaveText(['Envoy', 'Authority', 'Public trust', 'Settlement']);
-  await expect(panel.locator('dd')).toHaveText(values);
-  await returnToStory(page);
-}
-
 async function seedBoth(page: Page): Promise<void> {
-  await startGame(page);
-  await chooseName(page, 'Eleanor');
   await startCrisis(page);
+  await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key: cityKey, raw: legacyCitySave });
   await nameAndBriefing(page);
 }
 
 async function records(page: Page) {
-  return { city: await checkpointRecord(page), crisis: await checkpointRecord(page, crisisKey) };
+  return { city: await checkpointRecord(page, cityKey), crisis: await checkpointRecord(page, crisisKey) };
 }
 
 /** Observe native storage calls only; no application/session hooks. */
@@ -90,115 +61,73 @@ async function storageAccess(page: Page): Promise<{ operation: string; key: stri
   return page.evaluate(() => Reflect.get(window, '__empiresStorageAccess'));
 }
 
-test('library lists both stories without storage access; selecting and going back only reads the selected save', async ({ page }) => {
-  await observeStorage(page);
+test('direct startup reads only Provincial Crisis and never reads a retired City Gate record', async ({ page }) => {
   await page.goto('/');
-  await expectPassage(page, 'Your next story');
-  await expect(page.getByText('Choose a story.', { exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 2 })).toHaveText(titles);
-  await expect(page.getByRole('button')).toHaveText(titles.map(title => 'Select ' + title));
-  expect(await storageAccess(page)).toEqual([]);
-
-  await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Select The City Gate', exact: true })).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expectPassage(page, 'The City Gate');
-  await expect(page.getByRole('group', { name: 'Game tools' })).toHaveCount(0);
-  expect(await storageAccess(page)).toEqual([{ operation: 'read', key: STORAGE_KEY }]);
-  await action(page, 'Back to Stories', 'Your next story');
-  expect(await storageAccess(page)).toEqual([{ operation: 'read', key: STORAGE_KEY }]);
-  await selectStory(page, 'Provincial Crisis');
-  await expect(page.getByRole('navigation', { name: 'Game startup' }).getByRole('button'))
-    .toHaveText(['New Game', 'Back to Stories']);
-  await action(page, 'Back to Stories', 'Your next story');
+  await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key: cityKey, raw: legacyCitySave });
+  await observeStorage(page);
+  await page.reload();
+  await expectStartup(page);
+  await expect(page.getByRole('button')).toHaveText(['New Game']);
+  expect(await storageAccess(page)).toEqual([{ operation: 'read', key: crisisKey }]);
+  await action(page, 'New Game', 'The Last Ferry');
   expect(await storageAccess(page)).toEqual([
-    { operation: 'read', key: STORAGE_KEY }, { operation: 'read', key: crisisKey },
+    { operation: 'read', key: crisisKey }, { operation: 'read', key: crisisKey }, { operation: 'write', key: crisisKey },
   ]);
+  expect(await checkpointRecord(page, cityKey)).toBe(legacyCitySave);
 });
 
-test('both stories keep independent checkpoints across reloads, startup switching, and Continue', async ({ page }) => {
+test('reload and Continue preserve both saved records without writing or replaying checkpoint rewards', async ({ page }) => {
   await seedBoth(page);
   const saved = await records(page);
-  expect(JSON.parse(saved.city!).storyId).toBe('empires-example');
   expect(JSON.parse(saved.crisis!).storyId).toBe('provincial-crisis');
-  expect(JSON.parse(saved.city!).checkpoint.state.passageId).toBe('choose_background');
   expect(JSON.parse(saved.crisis!).checkpoint.state.passageId).toBe('briefing');
-
   await observeStorage(page);
-  await page.reload();
-  expect(await storageAccess(page)).toEqual([]);
-  await selectStory(page);
-  await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toBeVisible();
-  await action(page, 'Back to Stories', 'Your next story');
-  await selectStory(page, 'Provincial Crisis');
-  await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toBeVisible();
-  await action(page, 'Back to Stories', 'Your next story');
-  expect(await storageAccess(page)).toEqual([
-    { operation: 'read', key: STORAGE_KEY }, { operation: 'read', key: crisisKey },
-  ]);
-  expect(await records(page)).toEqual(saved);
-
-  await selectStory(page);
-  await action(page, 'Continue Game', 'Choose Your Background');
-  await expectCharacter(page, ['Eleanor', '1', '5', 'No']);
-  await expectItems(page, 'Skills', ['Composure']);
-  await expect(page.getByRole('button', { name: 'Back to Stories', exact: true })).toHaveCount(0);
-  await page.reload();
-  await selectStory(page, 'Provincial Crisis');
-  await action(page, 'Continue Game', 'Six Sacks and a Day');
-  await crisisCharacter(page, ['Rowan 周', '3', '1', 'Undecided']);
-  await expectItems(page, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
-  await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
-  expect(await records(page)).toEqual(saved);
-  expect((await storageAccess(page)).filter(access => access.operation !== 'read')).toEqual([]);
+  for (let reload = 0; reload < 2; reload++) {
+    await page.reload();
+    await expectStartup(page);
+    await action(page, 'Continue Game', 'Six Sacks and a Day');
+    await crisisCharacter(page, ['Rowan 周', '3', '1', 'Undecided']);
+    await expectItems(page, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
+    await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
+    expect(await storageAccess(page)).toEqual([{ operation: 'read', key: crisisKey }]);
+    expect(await records(page)).toEqual(saved);
+  }
 });
 
-for (const title of titles) {
-  const selectedKey = title === 'The City Gate' ? STORAGE_KEY : crisisKey;
-  const otherKey = title === 'The City Gate' ? crisisKey : STORAGE_KEY;
-
-  test('New Game cancellation and replacement affect only ' + title, async ({ page }) => {
+for (const legacy of [legacyCitySave, '{broken legacy save']) {
+  test('startup replacement preserves legacy City Gate bytes: ' + (legacy === legacyCitySave ? 'valid' : 'corrupt'), async ({ page }) => {
     await seedBoth(page);
+    await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key: cityKey, raw: legacy });
     const saved = await records(page);
-    const otherBytes = await checkpointRecord(page, otherKey);
     await page.reload();
-    await selectStory(page, title);
+    await expectStartup(page);
     await confirmNewGame(page, false);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
-    await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toBeVisible();
     expect(await records(page)).toEqual(saved);
     await confirmNewGame(page, true);
-    await expectPassage(page, title === 'The City Gate' ? 'The City Gate' : 'The Last Ferry');
-    expect(await checkpointRecord(page, otherKey)).toBe(otherBytes);
-    const envelope = JSON.parse((await checkpointRecord(page, selectedKey))!);
+    await expectPassage(page, 'The Last Ferry');
+    expect(await checkpointRecord(page, cityKey)).toBe(legacy);
+    const envelope = JSON.parse((await checkpointRecord(page))!);
+    expect(envelope.storyId).toBe('provincial-crisis');
     expect(envelope.storyRevision).toBe(1);
     expect(envelope.formatVersion).toBe(1);
-    expect(envelope.checkpoint.state.passageId).toBe(title === 'The City Gate' ? 'gate' : 'quayside');
-  });
-
-  test('a corrupt ' + title + ' save is isolated and only explicitly replaced', async ({ page }) => {
-    await seedBoth(page);
-    const otherBytes = await checkpointRecord(page, otherKey);
-    await page.evaluate(key => localStorage.setItem(key, '{broken'), selectedKey);
-    await page.reload();
-    await selectStory(page, title);
-    await expect(page.getByText('A saved game was found, but it cannot be loaded.', { exact: true })).toBeVisible();
-    await expect(page.getByText('The saved data is not readable.', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toHaveCount(0);
-    await confirmNewGame(page, false);
-    expect(await checkpointRecord(page, selectedKey)).toBe('{broken');
-    await action(page, 'Back to Stories', 'Your next story');
-    await selectStory(page, title === 'The City Gate' ? 'Provincial Crisis' : 'The City Gate');
-    await action(page, 'Continue Game', title === 'The City Gate' ? 'Six Sacks and a Day' : 'Choose Your Background');
-    expect(await checkpointRecord(page, selectedKey)).toBe('{broken');
-    expect(await checkpointRecord(page, otherKey)).toBe(otherBytes);
-    await page.reload();
-    await selectStory(page, title);
-    await confirmNewGame(page, true);
-    await expectPassage(page, title === 'The City Gate' ? 'The City Gate' : 'The Last Ferry');
-    expect(await checkpointRecord(page, otherKey)).toBe(otherBytes);
+    expect(envelope.checkpoint.state.passageId).toBe('quayside');
   });
 }
+
+test('corrupt Provincial Crisis data stays isolated and requires explicit replacement', async ({ page }) => {
+  await seedBoth(page);
+  await page.evaluate(key => localStorage.setItem(key, '{broken'), crisisKey);
+  await page.reload();
+  await expectStartup(page);
+  await expect(page.getByText('The saved data is not readable.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toHaveCount(0);
+  await confirmNewGame(page, false);
+  expect(await checkpointRecord(page)).toBe('{broken');
+  expect(await checkpointRecord(page, cityKey)).toBe(legacyCitySave);
+  await confirmNewGame(page, true);
+  await expectPassage(page, 'The Last Ferry');
+  expect(await checkpointRecord(page, cityKey)).toBe(legacyCitySave);
+});
 
 test('Provincial Crisis naming, selected metadata, conditional choices, and spending reach a complete ending', async ({ page }) => {
   await startCrisis(page);
@@ -228,7 +157,7 @@ test('Provincial Crisis naming, selected metadata, conditional choices, and spen
   await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveCount(0);
   await expect(page.locator('main b, main img, main script')).toHaveCount(0);
   expect(await checkpointRecord(page, crisisKey)).toBe(saved);
-  expect(await checkpointRecord(page)).toBeNull();
+  expect(await checkpointRecord(page, cityKey)).toBeNull();
 });
 
 for (const checkpoint of ['briefing', 'night_council']) {
@@ -275,7 +204,7 @@ for (const checkpoint of ['briefing', 'night_council']) {
       expect((await storageAccess(page)).filter(access => access.operation !== 'read')).toEqual(writes);
     }
     await page.reload();
-    await selectStory(page, 'Provincial Crisis');
+    await expectStartup(page);
     await action(page, 'Continue Game', heading);
     await expectItems(page, 'Journal', expectedJournal);
     await expectItems(page, 'Skills', expectedSkills);
@@ -312,51 +241,8 @@ test('failed Provincial Crisis automatic save keeps its in-memory recovery and w
   await expect(page.getByRole('alert')).toHaveText(warning);
   expect(await records(page)).toEqual(saved);
   await page.reload();
-  await selectStory(page, 'Provincial Crisis');
+  await expectStartup(page);
   await action(page, 'Continue Game', 'Six Sacks and a Day');
   await crisisCharacter(page, ['Rowan 周', '3', '1', 'Undecided']);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
-
-for (const width of [320, 375]) {
-  test('story library and both startup screens remain accessible at ' + width + 'px', async ({ page }) => {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto('/');
-    await expectPassage(page, 'Your next story');
-    for (const title of titles) {
-      const button = page.getByRole('button', { name: 'Select ' + title, exact: true });
-      for (let tab = 0; tab < (title === 'The City Gate' ? 1 : 2); tab++) await page.keyboard.press('Tab');
-      await expect(button).toBeFocused();
-      await expect(button).toBeInViewport();
-      const layout = await button.evaluate(element => {
-        const bounds = element.getBoundingClientRect();
-        const style = getComputedStyle(element);
-        return { width: bounds.width, height: bounds.height, outline: style.outlineStyle,
-          outlineWidth: parseFloat(style.outlineWidth), pageWidth: document.documentElement.scrollWidth };
-      });
-      expect(layout.width).toBeGreaterThanOrEqual(44);
-      expect(layout.height).toBeGreaterThanOrEqual(44);
-      expect(layout.pageWidth).toBeLessThanOrEqual(width + 1);
-      expect(layout.outline).not.toBe('none');
-      expect(layout.outlineWidth).toBeGreaterThanOrEqual(2);
-      await page.keyboard.press('Enter');
-      await expectPassage(page, title);
-      await expect(page.getByRole('button', { name: 'New Game', exact: true })).toBeInViewport();
-      await action(page, 'Back to Stories', 'Your next story');
-    }
-    await selectStory(page, 'Provincial Crisis');
-    await action(page, 'New Game', 'The Last Ferry');
-    await action(page, 'Enter a different name in the public record', 'The Public Record');
-    const field = page.getByRole('textbox', { name: 'Name for the public record', exact: true });
-    await expect(field).toBeInViewport();
-    await field.fill('Mobile Reader');
-    for (const name of panelNames) await openPanel(page, name);
-    await returnToStory(page);
-    await expect(field).toHaveValue('Mobile Reader');
-    await returnToStory(page);
-    await field.press('Enter');
-    await expectPassage(page, 'What You Bring');
-    await crisisCharacter(page, ['Mobile Reader', '2', '0', 'Undecided']);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);
-  });
-}

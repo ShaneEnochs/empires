@@ -7,14 +7,14 @@ No frontend framework, backend, or runtime library dependencies.
 
 GitHub Pages deployment is configured for
 https://shaneenochs.github.io/empires/ (the intended address; verify a successful
-deployment before treating it as live). The published library includes both
-The City Gate and Provincial Crisis and requires no local installation.
+deployment before treating it as live). The public application opens directly
+to Provincial Crisis and requires no local installation.
 
 One-time repository setup: go to **Settings → Pages → Build and deployment →
 Source → GitHub Actions**. Allow the `github-pages` environment to deploy from
 `main` if environment protection rules are configured. Merge the deployment PR,
 then check the **Checks** workflow's `deploy-pages` job and open its environment URL.
-Verify both stories before announcing the site as live.
+Verify Provincial Crisis startup, gameplay, and reload before announcing the site as live.
 
 Pull requests run all checks, including a Pages build, but never deploy.
 Only a push to `main` can deploy, after the Node tests, story checks, root build,
@@ -46,48 +46,38 @@ npm ci
 npm run dev
 ```
 
-Open the address printed by Vite and choose **The City Gate** or **Provincial Crisis**
-from the story library. The selected story's startup offers **New Game**, plus
-**Continue Game** when its usable checkpoint exists. New Game asks before replacing that story's saved
-progress. Continue resumes the **last checkpoint**, not the last visited passage.
-Back to Stories is available before gameplay and leaves both saves untouched.
-To choose a different story after starting, reopen or reload the application.
-The City Gate offers **gate → messenger → council**
-or **gate → council**, with different influence, honor, and loyalty values.
-The messenger's Continue explicitly targets `council`; the council is terminal.
-The Journal button shows recorded events grouped by chapter. The messenger route
-records an extra event; journal text keeps the values present when recorded.
-The Character button shows the author's selected variables in display order:
-Name, Influence, Honor, and Loyal in the example. It reads current values without
-changing gameplay; booleans display as Yes or No.
-The Skills section within Character lists acquired skills in acquisition order. Both routes start
-with Composure, which is revoked at the council. Speaking to the messenger grants
-Diplomacy and changes the council's visible prose.
-The Inventory section within Character lists item names and quantities in acquisition order. Both
-routes start with ten coins and a gate token; the messenger adds two coins. The
-council collects five coins and the token, leaving seven or five coins.
-An optional third gate action lets the player choose a preferred name and a
-noble or soldier background. The original two routes keep their outcomes.
-The name is an ordinary string variable; backgrounds use choices and entry effects.
-An optional watchtower route ends in authored death prose. **Try Again** returns
-to the initial gate, or to the background checkpoint if a name was submitted.
-Variables, journal entries, acquired skills, and inventory persist across passages.
-Successful checkpoints are saved automatically in this browser. Refreshing shows
-the library again; select the same story and Continue to resume its checkpoint.
-Ordinary progress after the last saved checkpoint is not restored.
+Open the address printed by Vite. Empires opens directly to **Provincial Crisis**'s
+startup screen, without a one-story library. It offers **New Game**, plus
+**Continue Game** when a compatible checkpoint exists. Continue Game resumes the
+**last checkpoint**, not the last visited passage. New Game asks before replacing
+existing progress, including unusable saves. Storage failure retains the existing
+explicit Play without saving consent flow.
 
-## Playable stories
+New Game is available only on startup. To start over during gameplay, reload or
+reopen the application and choose New Game there. There is no in-game restart.
+Authored choices require selecting a radio option followed by **Continue**;
+ordinary Continue passages and text forms remain single actions. **Try Again**
+recovers from authored death using the existing checkpoint.
 
-| Story | Experience | Save ID | Revision |
+Character displays Envoy, Authority, Public trust, and Settlement, followed by
+Skills and Inventory in acquisition order. Journal groups recorded events by
+chapter; People shows only journal-linked encounters. Checkpoints save automatically
+in this browser. Ordinary progress, draft names, and uncommitted selections after
+the last checkpoint are discarded on reload.
+
+## Playable story and internal fixture
+
+| Story | Availability | Save ID | Revision |
 | --- | --- | --- | --- |
-| The City Gate | A short council adventure with an optional name/background and a dangerous watchtower. | `empires-example` | 1 |
-| Provincial Crisis | A 30-passage political adventure about flooding and disputed grain, with three endings and two authored checkpoints. | `provincial-crisis` | 1 |
+| Provincial Crisis | Sole public story: 30 passages, three endings, and two authored checkpoints. | `provincial-crisis` | 1 |
+| The City Gate | Internal authoring example/regression fixture in `src/example.story`; absent from public navigation. | `empires-example` | 1 |
 
-Each story has its own Continue Game, confirmed New Game, automatic checkpoint,
-and Try Again recovery. Opening the library does not read or write saves.
-Choosing a story checks only its record; a corrupt save cannot block the other.
-Character, Journal, and People use the selected story's definitions.
-There are no shared characters, statistics, inventory, or transfers between stories.
+Provincial Crisis keeps its exact `empires:checkpoint:provincial-crisis` key,
+revision 1, and existing save format. Old City Gate records are never read,
+rewritten, or deleted by the public application. Its authored source, default
+storage exports, and isolated parser/Game/session/recovery tests remain intact.
+The static catalog remains ready for future stories: a single entry opens startup
+directly; multiple entries use the existing library and pre-game Back to Stories.
 
 ```sh
 npm test          # parsing, validation, state effects, interpolation, navigation
@@ -126,10 +116,11 @@ at desktop size; a focused selection also runs at 320, 375, 768, and 1280px.
 Coverage includes startup, checkpoint Continue, confirmed/canceled New Game,
 invalid saved data, original routes, conditional prose, all panels, names/input,
 death/retry, persistent bytes/write counts, responsive controls, and keyboard focus.
-The original 19 browser workflows explicitly select The City Gate. Additional
-library tests cover both stories' startup, isolated saves/corruption, Provincial
-Crisis naming, a complete ending, both checkpoint recoveries, failed automatic
-saves, and narrow-screen selection. Tests drive both stories via accessible controls without app hooks or
+The browser suite drives Provincial Crisis directly, covering startup, legacy
+City Gate save isolation, naming, all three endings, both checkpoint recoveries,
+failed automatic saves, and responsive controls. City Gate's retired routes and
+save/recovery behavior retain isolated Node regression coverage. Browser tests
+use accessible controls without app hooks or
 test-only routes. There are no screenshot baselines, sleeps, or automatic retries.
 
 Failures retain screenshots and traces in `test-results/` plus an HTML report in
@@ -207,10 +198,14 @@ bound. No new defect was found. Neither story source nor revision was changed.
 
 Empires uses the same centered, 46rem maximum reading surface on phone and desktop.
 A single row of four equal-width, flat tabs sits at the top of gameplay:
-**Story, Character, Journal, People**. The active tab has an underline. An opaque
+**Story, Character, Journal, People**. Labels use approximately 0.9rem type, with
+a small adjustment at 320px. The active tab has one bottom-border indicator; tab
+text never underlines during hover, selection, active press, or keyboard focus. An opaque
 CSS sticky wrapper keeps these 44px controls and the compact chapter bar visible
 while scrolling in every view. The chapter comes from the current passage and
-updates after successful navigation; the passage title stays in the reading content.
+updates after successful navigation. Its centered 0.9rem label has reduced vertical
+padding. Passage titles remain in reading content, centered and approximately 10%
+larger than startup headings; longer titles wrap. Narrative stays left-aligned.
 Branding remains on library/startup screens, which show no invented chapter.
 Serif prose and restrained selectable choice rows keep reading prominent.
 System sans-serif controls and statistics use one muted neutral palette. Native
@@ -224,7 +219,7 @@ and intact, retaining unfinished input, validation messages, and selected choice
 Viewing information never enters passages or touches saves. Heading focus follows
 view selection; successful gameplay navigation and Try Again return to Story and
 focus the passage heading. Validation focuses the retained input. Critical save
-warnings and confirmed New Game remain available across views.
+warnings remain available across views. New Game is confined to startup.
 
 Character contains **Character Statistics**, **Skills**, and **Inventory**.
 Statistics preserve author order and formatting; acquired skills and item names/
@@ -238,37 +233,39 @@ hidden, and recovery derives visibility again from the restored journal.
 People mentioned only in prose, such as the ferryman, are omitted without adding
 story tracking. An empty reference displays “No people recorded yet.”
 
-Authored choices require **select an option, then press Next**. No option starts
-selected, and Next is disabled until one is selected. Selecting a different option
+Authored choices require **select an option, then press Continue**. No option starts
+selected, and Continue is disabled until one is selected. Selecting a different option
 replaces the previous selection; selecting alone never navigates, executes effects,
-captures a checkpoint, or touches storage. Only Next calls the existing session
+captures a checkpoint, or touches storage. Only Continue calls the existing session
 navigation method. A failed action retains the selection and accessible error;
 successful navigation begins a fresh unselected passage. Selection survives visits
 to information views but is discarded on reload and never saved.
 
 Use Tab to enter the native radio group, Space to select, arrow keys to change
-selection, then Tab to Next and Enter/Space to advance. The whole row is selectable;
+selection, then Tab to Continue and Enter/Space to advance. The whole row is selectable;
 the checked radio and restrained highlight expose selection without color alone.
 Continue passages, text-input forms (including Enter submission), and Try Again
-remain single actions. Terminal endings have no Next. New Game keeps its confirmation.
+remain single actions. Terminal endings have no Continue. New Game keeps its confirmation.
 
 Story content, saves, identities, revisions, and recovery semantics are unchanged.
 
 ## Write a story
 
-Edit [src/example.story](src/example.story); read the full
+Study the internal [src/example.story](src/example.story) authoring example; read the full
 [authoring guide](docs/SCRIPTING.md) for supported syntax.
 
 For a separate 30-passage adventure, see
 [Provincial Crisis](examples/provincial-crisis.story) and its
 [playtest routes, balances, and authoring findings](examples/provincial-crisis.md).
 Its 20 playthrough tests and shared-storage identity tests run with `npm test`.
-Both stories are playable through the browser library without changing either
-authored source.
+Provincial Crisis is the public story. The City Gate remains an internal example
+and regression fixture; both authored sources still run through preflight and Node tests.
 
 The small static catalog lives in `src/catalog.ts`. To bundle another story,
 add a Vite `?raw` import and one entry containing an explicit unique catalog `id`,
-`title`, `description`, `source`, and `identity: { storyId, storyRevision }`.
+`title`, `description`, `source`, immutable `people` definitions, and
+`identity: { storyId, storyRevision }`. Adding a second entry restores the library
+without adding routes or changing the renderer.
 The catalog freezes its entries/identities and checks unique catalog IDs and
 unique save IDs at initialization. Catalog IDs identify application entries;
 `identity.storyId` selects persistent progress, and `storyRevision` declares save
@@ -527,11 +524,11 @@ Checkpoint control; browser startup uses the checkpoint constructor for Continue
 ## Persistent checkpoint and startup
 
 `src/storage.ts` uses one namespaced localStorage key per configured story.
-The City Gate catalog entry uses `DEFAULT_SAVE_IDENTITY`:
+The internal City Gate fixture retains `DEFAULT_SAVE_IDENTITY`:
 `storyId: 'empires-example'`, `storyRevision: 1`, and the unchanged key
 `empires:checkpoint:empires-example`. Provincial Crisis uses ID `provincial-crisis`,
 revision 1, and key `empires:checkpoint:provincial-crisis`. Existing City Gate
-revision-1 saves remain readable.
+revision-1 saves remain compatible with the internal fixture and stay untouched by the public app.
 `SAVE_FORMAT_VERSION = 1` remains an independent application-wide constant.
 Identity/revision stay outside GameState and `.story` syntax. The initial save
 envelope for the shipped example is:
@@ -597,7 +594,7 @@ shown. Technical details are available in the browser console.
 New Game confirms before replacing the selected story's existing record, including a corrupt one.
 It constructs a fresh Game, writes its initial pre-entry checkpoint once using
 one `setItem`, then activates it. Cancel, construction failure, or replacement
-failure preserves the old game/save. New Game is also available beside the panels.
+failure preserves the old game/save. New Game is available only before gameplay; reload to return to startup.
 
 After explicit navigation or text submission, the application compares checkpoint
 references and saves only a successful replacement. Re-entry to the same marked
@@ -627,7 +624,7 @@ The starting passage cannot be death, since it creates the initial checkpoint.
 Death is immutable passage metadata, not an `isDead` gameplay variable. Ordinary
 entry effects still run atomically before its prose displays. The player can read
 that prose and inspect Character, Journal, and People before choosing Try Again;
-New Game and any save warning remain available.
+Save warnings remain available; New Game is available on startup after reload.
 
 `Game.retryAfterDeath()` rejects outside death and delegates to the existing
 checkpoint restoration. `GameSession.retryAfterDeath()` performs no storage access.

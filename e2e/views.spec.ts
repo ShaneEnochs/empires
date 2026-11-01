@@ -7,7 +7,7 @@ for (const width of [320, 375, 768, 1280]) {
     await startGame(page);
     await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', ...panelNames]);
     await expect(page.getByRole('button', { name: 'Story', exact: true })).toHaveAttribute('aria-pressed', 'true');
-    await choose(page, 'Choose a preferred name and background');
+    await choose(page, 'Enter a different name in the public record');
     const field = page.locator('#player-text');
     await field.fill('   ');
     await field.press('Enter');
@@ -35,14 +35,14 @@ for (const width of [320, 375, 768, 1280]) {
       await expect(field).toHaveAttribute('aria-invalid', 'true');
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
       await section.getByRole('button', { name: 'Return to Story', exact: true }).click();
-      await expectPassage(page, 'Choose Your Name');
+      await expectPassage(page, 'The Public Record');
       await expect(page.getByRole('alert')).toHaveText(message!);
       expect(await node!.evaluate(element => element === document.querySelector('#player-text'))).toBe(true);
     }
     expect(await page.evaluate(() => Reflect.get(window, '__viewStorageCalls'))).toEqual([]);
     await field.press('Enter');
-    await expectPassage(page, 'Choose Your Background');
-    await expect(page.getByText('Welcome, Unfinished Éléonore. What shaped your life before this journey?', { exact: true })).toBeVisible();
+    await expectPassage(page, 'What You Bring');
+    await expect(page.getByText('Your writ says Unfinished Éléonore. It does not say why anyone here should trust you. Before the commission, you made a living in one of two worlds.', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Story', exact: true })).toHaveAttribute('aria-pressed', 'true');
   });
 }

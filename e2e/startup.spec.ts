@@ -1,105 +1,104 @@
 import { expect, test } from '@playwright/test';
-import { STORAGE_KEY } from '../src/storage';
 import {
-  choose, arrival, checkpointRecord, checkpointWrites, chooseName, confirmNewGame,
-  expectCharacter, expectGateState, expectItems, expectPassage, observeCheckpointWrites, selectStory, startGame,
+  arrival, checkpointRecord, checkpointWrites, choose, confirmNewGame, crisisKey,
+  expectCharacter, expectInitialState, expectItems, expectPassage, expectStartup,
+  observeCheckpointWrites, reachBriefing, startGame,
 } from './helpers';
 
-test('first visit offers New Game and captures the initial pre-entry checkpoint', async ({ page }) => {
+test('first visit directly offers Provincial Crisis startup and captures its initial pre-entry checkpoint', async ({ page }) => {
   await page.goto('/');
-  await selectStory(page);
-  await expect(page.getByRole('navigation', { name: 'Game startup' }).getByRole('button')).toHaveText(['New Game', 'Back to Stories']);
+  await expectStartup(page);
+  await expect(page.getByRole('navigation', { name: 'Game startup' }).getByRole('button')).toHaveText(['New Game']);
   expect(await checkpointRecord(page)).toBeNull();
-
   await page.getByRole('button', { name: 'New Game', exact: true }).click();
-  await expectPassage(page, 'The City Gate');
-  await expectGateState(page);
-  const record = await checkpointRecord(page);
-  expect(record).not.toBeNull();
-  const checkpoint = JSON.parse(record!).checkpoint.state;
-  expect(checkpoint).toEqual({
-    passageId: 'gate',
-    variables: { influence: 0, honor: 5, loyal: false, character_name: 'Unknown' },
-    journal: [], skills: [], inventory: {},
+  await expectPassage(page, 'The Last Ferry');
+  await expectInitialState(page);
+  const save = JSON.parse((await checkpointRecord(page))!);
+  expect(save).toEqual({
+    formatVersion: 1, storyId: 'provincial-crisis', storyRevision: 1,
+    checkpoint: { state: {
+      passageId: 'quayside',
+      variables: { envoy_name: 'Mara Vale', authority: 2, trust: 0, plan: 'Undecided', workers_fed: false, river_warning: false, bonded: false },
+      journal: [], skills: [], inventory: {},
+    } },
   });
 });
 
-test('Continue resumes the initial checkpoint and drops ordinary unsaved passage progress', async ({ page }) => {
+test('Continue Game resumes the initial checkpoint and drops ordinary unsaved passage progress', async ({ page }) => {
   await observeCheckpointWrites(page);
   await startGame(page);
   const saved = await checkpointRecord(page);
-  await choose(page, 'Speak to the messenger');
-  await expectPassage(page, 'A Quiet Warning');
-  await expectCharacter(page, ['Alexander', '3', '4', 'Yes']);
+  await choose(page, 'Keep the name Mara Vale and begin');
+  await choose(page, 'You mediated disputes at the provincial court');
+  await expectPassage(page, "A Clerk's Reputation");
+  await expectCharacter(page, ['Mara Vale', '3', '0', 'Undecided']);
   expect(await checkpointRecord(page)).toBe(saved);
   expect(await checkpointWrites(page)).toBe(1);
-
   await page.reload();
-  await selectStory(page);
-  await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toBeVisible();
+  await expectStartup(page);
   await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
-  await expectPassage(page, 'The City Gate');
-  await expectGateState(page);
+  await expectPassage(page, 'The Last Ferry');
+  await expectInitialState(page);
   expect(await checkpointRecord(page)).toBe(saved);
   expect(await checkpointWrites(page)).toBe(0);
 });
 
-test('a new page continues the authored checkpoint with its name, not the later council passage', async ({ page, context }) => {
+test('a new page resumes a revision-1 authored checkpoint, accepted name, and complete acquired state', async ({ page, context }) => {
   await startGame(page);
-  await chooseName(page, 'Eleanor');
+  await reachBriefing(page, 'Eleanor');
   const saved = await checkpointRecord(page);
-  await choose(page, 'Raised among nobility');
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expectPassage(page, 'The Empty Chair');
-  await expectCharacter(page, ['Eleanor', '2.5', '5', 'No']);
-
+  await choose(page, 'Investigate the mill accounts');
+  await choose(page, 'Pay two coins for attested accounts');
+  await expectPassage(page, 'Ink Paid For');
   const reopened = await context.newPage();
   await observeCheckpointWrites(reopened);
   for (let load = 0; load < 2; load++) {
     await reopened.goto('/');
-    await selectStory(reopened);
+    await expectStartup(reopened);
     await reopened.getByRole('button', { name: 'Continue Game', exact: true }).click();
-    await expectPassage(reopened, 'Choose Your Background');
-    await expectCharacter(reopened, ['Eleanor', '1', '5', 'No']);
-    await expectItems(reopened, 'Journal', [arrival, 'You introduced yourself as Eleanor.']);
-    await expectItems(reopened, 'Skills', ['Composure']);
-    await expectItems(reopened, 'Inventory', ['Gold Coin × 10', 'Gate Token × 1']);
+    await expectPassage(reopened, 'Six Sacks and a Day');
+    await expectCharacter(reopened, ['Eleanor', '3', '1', 'Undecided']);
+    await expectItems(reopened, 'Journal', [arrival, 'Eleanor returned as a former river surveyor.', 'Eleanor accepted six public grain sacks with authority 3.']);
+    await expectItems(reopened, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
+    await expectItems(reopened, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
     await expect(reopened.getByRole('textbox')).toHaveCount(0);
     expect(await checkpointRecord(reopened)).toBe(saved);
     expect(await checkpointWrites(reopened)).toBe(0);
   }
 });
 
-test('New Game cancellation preserves progress; confirmation replaces it with fresh progress', async ({ page }) => {
+test('startup New Game cancellation retains progress and confirmation replaces only its checkpoint', async ({ page }) => {
   await startGame(page);
-  await chooseName(page, 'Eleanor');
-  await choose(page, 'Raised among nobility');
-  await expectPassage(page, 'A Noble Upbringing');
+  await reachBriefing(page, 'Eleanor');
   const saved = await checkpointRecord(page);
-
+  await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+  await page.reload();
+  await expectStartup(page);
   await confirmNewGame(page, false);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('A Noble Upbringing');
-  await expectCharacter(page, ['Eleanor', '3', '5', 'No']);
-  await expectItems(page, 'Skills', ['Composure', 'Diplomacy']);
-  await expectItems(page, 'Journal', [arrival, 'You introduced yourself as Eleanor.', 'Eleanor learned the customs of the royal court.']);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Provincial Crisis');
+  await expect(page.getByRole('button', { name: 'New Game', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toBeVisible();
   expect(await checkpointRecord(page)).toBe(saved);
-
+  await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
+  await expectPassage(page, 'Six Sacks and a Day');
+  await expectCharacter(page, ['Eleanor', '3', '1', 'Undecided']);
+  await page.reload();
+  await expectStartup(page);
   await confirmNewGame(page, true);
-  await expectPassage(page, 'The City Gate');
-  await expectGateState(page);
-  expect(JSON.parse((await checkpointRecord(page))!).checkpoint.state.passageId).toBe('gate');
+  await expectPassage(page, 'The Last Ferry');
+  await expectInitialState(page);
+  expect(JSON.parse((await checkpointRecord(page))!).checkpoint.state.passageId).toBe('quayside');
   expect(await checkpointRecord(page)).not.toBe(saved);
 });
 
-test('invalid stored checkpoint explains the problem, preserves its bytes, and requires overwrite confirmation', async ({ page }) => {
+test('an invalid checkpoint is explained and kept until confirmed replacement', async ({ page }) => {
   await startGame(page);
   const invalid = JSON.parse((await checkpointRecord(page))!);
   invalid.checkpoint.state.passageId = 'removed_passage';
   const raw = JSON.stringify(invalid);
-  await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key: STORAGE_KEY, raw });
+  await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key: crisisKey, raw });
   await page.reload();
-
-  await selectStory(page);
+  await expectStartup(page);
   await expect(page.getByText('A saved game was found, but it cannot be loaded.', { exact: true })).toBeVisible();
   await expect(page.getByText('The saved checkpoint is not compatible with this story.', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Continue Game', exact: true })).toHaveCount(0);
@@ -107,6 +106,6 @@ test('invalid stored checkpoint explains the problem, preserves its bytes, and r
   await confirmNewGame(page, false);
   expect(await checkpointRecord(page)).toBe(raw);
   await confirmNewGame(page, true);
-  await expectPassage(page, 'The City Gate');
-  await expectGateState(page);
+  await expectPassage(page, 'The Last Ferry');
+  await expectInitialState(page);
 });

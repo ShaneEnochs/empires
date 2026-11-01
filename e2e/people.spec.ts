@@ -1,34 +1,20 @@
 import { expect, test } from '@playwright/test';
-import { choose, expectPassage, openPanel, returnToStory, selectStory, startGame } from './helpers';
+import { choose, expectPassage, openPanel, returnToStory, expectStartup, startGame } from './helpers';
 
-test('City Gate references follow actual journal encounters and remain separate from Character and Journal', async ({ page }) => {
+test('Character combines statistics, skills, and inventory while Journal remains independent', async ({ page }) => {
   await startGame(page);
   const character = await openPanel(page, 'Character');
   await expect(character.getByRole('heading', { level: 3 })).toHaveText(['Character Statistics', 'Skills', 'Inventory']);
   await expect(page.getByRole('button', { name: 'Skills', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Inventory', exact: true })).toHaveCount(0);
-  let people = await openPanel(page, 'People');
-  await expect(people.getByRole('listitem')).toHaveCount(0);
-  await expect(people).toHaveText(/No people recorded yet\./);
-  await returnToStory(page);
-  await choose(page, 'Speak to the messenger');
-  people = await openPanel(page, 'People');
-  await expect(people.getByRole('heading', { level: 3 })).toHaveText(['The messenger']);
-  await expect(people.getByText(/gives you two gold coins/)).toBeVisible();
-  await expect(people.getByText('The council clerk', { exact: true })).toHaveCount(0);
-  await returnToStory(page);
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  people = await openPanel(page, 'People');
-  await expect(people.getByRole('heading', { level: 3 })).toHaveText(['The messenger', 'The council clerk']);
   const journal = await openPanel(page, 'Journal');
-  await expect(journal.getByRole('listitem')).toHaveCount(3);
-  await expect(journal.getByRole('heading', { level: 3 })).toHaveText(['Prologue', 'Chapter One']);
+  await expect(journal.getByRole('listitem')).toHaveText(['The last ferry reached Bellwether before the river closed.']);
+  await expect(journal.getByRole('heading', { level: 3 })).toHaveText(['The Writ']);
+  await expect(character).toBeHidden();
 });
 
 test('Provincial references wait for recording and checkpoint recovery removes later encounters', async ({ page }) => {
-  await page.goto('/');
-  await selectStory(page, 'Provincial Crisis');
-  await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  await startGame(page);
   await openPanel(page, 'People');
   await expect(page.getByText('No people recorded yet.', { exact: true })).toBeVisible();
   await returnToStory(page);
@@ -53,7 +39,7 @@ test('Provincial references wait for recording and checkpoint recovery removes l
   await returnToStory(page);
   // Return to the saved briefing checkpoint on reload, before these encounters.
   await page.reload();
-  await selectStory(page, 'Provincial Crisis');
+  await expectStartup(page);
   await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
   await expectPassage(page, 'Six Sacks and a Day');
   people = await openPanel(page, 'People');
@@ -72,5 +58,5 @@ test('Provincial references wait for recording and checkpoint recovery removes l
   await expect(people.getByRole('heading', { level: 3 })).toHaveText(['The customs keeper']);
   await returnToStory(page);
   await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
 });

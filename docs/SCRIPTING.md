@@ -408,12 +408,13 @@ matching `^[a-z][a-z0-9_-]*$` and a positive safe integer `storyRevision`.
 Developers pass it to GameSession/storage APIs; see README for setup. Independent
 stories require distinct IDs and use `empires:checkpoint:<storyId>`. Revision is
 not part of the key, so incompatible old progress remains detectable.
-The City Gate catalog entry uses `DEFAULT_SAVE_IDENTITY`, with legacy
+The internal City Gate fixture retains `DEFAULT_SAVE_IDENTITY`, with legacy
 `STORY_ID = 'empires-example'`, `STORY_REVISION = 1`, and exact key
 `empires:checkpoint:empires-example`. `SAVE_FORMAT_VERSION = 1` is independent.
-Provincial Crisis has its own revision-1 identity/key. Players choose either story
-from the static browser library; selection and Back to Stories are application
-controls, not story commands. Progress and character data do not transfer.
+Provincial Crisis keeps its own revision-1 identity/key and is the sole public story.
+The app opens its startup directly; City Gate remains an internal regression fixture.
+New Game is confined to startup after reload. These are application decisions,
+not story commands. Progress and character data do not transfer.
 The JSON envelope has exactly `formatVersion`, `storyId`, `storyRevision`, and
 `checkpoint` (the complete existing `{ state: GameState }` representation).
 See README for an actual initial-save example.
@@ -1088,12 +1089,15 @@ import/export, procedures, subroutines, loops, and plugin systems remain exclude
 unless a future task explicitly changes the requirements.
 
 
-## Compact reading views and deliberate choices (Stage 10B)
+## Compact reading views and deliberate choices (Stages 10B–10C)
 
 The browser presents four compact equal-width tabs in one row: Story, Character,
 Journal, People. An opaque CSS sticky wrapper holds the tabs and a compact bar
 showing the current passage's authored chapter, in every view. Passage titles
-remain in scrollable content; focus clears the sticky header. Library/startup
+remain in scrollable content, centered and approximately 10% larger. Chapter text
+is centered with compact padding; prose stays left-aligned. Tabs have slightly
+larger labels and one bottom-border indicator, with no text underline in any state.
+Focus clears the sticky header. Library/startup
 screens keep the Empires identity and show no invented chapter. One active content
 view uses the same centered column at every viewport width. Native
 buttons expose aria-pressed; hidden subtrees are removed from keyboard and
@@ -1104,7 +1108,8 @@ story directives or persisted state.
 Main retains the story DOM while information is shown, so unsubmitted text,
 validation errors, and selected choices survive. It refreshes only the selected read-only view through
 panels.ts. View selection never runs GameSession actions, rerenders the passage,
-or touches storage. New Game and save warnings stay outside the hidden content.
+or touches storage. Save warnings stay outside the hidden content. New Game is
+confined to startup after reload.
 Successful navigation/input/retry rebuild the passage and select Story. Checkpoint
 and save compatibility remain unchanged. The muted palette uses system fonts;
 there are no animations, overlays, sidebars, or separate mobile navigation.
@@ -1119,12 +1124,12 @@ event reveals its reference; checkpoint recovery derives visibility from the res
 journal. People mentioned without a recorded encounter are omitted. This introduces
 no story directive or gameplay/save fields, and needs no revision or save migration.
 
-Authored `*choice` options use a native radio group followed by Next. No choice is
-preselected; Next stays disabled until selection. Tab enters the group, Space
-selects, and arrow keys change selection. Tab to Next and Enter/Space advances to
+Authored `*choice` options use a native radio group followed by Continue. No choice is
+preselected; Continue stays disabled until selection. Tab enters the group, Space
+selects, and arrow keys change selection. Tab to Continue and Enter/Space advances to
 the existing authored destination. Selecting alone never executes effects,
 captures checkpoints, navigates, or reads/writes saves. Information views retain
 the choice; reload discards it. Successful navigation resets selection; failure
 retains it with the existing accessible error. Eligibility and effects still belong
 to Game. `*continue`, text-input submission, and Try Again remain single actions;
-terminal passages have no Next. Confirmed New Game behavior is unchanged.
+terminal passages have no Continue. Confirmed New Game behavior is unchanged.

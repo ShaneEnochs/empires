@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import {
-  checkpointRecord, enterWatchtower, expectCharacter, expectPassage, openPanel, panelNames, startGame,
+  checkpointRecord, enterSluiceDeath, expectCharacter, expectPassage, openPanel, panelNames, startGame,
   returnToStory, choose,
 } from './helpers';
 
@@ -42,7 +42,7 @@ for (const width of [320, 375, 768, 1280]) {
       await startGame(page);
       await expectLayout(page);
       await page.keyboard.press('Tab');
-      const choice = page.getByRole('radio', { name: 'Speak to the messenger', exact: true });
+      const choice = page.getByRole('radio', { name: 'Enter a different name in the public record', exact: true });
       await expect(choice).toBeFocused();
       await expect(choice).toBeInViewport();
       const outline = await choice.evaluate(element => {
@@ -58,36 +58,40 @@ for (const width of [320, 375, 768, 1280]) {
         await expect(page.getByRole('navigation', { name: 'Passage actions' })).toHaveCount(0);
         await expectLayout(page);
       }
-      await expect(page.getByRole('group', { name: 'Game tools' }).getByRole('button')).toHaveCount(1);
+      await expect(page.getByRole('group', { name: 'Game tools' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
       await returnToStory(page);
-      await choose(page, 'Speak to the messenger');
-      await expectPassage(page, 'A Quiet Warning');
+      await choose(page, 'Keep the name Mara Vale and begin');
+      await choose(page, 'You surveyed these river channels');
+      await expectPassage(page, 'Old Watermarks');
       await page.getByRole('button', { name: 'Continue', exact: true }).click();
-      await expectPassage(page, 'The Empty Chair');
-      await expectCharacter(page, ['Alexander', '2.5', '4', 'Yes']);
+      await expectPassage(page, 'Six Sacks and a Day');
+      await expectCharacter(page, ['Mara Vale', '3', '1', 'Undecided']);
       await expectLayout(page);
     });
 
     test('name input and checkpoint recovery remain visible and usable', async ({ page }) => {
       await startGame(page);
-      await choose(page, 'Choose a preferred name and background');
-      const field = page.getByRole('textbox', { name: 'Preferred name', exact: true });
+      await choose(page, 'Enter a different name in the public record');
+      const field = page.getByRole('textbox', { name: 'Name for the public record', exact: true });
       await expect(field).toBeEditable();
       await expect(field).toBeInViewport();
       await expectLayout(page);
       const name = 'Reader ' + width;
       await field.fill(name);
       await field.press('Enter');
-      await expectPassage(page, 'Choose Your Background');
+      await expectPassage(page, 'What You Bring');
+      await choose(page, 'You surveyed these river channels');
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
       const saved = await checkpointRecord(page);
       for (const panel of panelNames) await openPanel(page, panel);
       await expectLayout(page);
       await returnToStory(page);
-      await enterWatchtower(page);
+      await enterSluiceDeath(page);
       await expectLayout(page);
       await page.getByRole('button', { name: 'Try Again', exact: true }).click();
-      await expectPassage(page, 'Choose Your Background');
-      await expectCharacter(page, [name, '1', '5', 'No']);
+      await expectPassage(page, 'Six Sacks and a Day');
+      await expectCharacter(page, [name, '3', '1', 'Undecided']);
       expect(await checkpointRecord(page)).toBe(saved);
       await expectLayout(page);
     });

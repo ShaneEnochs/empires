@@ -464,7 +464,7 @@ state. No extra state, definitions, timestamps, drafts, or version history are s
 All identity arguments default to frozen `DEFAULT_SAVE_IDENTITY`, retaining
 `STORY_ID = 'empires-example'`, `STORY_REVISION = 1`, and
 `STORAGE_KEY = 'empires:checkpoint:empires-example'` for existing callers.
-The City Gate catalog entry supplies that default; Provincial Crisis supplies
+The internal City Gate fixture retains that default; the public Provincial Crisis entry supplies
 `{ storyId: 'provincial-crisis', storyRevision: 1 }` and uses
 `empires:checkpoint:provincial-crisis`. Both authored stories and compatible
 revision-1 saves are unchanged; there is no migration or format bump.
@@ -528,42 +528,30 @@ never migrates, repairs, or deletes the save; confirmed New Game replaces it.
 There is no automatic release-compatibility or migration framework. Data belongs
 to one browser profile/origin; no cross-tab synchronization or cloud copy is added.
 
-## Static story library
+## Static catalog and startup
 
-Stage 9B adds `src/catalog.ts` with two bundled sources: The City Gate
-(`src/example.story`) and Provincial Crisis (`examples/provincial-crisis.story`).
-Entries contain a stable application `id`, title, description, Vite `?raw` source,
-explicit `StorySaveIdentity`, and read-only People definitions. Catalog/entry/identity
-and People data is frozen. Initialization
-rejects invalid/duplicate catalog IDs and duplicate save IDs, even if revisions differ.
-Catalog IDs need not equal save IDs: `city-gate` deliberately keeps the established
-`empires-example` save identity. Titles/files/content never determine either ID.
+`src/catalog.ts` is a frozen list of explicit application IDs, titles, descriptions,
+Vite `?raw` source, People definitions, and validated StorySaveIdentity records.
+Initialization checks distinct catalog/save IDs. Stage 10C publishes only Provincial
+Crisis (`provincial-crisis`, revision 1), so opening the app parses that entry and
+constructs its session directly, then presents startup. It reads only that save,
+never initializes a new Game for empty startup, and retains all existing validation,
+Continue Game, confirmed replacement, and explicit unsaved-play semantics.
 
-`renderLibrary` builds text and native selection buttons without parsing stories,
-constructing sessions/Games, or accessing storage. A selection calls `selectStory`,
-which parses only that source and creates its GameSession with the entry's identity.
-The selected Story/session live together in that invocation's closure; all existing
-gameplay handlers and `createPanels(story, game)` use those same objects. No second
-renderer or mutable active-story registry is needed.
+The City Gate source remains `src/example.story`, with its isolated Node tests,
+legacy `empires-example` default identity/exports, and existing saved records intact.
+The public app neither imports that source nor reads, deletes, or rewrites its save.
+Neither story's authored source, revision, save format, or checkpoint semantics changes.
 
-Startup keeps the existing Continue/New Game/unusable-save/unsaved-play behavior.
-Back to Stories replaces the pre-game DOM with the library without initializing a
-Game or accessing storage. Removed startup handlers do not remain attached to the
-new screen. Selecting a saved story prepares its restored Game through the existing
-session validation; going back discards that startup without activating gameplay
-or changing saved bytes. Library/startup/gameplay headings retain native focus behavior.
+`selectStory` keeps the parsed Story, validated People metadata, session, active
+Game, and handlers in one closure. There is one renderer. New Game exists only on
+startup; reload/reopen returns there. No in-game restart or story switching exists.
 
-After gameplay starts, there is no story-switch or checkpoint-return control.
-Reloading/reopening returns to the library, where each story independently offers
-its latest saved checkpoint. New Game checks/confirms/replaces only the selected
-record; corrupt progress in one story does not disable the other. Death/retry keeps
-using the selected session's newest in-memory checkpoint and never writes a save.
-Panels and accepted player names remain story-specific; nothing transfers between games.
-
-To add a bundled story, explicitly import its raw source and add a static catalog
-entry with unique catalog/save IDs and an intentional compatible revision. Keep
-the existing source/API playtests and add browser coverage. No dynamic discovery,
-URL routing, content service, plugin system, or third-party runtime is introduced.
+For future additions, import a raw source and add an explicit unique catalog/save
+identity and People definitions. With multiple entries, the existing inert library
+renders selection buttons and pre-game Back to Stories; library rendering itself
+never parses stories, initializes games, or accesses saves. No URL routes, hidden
+controls, mutable registry, or content service are introduced.
 
 ## Death and checkpoint recovery
 
@@ -579,7 +567,8 @@ A death destination follows the same atomic entry path and entry-effect ordering
 as every other passage. Its title and visible prose render before a native
 Try Again button; no restoration happens on entry or rendering. It has no normal
 outgoing action, so existing navigation/input guards remain effective.
-Character, Journal, People, New Game, and storage warnings remain available.
+Character, Journal, People, and storage warnings remain available. New Game is
+confined to startup after reload.
 
 `Game.retryAfterDeath()` verifies the current passage marker, then calls the
 existing `restoreCheckpoint()`. No target/snapshot argument, runtime death mode,
@@ -776,13 +765,16 @@ See README for local installation and diagnostics. CI does not deploy, publish,
 or merge anything.
 
 
-## Compact reading views and deliberate choices (Stage 10B)
+## Compact reading views and deliberate choices (Stages 10B–10C)
 
 Gameplay starts with four equal-width grid controls in one row: Story, Character,
-Journal, People. Flat tabs have at least 44px targets and an active underline.
+Journal, People. Flat tabs have at least 44px targets, approximately 0.9rem labels,
+and exactly one active bottom-border indicator. No tab interaction underlines text.
 An opaque CSS sticky wrapper holds the tabs and a separate compact chapter bar,
 derived from `game.passage.chapter` after each successful action. The passage
-heading remains in scrollable content; CSS scroll spacing keeps focus visible.
+heading remains in scrollable content, centered and 10% larger, while prose stays
+left-aligned. The centered chapter label has compact padding. CSS scroll spacing
+accounts for the sticky header and keeps focus visible.
 Branding remains on library/startup screens, which have no chapter bar. One active
 content view uses the same centered column at every viewport width. Native
 buttons expose aria-pressed; hidden subtrees are removed from keyboard and
@@ -793,16 +785,17 @@ story directives or persisted state.
 Main retains the story DOM while information is shown, so unsubmitted text,
 validation errors, and selected choices survive. It refreshes only the selected read-only view through
 panels.ts. View selection never runs GameSession actions, rerenders the passage,
-or touches storage. New Game and save warnings stay outside the hidden content.
+or touches storage. Save warnings stay outside the hidden content. New Game is
+confined to startup.
 Successful navigation/input/retry rebuild the passage and select Story. Checkpoint
 and save compatibility remain unchanged. The muted palette uses system fonts;
 there are no animations, overlays, sidebars, or separate mobile navigation.
 
 Authored choices are native radio rows within a labeled fieldset, followed by
-Next. Every render starts with no selection and disabled Next. Selecting a radio
+Continue. Every render starts with no selection and disabled Continue. Selecting a radio
 only records a transient choice in that passage's rendering closure and enables
-Next; it never calls Game/GameSession or touches persistence. Native arrow keys
-and Space select, Tab reaches Next, and Enter/Space commits. Next calls only
+Continue; it never calls Game/GameSession or touches persistence. Native arrow keys
+and Space select, Tab reaches Continue, and Enter/Space commits. Continue calls only
 `session.navigate(selected.destinationId)`; Game still enforces eligibility and
 applies effects. Success rebuilds the passage and drops selection, including
 same-ID entries and recovery. Failure retains the DOM, choice, and existing error

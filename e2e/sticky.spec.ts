@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { choose, expectPassage, openPanel, returnToStory, selectStory } from './helpers';
+import { choose, expectPassage, openPanel, returnToStory, expectStartup, reachBriefing, councilWithEvidence } from './helpers';
 
 for (const width of [320, 375, 768, 1280]) {
   test('four compact tabs and the chapter stay together while scrolling at ' + width + 'px', async ({ page }) => {
@@ -7,8 +7,7 @@ for (const width of [320, 375, 768, 1280]) {
     await page.setViewportSize({ width, height: 240 });
     await page.goto('/');
     await expect(page.locator('.chapter-label')).toHaveCount(0);
-    await selectStory(page);
-    await expect(page.locator('.chapter-label')).toHaveCount(0);
+    await expectStartup(page);
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
     const navigation = page.getByRole('navigation', { name: 'Reading views' });
     await expect(navigation.getByRole('button')).toHaveText(['Story', 'Character', 'Journal', 'People']);
@@ -21,14 +20,12 @@ for (const width of [320, 375, 768, 1280]) {
       expect(bounds.y).toBe(dimensions[0]!.y);
       expect(bounds.height).toBe(44);
     }
-    await expect(page.locator('.chapter-label')).toHaveText('Prologue');
-    await page.getByRole('radio', { name: 'Speak to the messenger', exact: true }).check();
-    await expect(page.locator('.chapter-label')).toHaveText('Prologue');
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
-    await expectPassage(page, 'A Quiet Warning');
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
-    await expectPassage(page, 'The Empty Chair');
-    await expect(page.locator('.chapter-label')).toHaveText('Chapter One');
+    await expect(page.locator('.chapter-label')).toHaveText('The Writ');
+    await page.getByRole('radio', { name: 'Keep the name Mara Vale and begin', exact: true }).check();
+    await expect(page.locator('.chapter-label')).toHaveText('The Writ');
+    await reachBriefing(page);
+    await councilWithEvidence(page);
+    await expect(page.locator('.chapter-label')).toHaveText('Night Council');
 
     for (const view of ['Story', 'Character', 'Journal', 'People'] as const) {
       if (view === 'Story') await returnToStory(page); else await openPanel(page, view);
@@ -57,7 +54,7 @@ for (const width of [320, 375, 768, 1280]) {
       expect(position.chapterBottom).toBeLessThan(position.viewport);
       expect(position.background).not.toBe('rgba(0, 0, 0, 0)');
       expect(position.scrollWidth).toBeLessThanOrEqual(position.width);
-      await expect(page.locator('.chapter-label')).toHaveText('Chapter One');
+      await expect(page.locator('.chapter-label')).toHaveText('Night Council');
     }
     // Keyboard focus on a tab stays visible above scrolled reading content.
     await navigation.getByRole('button', { name: 'Story', exact: true }).focus();

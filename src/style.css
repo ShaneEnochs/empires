@@ -7,7 +7,8 @@
   --selected: #d4dfd9;
   --space: 1.25rem;
   --reading-inset: clamp(1rem, 4vw, 3rem);
-  --reading-header-space: calc(44px + 3rem);
+  --tab-height: max(44px, calc(1.65rem + 3px));
+  --reading-header-space: calc(var(--tab-height) + 1.65rem + 1px);
   font-family: Georgia, 'Times New Roman', serif;
   line-height: 1.8;
   color: var(--text);
@@ -30,6 +31,7 @@ main {
 }
 h1, h2, h3 { line-height: 1.25; font-weight: normal; }
 h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0 0 1.5rem; }
+#passage-heading { text-align: center; font-size: clamp(1.98rem, 4.4vw, 2.64rem); }
 h2 { font-size: 1.6rem; margin: 0 0 var(--space); }
 h3 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; }
 p { margin: 0 0 var(--space); }
@@ -43,18 +45,17 @@ p { margin: 0 0 var(--space); }
   z-index: 1;
   margin-inline: calc(-1 * var(--reading-inset));
   margin-block-end: var(--space);
-  padding-inline: var(--reading-inset);
   background: var(--surface);
 }
-.chapter-label { font-size: 0.8rem; line-height: 1.5; margin: 0; padding-block: 0.4rem; border-block-end: 1px solid var(--border); }
-h1, h2, h3, button, input { scroll-margin-block-start: var(--reading-header-space); }
+.chapter-label { text-align: center; font-size: 0.9rem; line-height: 1.5; margin: 0; padding: 0.15rem var(--reading-inset); border-block-end: 1px solid var(--border); }
+h1, h2, h3, button, input { scroll-margin-block-start: 2rem; }
 button, input { font: 1rem/1.5 system-ui, sans-serif; min-block-size: 44px; min-inline-size: 44px; max-inline-size: 100%; border: 1px solid var(--border); border-radius: 0.2rem; color: var(--text); background: var(--surface); }
 button { padding: 0.65rem 0.85rem; cursor: pointer; white-space: normal; overflow-wrap: anywhere; }
 button:hover { border-color: var(--accent); text-decoration: underline; text-underline-offset: 0.18em; }
 button:active { background: var(--selected); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .view-navigation { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.view-navigation button { min-inline-size: 0; min-block-size: 44px; padding: 0.25rem 0.15rem; border: 0; border-block-end: 3px solid transparent; border-radius: 0; font-size: 0.8rem; color: var(--accent); }
+.view-navigation button { min-inline-size: 0; min-block-size: var(--tab-height); padding: 0.15rem 0; border: 0; border-block-end: 3px solid transparent; border-radius: 0; font-size: clamp(0.85rem, 3.8vw, 0.9rem); color: var(--accent); text-decoration: none; }
 .view-navigation [aria-pressed='true'] { border-block-end-color: var(--accent); font-weight: 650; color: var(--text); }
 .view-navigation button:focus-visible { outline-offset: -3px; }
 .passage-actions, .startup-actions { display: grid; gap: 0.65rem; border-block-start: 1px solid var(--border); padding-block-start: var(--space); margin-block-start: 2rem; }
@@ -68,8 +69,6 @@ button:active { background: var(--selected); }
 .choice-row span { min-inline-size: 0; }
 .choice-row:focus-within { outline: 3px solid var(--accent); outline-offset: 3px; }
 .visually-hidden { position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.utility-controls { border-block-start: 1px solid var(--border); margin-block-start: 2rem; padding-block-start: var(--space); }
-.utility-controls button { font-size: 0.9rem; }
 .info-panel { font-family: system-ui, sans-serif; font-size: 1rem; }
 .info-panel h2, .info-panel h3 { font-family: Georgia, 'Times New Roman', serif; }
 .info-panel > section + section { border-block-start: 1px solid var(--border); margin-block-start: var(--space); }

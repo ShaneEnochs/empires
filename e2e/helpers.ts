@@ -1,31 +1,38 @@
 import { expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { STORAGE_KEY } from '../src/storage';
+import { checkpointKey, STORAGE_KEY } from '../src/storage';
 
-export const arrival = 'Alexander reached the city with influence 1.';
+export const crisisKey = checkpointKey({ storyId: 'provincial-crisis', storyRevision: 1 });
+export const cityKey = STORAGE_KEY;
+export const arrival = 'The last ferry reached Bellwether before the river closed.';
 export const panelNames = ['Character', 'Journal', 'People'] as const;
 type PanelName = typeof panelNames[number];
 type CharacterSection = 'Skills' | 'Inventory';
-export type StoryTitle = 'The City Gate' | 'Provincial Crisis';
 
 export async function expectPassage(page: Page, title: string): Promise<void> {
   const heading = page.getByRole('heading', { level: 1, name: title, exact: true });
   await expect(heading).toBeVisible();
   await expect(heading).toBeFocused();
+  if (await heading.getAttribute('id') === 'passage-heading') {
+    await expect(heading).toHaveCSS('text-align', 'center');
+    await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+  }
+}
+
+export async function expectStartup(page: Page): Promise<void> {
+  await expectPassage(page, 'Provincial Crisis');
+  await expect(page.getByRole('navigation', { name: 'Game startup' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Select |Back to Stories/ })).toHaveCount(0);
+  await expect(page.getByText('The City Gate', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.chapter-label')).toHaveCount(0);
 }
 
 export async function startGame(page: Page): Promise<void> {
   await page.goto('/');
-  await selectStory(page);
+  await expectStartup(page);
   await page.getByRole('button', { name: 'New Game', exact: true }).click();
-  await expectPassage(page, 'The City Gate');
-}
-
-export async function selectStory(page: Page, title: StoryTitle = 'The City Gate'): Promise<void> {
-  await expectPassage(page, 'Your next story');
-  await page.getByRole('button', { name: 'Select ' + title, exact: true }).click();
-  await expectPassage(page, title);
-  await expect(page.getByRole('navigation', { name: 'Game startup' })).toBeVisible();
+  await expectPassage(page, 'The Last Ferry');
+  await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
 }
 
 export async function openPanel(page: Page, name: PanelName | CharacterSection): Promise<Locator> {
@@ -47,7 +54,7 @@ export async function returnToStory(page: Page): Promise<void> {
 
 export async function expectCharacter(page: Page, values: string[]): Promise<void> {
   const panel = await openPanel(page, 'Character');
-  await expect(panel.locator('dt')).toHaveText(['Name', 'Influence', 'Honor', 'Loyal']);
+  await expect(panel.locator('dt')).toHaveText(['Envoy', 'Authority', 'Public trust', 'Settlement']);
   await expect(panel.locator('dd')).toHaveText(values);
   await returnToStory(page);
 }
@@ -58,37 +65,58 @@ export async function expectItems(page: Page, name: Exclude<PanelName, 'Characte
   await returnToStory(page);
 }
 
-/** Authored choices commit only after selecting a native radio and pressing Next. */
+/** Authored choices commit only after selecting a native radio and pressing Continue. */
 export async function choose(page: Page, label: string): Promise<void> {
   await page.getByRole('radio', { name: label, exact: true }).check();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  const advance = page.getByRole('button', { name: 'Continue', exact: true });
+  await expect(advance).toHaveCount(1);
+  await advance.click();
 }
 
-export async function expectGateState(page: Page): Promise<void> {
-  await expectCharacter(page, ['Alexander', '1', '5', 'No']);
+export async function expectInitialState(page: Page): Promise<void> {
+  await expectCharacter(page, ['Mara Vale', '2', '0', 'Undecided']);
   await expectItems(page, 'Journal', [arrival]);
-  await expectItems(page, 'Skills', ['Composure']);
-  await expectItems(page, 'Inventory', ['Gold Coin × 10', 'Gate Token × 1']);
+  await expectItems(page, 'Skills', ['Provincial Commission']);
+  await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1']);
 }
 
 export async function chooseName(page: Page, value: string): Promise<void> {
-  await choose(page, 'Choose a preferred name and background');
-  await expectPassage(page, 'Choose Your Name');
-  await page.getByRole('textbox', { name: 'Preferred name', exact: true }).fill(value);
-  await page.getByRole('textbox', { name: 'Preferred name', exact: true }).press('Enter');
-  await expectPassage(page, 'Choose Your Background');
+  await choose(page, 'Enter a different name in the public record');
+  await expectPassage(page, 'The Public Record');
+  const field = page.getByRole('textbox', { name: 'Name for the public record', exact: true });
+  await field.fill(value);
+  await field.press('Enter');
+  await expectPassage(page, 'What You Bring');
 }
 
-export async function enterWatchtower(page: Page): Promise<void> {
-  await choose(page, 'Explore the abandoned watchtower');
-  await expectPassage(page, 'The Abandoned Watchtower');
+export async function reachBriefing(page: Page, name = 'Rowan 周'): Promise<void> {
+  await chooseName(page, name);
+  await choose(page, 'You surveyed these river channels');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expectPassage(page, 'A Fatal Fall');
-  await expect(page.getByText('The stair collapses beneath you. Your journey ends in the silent tower.', { exact: true })).toBeVisible();
+  await expectPassage(page, 'Six Sacks and a Day');
+}
+
+export async function councilWithEvidence(page: Page): Promise<void> {
+  await choose(page, 'Investigate the mill accounts');
+  await expect(page.getByRole('radio', { name: 'Negotiate a protected statement', exact: true })).toHaveCount(0);
+  await choose(page, 'Pay two coins for attested accounts');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await choose(page, 'Read the new watermarks from the bank');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expectPassage(page, 'When the Seal Expires');
+}
+
+export async function enterSluiceDeath(page: Page): Promise<void> {
+  await choose(page, 'Investigate the mill accounts');
+  await choose(page, 'Pay two coins for attested accounts');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await choose(page, 'Enter the unshored sluice chamber despite the warning');
+  await expectPassage(page, 'Beneath the Shore Timbers');
+  await expect(page.getByText("The river takes the commission's bearer before the council can meet.", { exact: true })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveText(['Try Again']);
 }
 
-export async function checkpointRecord(page: Page, key = STORAGE_KEY): Promise<string | null> {
+export async function checkpointRecord(page: Page, key = crisisKey): Promise<string | null> {
   return page.evaluate(key => localStorage.getItem(key), key);
 }
 
@@ -112,7 +140,7 @@ export async function observeCheckpointWrites(page: Page): Promise<void> {
       setItem.call(this, name, value);
       if (this === window.localStorage && name === key) writes++;
     };
-  }, STORAGE_KEY);
+  }, crisisKey);
 }
 
 export async function checkpointWrites(page: Page): Promise<number> {
