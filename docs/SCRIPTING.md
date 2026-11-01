@@ -1,6 +1,7 @@
 # Story authoring
 
-Write UTF-8 text in `src/example.story`, the only supported authoring format.
+Write UTF-8 text in a `.story` file, the supported story authoring format.
+Use `tools/notepadpp/starter.story` as a new-draft template.
 The parser validates a complete story before play. It produces immutable passage
 data; it does not execute JavaScript or the reference engine's language.
 
@@ -1116,7 +1117,7 @@ there are no animations, overlays, sidebars, or separate mobile navigation.
 
 Character contains Character Statistics, Skills, and Inventory, preserving author
 order for stats and acquisition order for skills/items. Journal stays independent.
-People uses immutable definitions in `src/people.ts` associated through each
+People uses validated immutable definitions from `content/provincial-crisis.people.json` associated through each
 `src/catalog.ts` entry. Each has a stable ID, name/role, short description supported
 by the story, and `discoveryEvents` listing one or more existing journal event IDs.
 Selection validates event IDs against the applicable parsed story. Only a recorded

@@ -1,0 +1,59 @@
+[
+  {
+    "id": "town_clerk",
+    "name": "The town clerk",
+    "description": "A clerk who recognizes your handwriting from a past arbitration at the provincial court.",
+    "discoveryEvents": [
+      "clerk_background"
+    ]
+  },
+  {
+    "id": "customs_keeper",
+    "name": "The customs keeper",
+    "description": "The keeper who signs six public grain sacks into your charge and honors the emergency writ until it expires.",
+    "discoveryEvents": [
+      "mandate_briefed"
+    ]
+  },
+  {
+    "id": "mill_clerk",
+    "name": "The mill clerk",
+    "description": "A junior clerk who can certify the private grain accounts and fears losing his post.",
+    "discoveryEvents": [
+      "copied_records",
+      "sworn_testimony"
+    ]
+  },
+  {
+    "id": "pilot",
+    "name": "The pilot",
+    "description": "A local pilot who takes soundings for one coin and teaches you the safe channel bearings.",
+    "discoveryEvents": [
+      "hired_pilot"
+    ]
+  },
+  {
+    "id": "governors_secretary",
+    "name": "The governor's secretary",
+    "description": "The secretary who records the early release of grain to the relief kitchen as unauthorized.",
+    "discoveryEvents": [
+      "relief_kitchen"
+    ]
+  },
+  {
+    "id": "merchant",
+    "name": "The grain merchant",
+    "description": "A merchant who advances three sacks in exchange for three coins and a guarantee against next year's harvest.",
+    "discoveryEvents": [
+      "merchant_bond"
+    ]
+  },
+  {
+    "id": "captain",
+    "name": "The guard captain",
+    "description": "The captain who offers to enforce rationing in exchange for control of the depot gates and queues.",
+    "discoveryEvents": [
+      "guard_requested"
+    ]
+  }
+]

@@ -310,3 +310,12 @@ Cancel/Escape must preserve progress/startup and restore focus. Guard duplicate
 approval, keep unsaved-play consent explicit, and never remove interactive focus
 outlines when suppressing focused heading outlines. Startup styles must stay
 scoped away from reading content; descriptions come from existing catalog data.
+
+## Notepad++ and People JSON
+
+Keep Notepad++ UDL/completion commands aligned with SCRIPTING.md; these are lexical
+aids, never another parser. The CMD launcher invokes existing preflight with quoted
+paths. Public People definitions live in content/provincial-crisis.people.json.
+Validate unknown JSON shapes before discovery-event checks. Preview may select
+optional .people.json through File API, resetting temporary progress on replacement;
+keep it development-only and isolated from public storage and publishing.

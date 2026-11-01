@@ -1,3 +1,4 @@
+import provincialPeopleData from '../content/provincial-crisis.people.json' with { type: 'json' };
 import type { GameState, Story } from './types';
 
 /** Author-maintained presentation metadata; never part of a game or save. */
@@ -27,46 +28,30 @@ export const cityGatePeople = definitions([
   },
 ]);
 
-export const provincialCrisisPeople = definitions([
-  {
-    id: 'town_clerk', name: 'The town clerk',
-    description: 'A clerk who recognizes your handwriting from a past arbitration at the provincial court.',
-    discoveryEvents: ['clerk_background'],
-  },
-  {
-    id: 'customs_keeper', name: 'The customs keeper',
-    description: 'The keeper who signs six public grain sacks into your charge and honors the emergency writ until it expires.',
-    discoveryEvents: ['mandate_briefed'],
-  },
-  {
-    id: 'mill_clerk', name: 'The mill clerk',
-    description: 'A junior clerk who can certify the private grain accounts and fears losing his post.',
-    discoveryEvents: ['copied_records', 'sworn_testimony'],
-  },
-  {
-    id: 'pilot', name: 'The pilot',
-    description: 'A local pilot who takes soundings for one coin and teaches you the safe channel bearings.',
-    discoveryEvents: ['hired_pilot'],
-  },
-  {
-    id: 'governors_secretary', name: "The governor's secretary",
-    description: 'The secretary who records the early release of grain to the relief kitchen as unauthorized.',
-    discoveryEvents: ['relief_kitchen'],
-  },
-  {
-    id: 'merchant', name: 'The grain merchant',
-    description: "A merchant who advances three sacks in exchange for three coins and a guarantee against next year's harvest.",
-    discoveryEvents: ['merchant_bond'],
-  },
-  {
-    id: 'captain', name: 'The guard captain',
-    description: 'The captain who offers to enforce rationing in exchange for control of the depot gates and queues.',
-    discoveryEvents: ['guard_requested'],
-  },
-]);
+/** Validate ordinary JSON without trusting runtime field types. */
+export function parsePeople(value: unknown): readonly PersonReference[] {
+  if (!Array.isArray(value)) throw new Error('People metadata must be a JSON array.');
+  const ids = new Set<string>();
+  const entries = value.map((entry: unknown, index) => {
+    if (!entry || typeof entry !== 'object') throw new Error(`People reference ${index + 1}: expected an object.`);
+    const { id, name, description, discoveryEvents } = entry as Record<string, unknown>;
+    if (typeof id !== 'string' || !/^[a-z][a-z0-9_-]*$/.test(id) || ids.has(id)
+      || typeof name !== 'string' || !name.trim() || typeof description !== 'string' || !description.trim()
+      || !Array.isArray(discoveryEvents) || discoveryEvents.length === 0
+      || !discoveryEvents.every(event => typeof event === 'string' && /^[a-z][a-z0-9_-]*$/.test(event))) {
+      throw new Error(`Invalid or duplicate People reference: ${typeof id === 'string' ? id : index + 1}`);
+    }
+    ids.add(id);
+    return { id, name, description, discoveryEvents: discoveryEvents as string[] };
+  });
+  return definitions(entries);
+}
+
+export const provincialCrisisPeople = parsePeople(provincialPeopleData);
 
 /** Validate the selected story before constructing its session or reading storage. */
 export function validatePeople(story: Story, people: readonly PersonReference[]): readonly PersonReference[] {
+  people = parsePeople(people);
   const events = new Set(story.passages.flatMap(passage => passage.effects
     .filter(effect => effect.kind === 'journal').map(effect => effect.id)));
   const ids = new Set<string>();

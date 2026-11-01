@@ -19,8 +19,8 @@ Run **Empires: Start Local Preview** (or `npm run dev`) and open
 Select your `.story` file, then New Game. The shared Empires reader supports
 choices followed by Continue, input forms, Character with Skills/Inventory,
 Journal, checkpoints, and Try Again. Restart preview returns to a fresh startup.
-People stays empty: its definitions are separate catalog metadata and cannot be
-inferred from arbitrary story prose.
+Optionally select a `.people.json` file for the People tab; see the
+[Notepad++ toolkit](../tools/notepadpp/README.md) for its format and file workflow.
 
 The passage index searches IDs and titles. Selecting an entry shows its chapter
 and all authored outgoing destinations, including conditional choices and input
@@ -86,3 +86,12 @@ Only one normal-style asset is shipped; declared weights are 400–600. System U
 fonts remain on controls and statistics. `font-display: swap` keeps text visible
 while loading; Georgia and generic serif cover loading failures and characters
 outside the Latin subset. No external font service is contacted.
+
+## Notepad++ as the primary editor
+
+See the [Notepad++ toolkit](../tools/notepadpp/README.md) for UDL highlighting,
+optional command completion, saved-file validation with a keyboard shortcut,
+a playable starter, the command cheat sheet, and local preview without VS Code.
+Provincial Crisis People descriptions live in `content/provincial-crisis.people.json`.
+Draft People references live in optional `.people.json` files; journal, skills, and
+inventory remain in `.story`. Public title-page text stays in `content/title-page.json`.
