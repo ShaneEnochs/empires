@@ -142,7 +142,7 @@
     },
     "interpolation": {
       "name": "variable.other.interpolated.empires",
-      "match": "\\$\\{[a-z][a-z0-9_-]*\\}"
+      "match": "\\$\\{[a-z][a-z0-9_-]*\\}|(?<!\\$)\\{(?:they|them|their|theirs|themself|They|Them|Their|Theirs|Themself)\\}"
     }
   }
 }

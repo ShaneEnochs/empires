@@ -119,3 +119,16 @@ identity, writes source files, or deploys anything. Do not overwrite Provincial
 Crisis or reuse its save ID just to preview a draft. Public Pages excludes the
 author preview. Existing VS Code snippets, tasks, and optional extension continue
 to work; choose whichever editor you prefer.
+
+## Pronoun substitution
+
+See the [pronoun template](../../docs/SCRIPTING.md#pronoun-tokens-stage-12b) for
+he/him, she/her, they/them, and custom choices using ordinary `*var`/`*set`.
+`{they}`, `{them}`, `{their}`, `{theirs}`, `{themself}` and initial-capital forms
+work in prose and journal entries, backed by declared string variables. Gender
+and honorifics remain independent; no verbs are conjugated automatically. Use
+`*show_if` paragraphs when forms differ. Journals keep the text resolved at recording.
+UDL highlights these exact tokens as keywords in prose where lexical rules permit;
+quoted journal strings keep string coloring. UDL cannot validate required variables
+or substitute values: save and run preflight for diagnostics. The completion list
+still contains directives only; no new command was added.

@@ -702,3 +702,8 @@ journal/skills/inventory remain in the story, and public startup text remains in
 `content/title-page.json`. Local drafts are never automatically published. VS Code
 support remains available. Windows interactive verification was unavailable; see
 the toolkit’s tested scope and installation instructions.
+
+Pronoun tokens such as `{they}` and `{Their}` are available in narrative and
+journal text through ordinary declared string variables. See the complete
+[creation template](docs/SCRIPTING.md#pronoun-tokens-stage-12b) for presets, custom
+values, independent gender/honorifics, and conditional verb forms.
