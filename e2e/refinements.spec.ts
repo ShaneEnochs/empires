@@ -18,6 +18,10 @@ for (const width of [320, 375, 768, 1280]) {
     await expect(newGame).toBeInViewport();
     await page.keyboard.press('Enter');
     await expectPassage(page, 'The Last Ferry');
+    if (width === 320) {
+      // Exercise the wider Linux fallback too, including the bold active label.
+      await page.addStyleTag({ content: '.view-navigation button { font-family: "DejaVu Sans", sans-serif; }' });
+    }
     const navigation = page.getByRole('navigation', { name: 'Reading views' });
     const buttons = navigation.getByRole('button');
     await expect(buttons).toHaveText(['Story', 'Character', 'Journal', 'People']);
@@ -49,6 +53,14 @@ for (const width of [320, 375, 768, 1280]) {
       await button.click();
       await expect(button).toHaveAttribute('aria-pressed', 'true');
       await expect(button).toHaveCSS('text-decoration-line', 'none');
+      const label = await button.evaluate(element => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return { height: element.getBoundingClientRect().height, textHeight: range.getBoundingClientRect().height,
+          lineHeight: parseFloat(getComputedStyle(element).lineHeight) };
+      });
+      expect(label.height).toBe(44);
+      expect(label.textHeight).toBeLessThanOrEqual(label.lineHeight);
       await button.focus();
       await page.keyboard.press('Space');
       await expect(button).toHaveCSS('text-decoration-line', 'none');
