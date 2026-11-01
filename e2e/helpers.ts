@@ -121,13 +121,12 @@ export async function checkpointRecord(page: Page, key = crisisKey): Promise<str
 }
 
 export async function confirmNewGame(page: Page, accept: boolean): Promise<void> {
-  const shown = page.waitForEvent('dialog');
-  const click = page.getByRole('button', { name: 'New Game', exact: true }).click();
-  const dialog = await shown;
-  if (accept) await dialog.accept(); else await dialog.dismiss();
-  await click;
-  expect(dialog.type()).toBe('confirm');
-  expect(dialog.message()).toBe('Start a new game? This will replace your existing saved progress.');
+  await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Start a new game?', exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('Starting over will replace your existing saved progress.');
+  await dialog.getByRole('button', { name: accept ? 'Start New Game' : 'Cancel', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
 }
 
 /** Observe native storage synchronously; do not access or patch application code. */

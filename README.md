@@ -683,3 +683,10 @@ files after external edits. Run `npm run test:author` for its separate browser t
 For optional VS Code syntax highlighting and parser-backed Problems diagnostics,
 see [local extension installation](tools/vscode-empires/README.md). Its build and
 dependencies are separate from the game. Existing preflight tasks remain available.
+
+The startup title screen uses the catalog description and emphasizes Continue Game
+when compatible progress exists, otherwise New Game. Restart and unsaved-play consent
+use styled native dialogs with Cancel initially focused, Escape cancellation, and
+focus restoration. Replacement approval still calls the unchanged session recheck;
+no-save startup skips the replacement dialog. Non-interactive focused headings do
+not draw control outlines; keyboard controls retain visible focus.

@@ -302,3 +302,11 @@ TextMate highlighting is presentation, not validation. Keep all 20 workspace
 snippets as the single source under empires-story; do not contribute a duplicate
 extension snippet set. Extension dependencies/build/VSIX files stay outside the
 player bundle. Never publish automatically or alter game/preview/save semantics.
+
+Startup confirmation uses a native modal dialog in the shared reader. Probe
+GameSession.newGame with a rejecting callback, then call it again with explicit
+approval only after consent; keep the synchronous session API and normal recheck.
+Cancel/Escape must preserve progress/startup and restore focus. Guard duplicate
+approval, keep unsaved-play consent explicit, and never remove interactive focus
+outlines when suppressing focused heading outlines. Startup styles must stay
+scoped away from reading content; descriptions come from existing catalog data.
