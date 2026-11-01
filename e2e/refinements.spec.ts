@@ -11,7 +11,7 @@ for (const width of [320, 375, 768, 1280]) {
     await expectStartup(page);
     const startup = page.getByRole('heading', { level: 1 });
     const base = await startup.evaluate(element => ({ size: parseFloat(getComputedStyle(element).fontSize), align: getComputedStyle(element).textAlign }));
-    expect(base.align).not.toBe('center');
+    expect(base.align).toBe('center');
     await page.keyboard.press('Tab');
     const newGame = page.getByRole('button', { name: 'New Game', exact: true });
     await expect(newGame).toBeFocused();
@@ -82,8 +82,8 @@ for (const width of [320, 375, 768, 1280]) {
     const heading = page.locator('#passage-heading');
     await expect(heading).toHaveCSS('text-align', 'center');
     const size = await heading.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
-    expect(size / base.size).toBeGreaterThanOrEqual(1.08);
-    expect(size / base.size).toBeLessThanOrEqual(1.12);
+    const expectedSize = Math.max(1.98 * 16, Math.min(width * 0.044, 2.64 * 16));
+    expect(Math.abs(size - expectedSize)).toBeLessThan(0.1);
     const chapter = page.locator('.chapter-label');
     await expect(chapter).toHaveCSS('text-align', 'center');
     await expect(chapter).toHaveCSS('font-size', '14.4px');

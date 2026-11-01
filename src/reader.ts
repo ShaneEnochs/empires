@@ -7,7 +7,7 @@ import { interpolate } from './interpolate';
 import { validatePeople } from './people';
 import type { PersonReference } from './people';
 
-interface ReaderEntry { readonly title: string; readonly identity: StorySaveIdentity; readonly people: readonly PersonReference[]; }
+interface ReaderEntry { readonly title: string; readonly description?: string; readonly identity: StorySaveIdentity; readonly people: readonly PersonReference[]; }
 
 export function showError(root: HTMLElement, error: unknown): void {
   root.querySelector('#story-error')?.remove();
@@ -32,6 +32,47 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
   const people = validatePeople(story, entry.people);
   const session = new GameSession(story, storage, entry.identity);
   let reportedNotice: unknown;
+  let confirmation: HTMLDialogElement | undefined;
+
+  function confirmAction(trigger: HTMLButtonElement, title: string, message: string, label: string, action: () => void): void {
+    if (confirmation) return;
+    const dialog = document.createElement('dialog');
+    confirmation = dialog;
+    dialog.className = 'confirmation';
+    dialog.setAttribute('aria-labelledby', 'confirmation-title');
+    dialog.setAttribute('aria-describedby', 'confirmation-message');
+    const heading = document.createElement('h2');
+    heading.id = 'confirmation-title'; heading.textContent = title;
+    const description = document.createElement('p');
+    description.id = 'confirmation-message'; description.textContent = message;
+    const actions = document.createElement('div'); actions.className = 'confirmation-actions';
+    const cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.textContent = 'Cancel'; cancel.autofocus = true;
+    const approve = document.createElement('button');
+    approve.type = 'button'; approve.textContent = label; approve.className = 'primary-action';
+    let accepted = false;
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key !== 'Tab') return;
+      if (event.shiftKey && document.activeElement === cancel) {
+        event.preventDefault(); approve.focus();
+      } else if (!event.shiftKey && document.activeElement === approve) {
+        event.preventDefault(); cancel.focus();
+      }
+    });
+    cancel.addEventListener('click', () => dialog.close());
+    approve.addEventListener('click', () => {
+      if (accepted) return;
+      accepted = true; approve.disabled = true; dialog.close();
+    });
+    dialog.addEventListener('close', () => {
+      dialog.remove(); confirmation = undefined;
+      if (accepted) action();
+      if (trigger.isConnected) trigger.focus();
+      else if (!root.contains(document.activeElement)) root.querySelector<HTMLElement>('h1')?.focus();
+    }, { once: true });
+    actions.append(cancel, approve); dialog.append(heading, description, actions);
+    root.append(dialog); dialog.showModal();
+  }
 
   function renderNotice(): void {
     root.querySelector('#save-status')?.remove();
@@ -53,28 +94,41 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
       const play = document.createElement('button');
       play.type = 'button';
       play.textContent = 'Play without saving';
-      play.addEventListener('click', () => {
-        const result = session.playWithoutSaving(() => window.confirm('Play a new game without saving? Progress will be lost when this page closes. Existing saved progress will not be changed.'));
-        if (result === 'started') showGameplay(session.game!);
-        else if (result === 'failed') renderNotice();
-      });
+      play.addEventListener('click', () => confirmAction(play, 'Play without saving?',
+        'Progress will be lost when this page closes. Existing saved progress will not be changed.', 'Play without saving', () => {
+          const result = session.playWithoutSaving(() => true);
+          if (result === 'started') showGameplay(session.game!);
+          else if (result === 'failed') renderNotice();
+        }));
       section.append(play);
     }
     root.insertBefore(section, root.querySelector('.reading-header')?.nextSibling ?? null);
   }
 
-  function startNewGame(): void {
-    const result = session.newGame(() => window.confirm('Start a new game? This will replace your existing saved progress.'));
+  function startNewGame(trigger: HTMLButtonElement, approved = false): void {
+    if (confirmation) return;
+    let needsConfirmation = false;
+    const result = session.newGame(() => {
+      needsConfirmation = true;
+      return approved;
+    });
     if (result === 'started') showGameplay(session.game!);
     else if (result === 'failed') renderNotice();
+    else if (needsConfirmation) confirmAction(trigger, 'Start a new game?',
+      'Starting over will replace your existing saved progress.', 'Start New Game', () => startNewGame(trigger, true));
   }
 
   function renderStartup(): void {
-    root.className = 'startup';
+    root.className = 'startup title-screen';
     const heading = document.createElement('h1');
     heading.textContent = entry.title;
     heading.tabIndex = -1;
     root.replaceChildren(appHeader(), heading);
+    if (entry.description) {
+      const description = document.createElement('p');
+      description.className = 'startup-description'; description.textContent = entry.description;
+      root.append(description);
+    }
     const startup = session.startup;
     if (startup.status === 'invalid' || startup.status === 'unavailable') {
       const message = document.createElement('p');
@@ -93,13 +147,15 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
       const resume = document.createElement('button');
       resume.type = 'button';
       resume.textContent = 'Continue Game';
+      resume.className = 'primary-action';
       resume.addEventListener('click', () => showGameplay(session.continueGame()));
       actions.append(resume);
     }
     const start = document.createElement('button');
     start.type = 'button';
     start.textContent = 'New Game';
-    start.addEventListener('click', startNewGame);
+    if (startup.status !== 'ready') start.className = 'primary-action';
+    start.addEventListener('click', () => startNewGame(start));
     actions.append(start);
     if (backToLibrary !== undefined) {
       const back = document.createElement('button');
