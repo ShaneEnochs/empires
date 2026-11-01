@@ -1128,3 +1128,102 @@ the choice; reload discards it. Successful navigation resets selection; failure
 retains it with the existing accessible error. Eligibility and effects still belong
 to Game. `*continue`, text-input submission, and Try Again remain single actions;
 terminal passages have no Continue. Confirmed New Game behavior is unchanged.
+
+## Pronoun tokens (Stage 12B)
+
+Narrative paragraphs and `*journal` text support exactly these tokens and their
+initial-capital forms (`{They}`, `{Them}`, `{Their}`, `{Theirs}`, `{Themself}`):
+
+| Token | Declared string variable |
+| --- | --- |
+| `{they}` | `pronouns_subject` |
+| `{them}` | `pronouns_object` |
+| `{their}` | `pronouns_possessive` |
+| `{theirs}` | `pronouns_possessive_pronoun` |
+| `{themself}` | `pronouns_reflexive` |
+
+Declare each variable needed by the tokens you use. Missing or non-string values
+produce a source-line parser error; the runtime also validates substitutions.
+There is no silent default. Capitalized tokens uppercase the first letter of the
+configured value. Ordinary `${variable}` interpolation still works. Unknown/literal
+braces such as `{weather}`, `{THEY}`, and `{lord}` stay literal. Substitution is one
+pass: values containing token-looking text or HTML are displayed as plain text,
+never reinterpreted. Tokens are not expanded in titles, choice labels, or input
+labels. Journals resolve when recorded and retain that text through later pronoun
+changes, saves, and resume; current narrative uses current variable values.
+
+Use existing choices and sets for creation; no overlay or special character state
+is needed. This complete playable template supports three presets:
+
+<!-- pronoun-template -->
+```text
+*var pronouns_subject "they"
+*var pronouns_object "them"
+*var pronouns_possessive "their"
+*var pronouns_possessive_pronoun "theirs"
+*var pronouns_reflexive "themself"
+*var use_plural_verbs true
+*var honorific "Captain"
+*var gender "Unspecified"
+
+*passage creation
+*title Choose Pronouns
+Choose how the story refers to you.
+*choice
+#He / him -> he
+#She / her -> she
+#They / them -> they
+
+*passage he
+*title He / Him
+*set pronouns_subject "he"
+*set pronouns_object "him"
+*set pronouns_possessive "his"
+*set pronouns_possessive_pronoun "his"
+*set pronouns_reflexive "himself"
+*set use_plural_verbs false
+Your pronouns are set.
+*continue arrival
+
+*passage she
+*title She / Her
+*set pronouns_subject "she"
+*set pronouns_object "her"
+*set pronouns_possessive "her"
+*set pronouns_possessive_pronoun "hers"
+*set pronouns_reflexive "herself"
+*set use_plural_verbs false
+Your pronouns are set.
+*continue arrival
+
+*passage they
+*title They / Them
+*set pronouns_subject "they"
+*set pronouns_object "them"
+*set pronouns_possessive "their"
+*set pronouns_possessive_pronoun "theirs"
+*set pronouns_reflexive "themself"
+*set use_plural_verbs true
+Your pronouns are set.
+*continue arrival
+
+*passage arrival
+*title A New Arrival
+*journal arrived "{Their} journey began at the gate."
+The guard welcomes ${honorific}.
+
+*show_if use_plural_verbs == true
+{They} are ready to begin.
+
+*show_if use_plural_verbs == false
+{They} is ready to begin.
+```
+
+Authors can add other presets with any string values through `*set`. Gender stays
+an independent ordinary variable: choosing pronouns does not change or infer it.
+Honorifics are independent too; use `${honorific}` rather than a special token.
+There is no automatic verb conjugation. `use_plural_verbs` above is an ordinary
+author-controlled boolean, not an engine rule; choose appropriate conditional
+paragraphs for custom pronouns and language. Adding variables to a published story
+can require a story revision change under existing save-compatibility rules;
+this feature does not alter shipped stories, save schemas, or revisions.

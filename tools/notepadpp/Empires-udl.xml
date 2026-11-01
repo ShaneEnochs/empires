@@ -28,7 +28,7 @@
       <Keywords name="Keywords1">*var *stat *skill *item *chapter *passage *title *checkpoint *set *add *journal *grant_skill *revoke_skill *add_item *remove_item *show_if *choice *continue *input_text *death</Keywords>
       <Keywords name="Keywords2">has_skill lacks_skill has_item lacks_item item_count true false</Keywords>
       <Keywords name="Delimiters">00" 01\ 02" 03[if 04 05] 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23</Keywords>
-      <Keywords name="Keywords3" />
+      <Keywords name="Keywords3">{they} {them} {their} {theirs} {themself} {They} {Them} {Their} {Theirs} {Themself}</Keywords>
       <Keywords name="Keywords4" />
       <Keywords name="Keywords5" />
       <Keywords name="Keywords6" />
@@ -43,6 +43,7 @@
       <WordsStyle name="OPERATORS" styleID="12" fgColor="375B56" bgColor="EEEEE9" fontName="" fontStyle="1" nesting="0" />
       <WordsStyle name="DELIMITERS1" styleID="16" fgColor="6B6135" bgColor="EEEEE9" fontName="" fontStyle="0" nesting="0" />
       <WordsStyle name="DELIMITERS2" styleID="17" fgColor="745078" bgColor="EEEEE9" fontName="" fontStyle="0" nesting="0" />
+      <WordsStyle name="KEYWORDS3" styleID="6" fgColor="745078" bgColor="EEEEE9" fontName="" fontStyle="0" nesting="0" />
     </Styles>
   </UserLang>
 </NotepadPlus>
