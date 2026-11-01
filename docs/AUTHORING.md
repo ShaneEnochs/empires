@@ -95,3 +95,15 @@ a playable starter, the command cheat sheet, and local preview without VS Code.
 Provincial Crisis People descriptions live in `content/provincial-crisis.people.json`.
 Draft People references live in optional `.people.json` files; journal, skills, and
 inventory remain in `.story`. Public title-page text stays in `content/title-page.json`.
+
+## Progress and checkpoint recovery
+
+Continue Game resumes the last committed passage and exact state, including an
+ending or death, without repeating rewards. Authored `*checkpoint` remains the
+pre-entry boundary for Try Again, independent of automatic last-passage saves.
+Unsubmitted input drafts and unconfirmed choices are not saved. Public progress
+is local to the current browser, never synchronized across devices. Storage
+failures may lose recent progress; warnings remain visible until a later save
+succeeds. Existing format-1 saves remain compatible and upgrade on a later committed
+action, never on startup inspection. Browser Back is not a gameplay undo feature.
+Local preview uses temporary memory storage; Restart preview discards it.

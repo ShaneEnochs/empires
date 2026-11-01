@@ -123,13 +123,13 @@ libraries. Use the existing checkout; no frontend framework is needed.
   Revisions stay out of keys so old progress reports incompatibility. Never scan,
   fall back to another story's key, or share the shipped slot for another story.
   Preserve default `empires-example`, revision 1, its exact legacy key/exports,
-  format version 1, and full snapshot validation. Never persist current post-entry state,
-  automatically repair a save, migrate it, or delete it before replacement.
+  format-1 reading compatibility and full snapshot validation. Write format 2 with
+  validated current post-entry state and the independent pre-entry checkpoint in
+  one atomic record. Never repair, rewrite on startup, or delete before replacement.
 - `GameSession` prepares a restored Game once before offering Continue, then
   activates it without re-entering or writing. Empty startup must not construct a
-  new Game. Explicit actions compare checkpoint references and write once only
-  after replacement; ordinary transitions, failed actions, renders, panel controls,
-  and form edits never save. No timers or unload saves.
+  new Game. Successful navigation, text submission, and Try Again each write once. Failed
+  actions, renders, panel controls, uncommitted choices, and form drafts never save. No timers or unload saves.
 - Keep `catalog.ts` a static frozen list of explicit ID, title, description,
   raw source, People metadata, and validated save identity. Provincial Crisis is
   currently the sole public entry, opening its startup directly. Use the existing
@@ -148,11 +148,11 @@ libraries. Use the existing checkout; no frontend framework is needed.
   Ordinary death entry effects use the existing atomic path. Display death prose
   before allowing recovery; no automatic retry or arbitrary outgoing navigation.
 - Player recovery goes only through guarded `Game.retryAfterDeath()`, delegating
-  to existing atomic `restoreCheckpoint()`. Session retry must never access storage,
-  capture a checkpoint, or clear a persistence warning. Use the newest in-memory
-  checkpoint even after a failed write; reload uses the older stored checkpoint.
+  to existing atomic `restoreCheckpoint()`. Session retry saves recovered current state once, without capturing a checkpoint.
+  Use the newest in-memory checkpoint even after a failed write; reload uses the
+  last successfully stored progress. Clear save warnings only on successful saves.
   Preserve accepted names, all state/order, and the checkpoint reference. Failed
-  retry leaves death visible and recoverable. Reject untrusted death snapshots.
+  retry leaves death visible and recoverable. Reject death checkpoints; validated committed progress may target death.
 - New Game rechecks record presence, confirms replacement even for unusable saves,
   constructs successfully before writing, and activates only after one successful
   replacement write. Cancellation and failed construction/writes preserve the old
@@ -319,3 +319,8 @@ paths. Public People definitions live in content/provincial-crisis.people.json.
 Validate unknown JSON shapes before discovery-event checks. Preview may select
 optional .people.json through File API, resetting temporary progress on replacement;
 keep it development-only and isolated from public storage and publishing.
+
+Stage 12A: Continue restores validated committed current state without entry effects;
+format-1 saves use their old checkpoint-entry behavior until the next committed save.
+Do not implement browser history/Undo, URL state, manual slots, timers, or unload saves.
+Browser-local progress does not synchronize across devices. Keep preview memory-only.

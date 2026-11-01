@@ -297,17 +297,18 @@ function sessionAtCamp(): { session: GameSession; storage: FakeStorage } {
 }
 function sessionDie(session: GameSession): void { session.navigate('ruins'); session.navigate('death'); }
 
-test('death, inspection, and retry perform no storage reads/writes and preserve persistent bytes', () => {
+test('death and retry save once per action; inspection never writes', () => {
   const { session, storage } = sessionAtCamp();
   const expected = session.game!.state;
   const saved = storage.record; const writes = storage.writes; const reads = storage.reads;
   for (let cycle = 0; cycle < 3; cycle++) {
     sessionDie(session);
     void session.game!.state; void session.game!.visibleParagraphs; void session.game!.availableChoices;
-    assert.equal(storage.record, saved);
+    assert.equal(JSON.parse(storage.record!).currentState.passageId, 'death');
+    assert.equal(storage.writes, writes + cycle * 3 + 2);
     session.retryAfterDeath();
     assert.deepEqual(session.game!.state, expected);
-    assert.equal(storage.record, saved); assert.equal(storage.writes, writes); assert.equal(storage.reads, reads);
+    assert.equal(storage.record, saved); assert.equal(storage.writes, writes + (cycle + 1) * 3); assert.equal(storage.reads, reads);
   }
 });
 
@@ -321,14 +322,14 @@ test('session retry rejects before startup and outside death without changing ga
   assert.equal(session.notice, undefined); assert.equal(storage.record, saved); assert.equal(storage.writes, 1);
 });
 
-test('Continue after death uses the persisted checkpoint without replaying death; confirmed New Game still resets', () => {
+test('Continue restores committed death without replay; confirmed New Game still resets', () => {
   const { session, storage } = sessionAtCamp();
   const expected = session.game!.state;
   sessionDie(session);
   const saved = storage.record; const writes = storage.writes;
   const reopened = new GameSession(story, storage);
   assert.equal(reopened.startup.status, 'ready');
-  assert.deepEqual(reopened.continueGame().state, expected);
+  assert.deepEqual(reopened.continueGame().state, session.game!.state);
   assert.equal(storage.writes, writes); assert.equal(storage.record, saved);
   const dead = session.game!.state;
   assert.equal(session.newGame(() => false), 'cancelled');
@@ -346,20 +347,20 @@ test('failed checkpoint writes keep the newer in-memory checkpoint for retry and
   storage.failWrites = true;
   session.navigate('camp');
   const newer = session.game!.state; const checkpoint = session.game!.checkpoint; const notice = session.notice;
-  assert.match(notice!.message, /latest checkpoint could not be saved/);
+  assert.match(notice!.message, /Recent progress could not be saved/);
   const writes = storage.writes;
   sessionDie(session); session.retryAfterDeath();
   assert.deepEqual(session.game!.state, newer);
-  assert.equal(session.game!.checkpoint, checkpoint); assert.equal(session.notice, notice);
-  assert.equal(storage.record, oldBytes); assert.equal(storage.writes, writes);
+  assert.equal(session.game!.checkpoint, checkpoint); assert.equal(session.notice?.message, notice?.message);
+  assert.equal(storage.record, oldBytes); assert.equal(storage.writes, writes + 3);
   const reopened = new GameSession(story, storage);
   assert.deepEqual(reopened.continueGame().state, initial);
-  assert.equal(storage.record, oldBytes); assert.equal(storage.writes, writes);
+  assert.equal(storage.record, oldBytes); assert.equal(storage.writes, writes + 3);
   // A later normal checkpoint entry can replace the save and clear the warning.
   storage.failWrites = false;
   session.navigate('choose_name'); session.submitText('Eleanor');
   assert.equal(session.notice, undefined);
-  assert.equal(storage.writes, writes + 1);
+  assert.equal(storage.writes, writes + 5);
   const loaded = loadCheckpoint(storage, story);
   assert.equal(loaded.status, 'loaded');
   if (loaded.status !== 'loaded') assert.fail('Expected the new checkpoint to be saved.');
@@ -376,10 +377,10 @@ test('failed session recovery retains both storage failure notice and death stat
   const restore = t.mock.method(session.game!, 'restoreCheckpoint', () => { throw new Error('Cannot restore now.'); });
   assert.throws(() => session.retryAfterDeath(), /Cannot restore now/);
   assert.equal(session.game!.state, dead); assert.equal(storage.record, saved); assert.equal(storage.writes, writes);
-  assert.equal(session.notice, notice);
+  assert.equal(session.notice?.message, notice?.message);
   restore.mock.restore();
-  session.retryAfterDeath(); assert.equal(session.game!.passage.id, 'camp'); assert.equal(storage.writes, writes);
-  assert.equal(session.notice, notice);
+  session.retryAfterDeath(); assert.equal(session.game!.passage.id, 'camp'); assert.equal(storage.writes, writes + 1);
+  assert.equal(session.notice?.message, notice?.message);
 });
 
 test('play without saving supports death and retry wholly in memory and retains its notice', () => {
@@ -389,7 +390,7 @@ test('play without saving supports death and retry wholly in memory and retains 
   const expected = session.game!.state; const notice = session.notice; const reads = storage.reads;
   sessionDie(session); session.retryAfterDeath();
   assert.deepEqual(session.game!.state, expected);
-  assert.equal(session.notice, notice); assert.match(notice!.message, /without saving/);
+  assert.equal(session.notice?.message, notice?.message); assert.match(notice!.message, /without saving/);
   assert.equal(storage.writes, 0); assert.equal(storage.reads, reads); assert.equal(storage.record, 'existing unusable save');
 });
 
@@ -451,5 +452,5 @@ test('a failed atomic death transition performs no persistence and leaves later 
   assert.equal(storage.record, saved); assert.equal(storage.writes, writes);
   sessionDie(session); session.retryAfterDeath();
   assert.deepEqual(session.game!.state, state);
-  assert.equal(storage.record, saved); assert.equal(storage.writes, writes);
+  assert.equal(storage.record, saved); assert.equal(storage.writes, writes + 3);
 });

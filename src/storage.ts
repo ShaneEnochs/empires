@@ -1,7 +1,7 @@
-import { validateSnapshot } from './snapshot';
-import type { GameSnapshot, Story } from './types';
+import { validateCommittedState, validateSnapshot } from './snapshot';
+import type { GameSnapshot, GameState, Story } from './types';
 
-export const SAVE_FORMAT_VERSION = 1;
+export const SAVE_FORMAT_VERSION = 2;
 export const STORY_ID = 'empires-example';
 export const STORY_REVISION = 1;
 export const STORAGE_KEY = 'empires:checkpoint:' + STORY_ID;
@@ -56,7 +56,7 @@ export interface CheckpointStorage {
 
 export type LoadedCheckpoint =
   | { readonly status: 'empty' }
-  | { readonly status: 'loaded'; readonly checkpoint: GameSnapshot }
+  | { readonly status: 'loaded'; readonly checkpoint: GameSnapshot; readonly currentState?: GameState }
   | { readonly status: 'invalid' | 'unavailable'; readonly message: string; readonly error: unknown };
 
 export type SaveResult = { readonly ok: true } | { readonly ok: false; readonly error: unknown };
@@ -79,26 +79,31 @@ export function loadCheckpoint(storage: CheckpointStorage, story: Story, identit
   }
   if (data === null || typeof data !== 'object' || Array.isArray(data)) return invalid('The saved data has an invalid format.');
   const envelope = data as Record<string, unknown>;
-  const fields = ['formatVersion', 'storyId', 'storyRevision', 'checkpoint'];
+  const fields = ['formatVersion', 'storyId', 'storyRevision', 'checkpoint',
+    ...(envelope.formatVersion === 2 ? ['currentState'] : [])];
   if (Object.keys(envelope).length !== fields.length || fields.some(key => !Object.hasOwn(envelope, key))) {
     return invalid('The saved data has an invalid format.');
   }
-  if (envelope.formatVersion !== SAVE_FORMAT_VERSION) return invalid('This save uses a different save format.');
+  if (envelope.formatVersion !== 1 && envelope.formatVersion !== SAVE_FORMAT_VERSION) return invalid('This save uses a different save format.');
   if (envelope.storyId !== configured.storyId) return invalid('This save belongs to another story.');
   if (envelope.storyRevision !== configured.storyRevision) return invalid('This save is from an incompatible story revision.');
   try {
-    return { status: 'loaded', checkpoint: validateSnapshot(envelope.checkpoint, story) };
+    const checkpoint = validateSnapshot(envelope.checkpoint, story);
+    if (envelope.formatVersion === 1) return { status: 'loaded', checkpoint };
+    const target = story.passages.find(passage => passage.id === checkpoint.state.passageId)!;
+    if (target.id !== story.startId && !target.checkpoint) throw new Error('Recovery target must be the start or an authored checkpoint.');
+    return { status: 'loaded', checkpoint, currentState: validateCommittedState(envelope.currentState, story) };
   } catch (error) {
     return invalid('The saved checkpoint is not compatible with this story.', error);
   }
 }
 
-/** One atomic replacement write; never delete the previous record first. */
+/** Explicit legacy-format writer retained for existing callers and fixtures. */
 export function saveCheckpoint(storage: CheckpointStorage, story: Story, checkpoint: GameSnapshot, identity: StorySaveIdentity = DEFAULT_SAVE_IDENTITY): SaveResult {
   const configured = validateSaveIdentity(identity);
   try {
     const envelope = {
-      formatVersion: SAVE_FORMAT_VERSION, storyId: configured.storyId, storyRevision: configured.storyRevision,
+      formatVersion: 1, storyId: configured.storyId, storyRevision: configured.storyRevision,
       checkpoint: validateSnapshot(checkpoint, story),
     };
     storage.setItem(keyFor(configured), JSON.stringify(envelope));
@@ -106,4 +111,19 @@ export function saveCheckpoint(storage: CheckpointStorage, story: Story, checkpo
   } catch (error) {
     return { ok: false, error };
   }
+}
+
+/** Current post-entry progress and its independent recovery boundary, in one write. */
+export function saveProgress(storage: CheckpointStorage, story: Story, currentState: GameState,
+  checkpoint: GameSnapshot, identity: StorySaveIdentity = DEFAULT_SAVE_IDENTITY): SaveResult {
+  const configured = validateSaveIdentity(identity);
+  try {
+    const envelope = { formatVersion: SAVE_FORMAT_VERSION, storyId: configured.storyId,
+      storyRevision: configured.storyRevision, checkpoint: validateSnapshot(checkpoint, story),
+      currentState: validateCommittedState(currentState, story) };
+    const target = story.passages.find(passage => passage.id === envelope.checkpoint.state.passageId)!;
+    if (target.id !== story.startId && !target.checkpoint) throw new Error('Invalid recovery target.');
+    storage.setItem(keyFor(configured), JSON.stringify(envelope));
+    return { ok: true };
+  } catch (error) { return { ok: false, error }; }
 }

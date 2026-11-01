@@ -1,4 +1,4 @@
-import type { GameSnapshot, JournalEntry, Story, VariableValue } from './types';
+import type { GameSnapshot, GameState, JournalEntry, Story, VariableValue } from './types';
 
 function invalid(message: string): never {
   throw new Error('Invalid checkpoint: ' + message);
@@ -40,6 +40,15 @@ function list(value: unknown, context: string): unknown[] {
 
 /** Validate against this story and return an independent, fully frozen snapshot. */
 export function validateSnapshot(value: unknown, story: Story): GameSnapshot {
+  return validateStateSnapshot(value, story, false);
+}
+
+/** Post-entry progress may include death; validate data without executing effects. */
+export function validateCommittedState(value: unknown, story: Story): GameState {
+  return validateStateSnapshot({ state: value }, story, true).state;
+}
+
+function validateStateSnapshot(value: unknown, story: Story, committed: boolean): GameSnapshot {
   const snapshot = record(value, 'Snapshot');
   fields(snapshot, ['state'], 'Snapshot');
   const state = record(snapshot.state, 'State');
@@ -47,7 +56,7 @@ export function validateSnapshot(value: unknown, story: Story): GameSnapshot {
   const passageId = state.passageId;
   const passage = story.passages.find(passage => passage.id === passageId);
   if (typeof passageId !== 'string' || !passage) invalid('Unknown passage ID.');
-  if (passage.death) invalid('Checkpoint destination cannot be a death passage.');
+  if (!committed && passage.death) invalid('Checkpoint destination cannot be a death passage.');
 
   const sourceVariables = record(state.variables, 'Variables');
   fields(sourceVariables, Object.keys(story.initialVariables), 'Variables');

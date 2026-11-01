@@ -110,7 +110,7 @@ for (const legacy of [legacyCitySave, '{broken legacy save']) {
     const envelope = JSON.parse((await checkpointRecord(page))!);
     expect(envelope.storyId).toBe('provincial-crisis');
     expect(envelope.storyRevision).toBe(1);
-    expect(envelope.formatVersion).toBe(1);
+    expect(envelope.formatVersion).toBe(2);
     expect(envelope.checkpoint.state.passageId).toBe('quayside');
   });
 }
@@ -157,12 +157,13 @@ test('Provincial Crisis naming, selected metadata, conditional choices, and spen
   await returnToStory(page);
   await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveCount(0);
   await expect(page.locator('main b, main img, main script')).toHaveCount(0);
-  expect(await checkpointRecord(page, crisisKey)).toBe(saved);
+  expect(JSON.parse((await checkpointRecord(page, crisisKey))!).checkpoint).toEqual(JSON.parse(saved!).checkpoint);
+  expect(JSON.parse((await checkpointRecord(page, crisisKey))!).currentState.passageId).toBe('ending_compact');
   expect(await checkpointRecord(page, cityKey)).toBeNull();
 });
 
 for (const checkpoint of ['briefing', 'night_council']) {
-  test('Provincial Crisis death and retry restore the complete ' + checkpoint + ' checkpoint without saving', async ({ page }) => {
+  test('Provincial Crisis death and retry restore the complete ' + checkpoint + ' checkpoint and save recovered progress', async ({ page }) => {
     await observeStorage(page);
     await seedBoth(page);
     if (checkpoint === 'night_council') await councilWithEvidence(page);
@@ -191,8 +192,9 @@ for (const checkpoint of ['briefing', 'night_council']) {
         await expect(page.getByText('The meeting has ended. The river has not.', { exact: true })).toBeVisible();
       }
       await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveText(['Try Again']);
-      expect(await records(page)).toEqual(saved);
-      expect((await storageAccess(page)).filter(access => access.operation !== 'read')).toEqual(writes);
+      expect((await records(page)).city).toBe(saved.city);
+      expect(JSON.parse((await records(page)).crisis!).checkpoint).toEqual(JSON.parse(saved.crisis!).checkpoint);
+      expect((await storageAccess(page)).filter(access => access.operation !== 'read')).toHaveLength(writes.length + cycle * (checkpoint === 'briefing' ? 5 : 3) + (checkpoint === 'briefing' ? 4 : 2));
       await page.getByRole('button', { name: 'Try Again', exact: true }).focus();
       await page.keyboard.press('Enter');
       await expectPassage(page, heading);
@@ -202,7 +204,7 @@ for (const checkpoint of ['briefing', 'night_council']) {
       await expectItems(page, 'Journal', expectedJournal);
       await expect(page.getByRole('textbox')).toHaveCount(0);
       expect(await records(page)).toEqual(saved);
-      expect((await storageAccess(page)).filter(access => access.operation !== 'read')).toEqual(writes);
+      expect((await storageAccess(page)).filter(access => access.operation !== 'read')).toHaveLength(writes.length + (cycle + 1) * (checkpoint === 'briefing' ? 5 : 3));
     }
     await page.reload();
     await expectStartup(page);
@@ -226,7 +228,7 @@ test('failed Provincial Crisis automatic save keeps its in-memory recovery and w
     };
   }, crisisKey);
   await councilWithEvidence(page);
-  const warning = 'The latest checkpoint could not be saved. Closing this page may lose progress since the last saved checkpoint.';
+  const warning = 'Recent progress could not be saved. Closing this page may lose progress since the last successful save.';
   await expect(page.getByRole('alert')).toHaveText(warning);
   for (const name of panelNames) {
     await openPanel(page, name);

@@ -428,105 +428,60 @@ These engine methods never touch browser storage or DOM. The application renders
 an activated restored Game on Continue, just as explicit actions render after
 navigation/submission. There is no voluntary Return to Checkpoint control.
 
-## Persistent checkpoints and application startup
+## Automatic progress and authored checkpoints (Stage 12A)
 
-Stage 7B adds `storage.ts` and a small `GameSession` application coordinator.
-Browser persistence leaves `GameState` and `GameSnapshot` unchanged and adds no
-save scripting directives. Storage functions accept an injected `getItem`/`setItem` interface and
-never construct a Game, execute effects, or navigate. Browser adapters defer
-access to `window.localStorage` until a caught read/write operation, including
-when the localStorage getter itself throws.
+Continue Game resumes the most recent successfully saved, committed passage with
+its exact post-entry variables, ordered journal, skills, and inventory. It does
+not enter the passage again or replay effects. Death passages resume with Try Again;
+terminal endings remain endings. Unsubmitted text drafts and selected but
+unconfirmed radio choices are not saved.
 
-Stage 9A adds explicit `StorySaveIdentity` application configuration with readonly
-`storyId: string` and `storyRevision: number` fields. It belongs outside Story,
-GameState, snapshots, and scripting. `validateSaveIdentity` requires exactly these
-own data fields, an ID matching `^[a-z][a-z0-9_-]*$`, and a positive safe integer
-revision. It rejects accessors/inherited fields and returns a frozen copy.
-Configuration errors throw before storage reads or writes; they are developer
-errors, separate from unusable saved records and unavailable storage.
+Authored checkpoints remain independent: each contains the state immediately
+before entering the latest `*checkpoint` passage (or the automatic initial
+boundary). Try Again re-enters that checkpoint once, discards later changes, and
+saves the recovered current state without moving the checkpoint boundary.
 
-`checkpointKey(identity)` returns `empires:checkpoint:` plus the unchanged ID,
-with no normalization or content/filename inference. Each independently identified
-story has one distinct key. Developers must allocate unique IDs: reusing one ID
-means sharing one record. Revision is deliberately absent from the key, so a
-revision change reports an incompatible save rather than an empty slot.
-Storage never enumerates keys, falls back to another story, or deletes records.
+Storage is local to this browser and device; it does not synchronize. Provincial
+Crisis keeps story ID `provincial-crisis`, revision 1, and the exact key
+`empires:checkpoint:provincial-crisis`. The internal City Gate default identity and
+`empires:checkpoint:empires-example` key remain separate.
 
-`loadCheckpoint(storage, story, identity)` and
-`saveCheckpoint(storage, story, checkpoint, identity)` validate the supplied
-identity and use only that key. The exact JSON envelope fields remain
-`formatVersion`, `storyId`, `storyRevision`, and `checkpoint`. Configured ID and
-revision must match the envelope before full snapshot validation against that Story.
-`SAVE_FORMAT_VERSION = 1` remains application-wide and independent of story revisions.
-The checkpoint is the existing complete pre-entry snapshot, not current post-entry
-state. No extra state, definitions, timestamps, drafts, or version history are serialized.
+Format 2 stores one atomic JSON record:
 
-All identity arguments default to frozen `DEFAULT_SAVE_IDENTITY`, retaining
-`STORY_ID = 'empires-example'`, `STORY_REVISION = 1`, and
-`STORAGE_KEY = 'empires:checkpoint:empires-example'` for existing callers.
-The internal City Gate fixture retains that default; the public Provincial Crisis entry supplies
-`{ storyId: 'provincial-crisis', storyRevision: 1 }` and uses
-`empires:checkpoint:provincial-crisis`. Both authored stories and compatible
-revision-1 saves are unchanged; there is no migration or format bump.
+```text
+{ formatVersion: 2, storyId, storyRevision, checkpoint: { state }, currentState }
+```
 
-`new GameSession(story, storage, identity)` captures its own validated frozen
-identity before startup reads. All subsequent startup, New Game rechecks/replacement,
-and automatic checkpoint writes use that copy, even if the caller later changes
-its original configuration object. Continue, retry, and unsaved play retain their
-existing no-write behavior. `Game` has no identity or storage responsibilities.
+`checkpoint.state` is pre-entry; `currentState` is post-entry. Both use the same
+strict field/type, passage, journal-event/chapter, skill, and inventory validation;
+only committed current state may target death. Format-2 recovery targets must be
+the start or an authored checkpoint. Validation produces independent frozen data.
+The restoration constructor uses `committedState` to restore validated current
+state directly, bypassing passage entry. Normal construction and checkpoint
+recovery still apply entry effects once.
 
-`loadCheckpoint` catches read/JSON errors, rejects missing/extra fields or
-mismatched versions/identity, then calls the existing full snapshot validator.
-It returns empty, loaded, invalid, or unavailable status and never writes or
-deletes. `GameSession` also verifies actual entry with the restoration constructor
-before offering Continue. A structurally valid but infeasible checkpoint becomes
-unusable. The prepared Game is retained until selection and activated by Continue,
-so probing and clicking Continue do not run effects twice. No default new Game is
-constructed during empty startup. There is no second gameplay-state collection;
-the active/prepared Game owns its own immutable state and checkpoint.
+Format-1 checkpoint-only saves remain readable and resume their checkpoint using
+the previous behavior. Opening startup and choosing Continue never rewrite them.
+The next successful committed action writes format 2. Invalid or revision-mismatched
+records are reported and left untouched. Story display text never controls identity.
 
-After story selection, startup renders a focused story-title heading and native New Game button, adding
-Continue Game only for a usable save. Invalid saves display a readable explanation
-without changing their bytes. Diagnostic errors are logged to the browser console.
-Continue performs no storage write and enters the saved destination directly,
-including accepted names or a genuine input action. Progress made in later ordinary
-passages is intentionally not resumed.
+GameSession saves once after each successful navigation, valid text submission,
+and Try Again. New Game must initialize and save successfully before activation;
+replacement still requires consent and a fresh save-presence check. Cancel preserves
+old progress. `saveProgress` validates and writes the whole record with one `setItem`,
+never deleting first. `loadCheckpoint` reads both formats; `saveCheckpoint` remains
+an explicit legacy-format writer for existing callers and regression fixtures.
 
-New Game rechecks record presence on the explicit action and requests native
-confirmation for every existing record, usable or unusable. Cancellation changes
-neither the app nor saved data. A fresh candidate Game must initialize successfully
-before its initial checkpoint is written with one `setItem`. Only write success
-activates that candidate and resets the panels. Failed construction/write preserves
-the previous active Game and saved record; no deletion precedes replacement.
-An inaccessible read prevents a risky overwrite when presence cannot be checked.
+Failed gameplay actions do not save. Failed automatic writes retain committed
+in-memory gameplay and the prior stored bytes, and warn that recent progress may
+be lost. Any later successful committed save clears that warning. Play without
+saving never creates or modifies saved records, including on death/retry. Read-only
+panels, draft editing, choice selection, rendering, timers, scrolling, unload, and
+startup inspection do not save. Browser Back is not gameplay Undo: there is no
+history stack, URL state, or Back/Forward gameplay integration.
 
-Navigation/submission wrappers capture the authoritative checkpoint reference,
-perform the Game action, and save once only when that reference changes. Legitimate
-same-ID checkpoint re-entry also writes. Failed actions throw before any write;
-ordinary transitions, getters, interpolation, renders, panel toggles, and field
-editing never save. `saveCheckpoint` validates/serializes the frozen checkpoint
-and catches write errors without managing gameplay. No separate save-event system
-or cache of current/post-entry state is introduced.
-
-Automatic write failure leaves successful gameplay and the new in-memory
-checkpoint committed. Native localStorage replacement is atomic, so failed writes
-leave old bytes intact. The app shows a persistent warning about losing progress
-since the last stored checkpoint. Ordinary renders retain it; a later real
-checkpoint write can succeed and clear it. There are no timers, polling, background
-sync, unload handlers, or retry writes from UI inspection.
-
-If storage is inaccessible, or New Game cannot be saved, an explicit Play without
-saving action asks for consent. It initializes a new Game, disables persistence
-for that game, leaves existing stored progress untouched, and keeps a clear
-progress-loss notice. Cancellation/failure preserves the previous application.
-
-Maintain stable passage, item, skill, journal, and variable identifiers. Maintainers
-must deliberately bump the configured story revision for incompatible declarations,
-chapter, or entry-effect changes, even if the old snapshot still passes structural
-validation. Bump `SAVE_FORMAT_VERSION` for incompatible envelope changes. A mismatch
-never migrates, repairs, or deletes the save; confirmed New Game replaces it.
-There is no automatic release-compatibility or migration framework. Data belongs
-to one browser profile/origin; no cross-tab synchronization or cloud copy is added.
+Local author preview uses the same session with a private memory adapter; Restart
+preview clears temporary progress. It never reads or writes public localStorage.
 
 ## Static catalog and startup
 
@@ -581,14 +536,14 @@ leaves death and checkpoint untouched and exposes an error without falling back
 to New Game. The browser retains the death passage and Try Again button and focuses
 the restored heading only after success.
 
-`GameSession.retryAfterDeath()` directly calls the guarded engine operation,
-without the navigation/submission persistence wrapper. It performs no storage
-read/write, never clears a save-failure notice, and never captures dead state.
-If checkpoint B is current in memory but its write failed after saved checkpoint A,
-retry uses B while reload/Continue uses A. A later successful normal checkpoint
-write may clear the warning. Explicit unsaved play recovers wholly in memory.
-Snapshot validation rejects death destinations because no legitimate initial or
-authored capture can target one. No save schema/envelope version changes are needed.
+`GameSession.retryAfterDeath()` uses the committed-action persistence wrapper.
+Successful retry writes current recovered state once, retaining the pre-entry
+checkpoint. Failed retry never writes or changes death state. After a failed save,
+retry uses the newest in-memory checkpoint; reload uses the last successful
+stored progress. Later successful saves clear warnings. Explicit unsaved play
+recovers wholly in memory. Checkpoint validation rejects death targets; committed
+progress validation permits them. Format 2 stores both boundaries atomically and
+format 1 remains readable.
 
 The example adds only optional watchtower choices/passages; original IDs,
 declarations, chapters, effects, and route outcomes stay intact. Revision 1 remains
@@ -746,10 +701,10 @@ restoration, complete state/order recovery, untrusted data validation, deep
 immutability, and atomic failures.
 Persistence tests cover envelopes, version/identity gates, read/write failures,
 confirmation/cancellation, atomic New Game replacement, exactly-once loading,
-checkpoint-only writes, Unicode/order retention, and explicit unsaved play.
+committed progress writes, legacy checkpoint compatibility, Unicode/order retention, and explicit unsaved play.
 Death tests cover syntax/metadata, guarded full-state recovery, exactly-once
 effects across repeated cycles, failed recovery, accepted names/input checkpoints,
-unchanged persistent bytes, newer unsaved checkpoints, and retained warnings.
+atomic progress replacement, preserved bytes on write failure, newer in-memory checkpoints, and warnings.
 Stat tests cover earlier-variable references, labels, order/immutability, primitive
 formatting, state updates, read-only inspection, and pre-existing save compatibility.
 `npm run build` checks source/tests

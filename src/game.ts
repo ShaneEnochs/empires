@@ -1,18 +1,22 @@
 import { evaluateCondition } from './condition';
 import { interpolate } from './interpolate';
 import { validateTextInput } from './input';
-import { validateSnapshot } from './snapshot';
+import { validateCommittedState, validateSnapshot } from './snapshot';
 import type { Choice, GameSnapshot, GameState, NarrativeParagraph, Passage, Story } from './types';
 
 export class Game {
   private currentState: GameState;
   private currentCheckpoint: GameSnapshot;
 
-  constructor(private readonly story: Story, options?: { readonly checkpoint: unknown }) {
+  /** committedState is storage restoration only: validated post-entry data skips entry.
+   * New games and checkpoint-only legacy/recovery construction retain normal entry. */
+  constructor(private readonly story: Story, options?: { readonly checkpoint: unknown; readonly committedState?: unknown }) {
     const snapshot = validateSnapshot(options === undefined ? {
       state: { passageId: story.startId, variables: story.initialVariables, journal: [], skills: [], inventory: {} },
     } : options.checkpoint, story);
-    const next = this.enterPassage(snapshot.state);
+    const next = options !== undefined && Object.hasOwn(options, 'committedState')
+      ? validateCommittedState(options.committedState, story)
+      : this.enterPassage(snapshot.state);
     this.currentState = next;
     this.currentCheckpoint = snapshot;
   }

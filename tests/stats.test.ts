@@ -194,7 +194,7 @@ test('Character inspection is read-only and never reads/writes storage or repeat
   assert.equal(storage.record, record); assert.equal(storage.writes, writes); assert.equal(storage.reads, reads);
 });
 
-test('Character values restore after Try Again and Continue Game with no recovery or viewing writes', () => {
+test('Character values restore after saved Try Again; Continue and views never write', () => {
   const { session, storage } = startSession();
   const expected = characterStats(story, session.game!.state);
   const state = session.game!.state; const checkpoint = session.game!.checkpoint;
@@ -206,12 +206,12 @@ test('Character values restore after Try Again and Continue Game with no recover
     assert.deepEqual(characterStats(story, session.game!.state), expected);
     assert.deepEqual(session.game!.state, state);
     assert.equal(session.game!.checkpoint, checkpoint);
-    assert.equal(storage.record, record); assert.equal(storage.writes, writes);
+    assert.equal(storage.record, record); assert.equal(storage.writes, writes + (cycle + 1) * 3);
   }
   const continued = new GameSession(story, storage).continueGame();
   assert.deepEqual(characterStats(story, continued.state), expected);
   assert.deepEqual(continued.state, state);
-  assert.equal(storage.record, record); assert.equal(storage.writes, writes);
+  assert.equal(storage.record, record); assert.equal(storage.writes, writes + 9);
 });
 
 test('adding/reordering/renaming stat displays preserves old saves, snapshot schema, and revision', () => {
@@ -221,10 +221,10 @@ test('adding/reordering/renaming stat displays preserves old saves, snapshot sch
   original.navigate('choose_name'); original.submitText('Eleanor');
   const expected = original.game!.state; const saved = storage.record; const writes = storage.writes;
   const envelope = JSON.parse(saved!);
-  assert.deepEqual(Object.keys(envelope), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint']);
+  assert.deepEqual(Object.keys(envelope), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint', 'currentState']);
   assert.deepEqual(Object.keys(envelope.checkpoint), ['state']);
   assert.deepEqual(Object.keys(envelope.checkpoint.state), ['passageId', 'variables', 'journal', 'skills', 'inventory']);
-  assert.equal(envelope.formatVersion, SAVE_FORMAT_VERSION); assert.equal(SAVE_FORMAT_VERSION, 1);
+  assert.equal(envelope.formatVersion, SAVE_FORMAT_VERSION); assert.equal(SAVE_FORMAT_VERSION, 2);
   assert.equal(envelope.storyId, STORY_ID); assert.equal(STORY_REVISION, 1);
   for (const stats of [displays, '*stat loyal "Oath"\n*stat name "Alias"\n', '']) {
     const revised = parseStory(definitions + stats + source);

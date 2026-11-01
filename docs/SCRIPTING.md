@@ -87,8 +87,8 @@ The first passage starts the story. The player can go directly to `council`
 further actions or automatic fall-through. Variables, recorded journal events,
 acquired skills, and inventory persist between passages.
 Browser startup offers New Game and, when valid saved progress exists, Continue
-Game. Continue resumes the last saved checkpoint rather than the latest ordinary
-passage; progress since that checkpoint is not recovered after reload.
+Game. Continue resumes the last successfully saved committed passage and exact state
+without replaying effects. Authored checkpoints remain dedicated to death recovery.
 The Journal button groups events in first-recorded chapter order; the messenger
 route has an extra event. Stored text keeps its original resolved values.
 Both routes acquire Composure at the gate and lose it at the council. Only the
@@ -367,10 +367,10 @@ after repeated death/retry cycles. The player can then choose the safe route.
 Authors must provide appropriate alternatives; narrative loops are not analyzed.
 
 Recovery uses the current in-memory pre-entry checkpoint, applies its effects
-once, and preserves the checkpoint itself. It neither reads nor writes storage.
-Death never saves dead state. If the latest automatic save failed, Try Again
-still uses that newer in-memory checkpoint and retains the warning; reopening
-instead resumes the older saved checkpoint. Play without saving supports the
+once, and preserves the checkpoint itself. The session saves recovered current
+progress once. Death may be saved as current progress, never as a checkpoint.
+If the latest automatic save failed, Try Again still uses the newer checkpoint; reopening
+instead resumes the last successfully saved progress. Play without saving supports the
 same recovery in memory. Failed recovery keeps the death passage and checkpoint
 unchanged and shows an accessible error so the player can retry.
 
@@ -386,22 +386,16 @@ because existing gate/background snapshots remain compatible.
 
 ## Browser saving and startup
 
-The application persists exactly one checkpoint per story with native localStorage,
-separate from `Game`. New Game constructs a fresh game, saves its automatic initial
-pre-entry checkpoint once, then displays the start passage. Every successful
-authored checkpoint entry (including text submission and same-passage re-entry)
-saves the new pre-entry snapshot once. Ordinary navigation, rejected actions,
-condition evaluation, rendering, panel controls, and unsubmitted text never save.
-There is no manual save command or save slot.
+The application persists one atomic record per story using localStorage, separate
+from Game. Format 2 contains the current committed post-entry state plus the
+independent pre-entry checkpoint. New Game saves initialized progress before
+activation. Successful navigation, text submission, and Try Again each save once.
+Rejected actions, reads, unconfirmed choices, and input drafts never save.
 
-Startup first parses/validates the story, reads the save, validates its envelope
-and full snapshot, and verifies that its destination can actually be entered.
-Continue Game is offered only when all checks pass. It activates that prepared
-restored game without another entry or storage write, skips earlier passages and
-character creation, and applies checkpoint effects once. Reopening repeatedly
-does not accumulate rewards or duplicate journal events. A checkpoint at an input
-passage still offers its form; a saved accepted name at its destination is retained
-without prompting. The current post-entry passage state is not separately saved.
+Continue restores validated current state directly without replaying entry effects;
+death remains recoverable and terminal endings remain terminal. Format-1 saves
+still resume their checkpoint with its effects applied once, and upgrade only
+on a later successful committed action. Startup and Continue do not write.
 
 Save identity is explicit application configuration in `src/storage.ts`, never
 `.story` declarations or GameState. `StorySaveIdentity` supplies a stable `storyId`
@@ -411,21 +405,21 @@ stories require distinct IDs and use `empires:checkpoint:<storyId>`. Revision is
 not part of the key, so incompatible old progress remains detectable.
 The internal City Gate fixture retains `DEFAULT_SAVE_IDENTITY`, with legacy
 `STORY_ID = 'empires-example'`, `STORY_REVISION = 1`, and exact key
-`empires:checkpoint:empires-example`. `SAVE_FORMAT_VERSION = 1` is independent.
+`empires:checkpoint:empires-example`. `SAVE_FORMAT_VERSION = 2` is independent; format 1 remains readable.
 Provincial Crisis keeps its own revision-1 identity/key and is the sole public story.
 The app opens its startup directly; City Gate remains an internal regression fixture.
 New Game is confined to startup after reload. These are application decisions,
 not story commands. Progress and character data do not transfer.
 The JSON envelope has exactly `formatVersion`, `storyId`, `storyRevision`, and
-`checkpoint` (the complete existing `{ state: GameState }` representation).
-See README for an actual initial-save example.
+`checkpoint` (the complete `{ state: GameState }` representation), plus
+`currentState` in format 2. See README for the two state boundaries.
 
 **Keep passage, item, skill, journal, and variable IDs stable.** Maintainers must
 bump the configured story revision for incompatible declaration/type, journal-chapter,
 or entry-effect changes. Matching versions do not bypass snapshot validation.
 Change `SAVE_FORMAT_VERSION` intentionally for incompatible envelope changes.
-There are no automatic migrations or version histories; saves from another story,
-revision, or format are rejected without deleting or overwriting them.
+There are no version histories. Legacy format 1 upgrades on committed saves;
+saves from another story, revision, or unsupported format remain untouched.
 
 Startup with unusable saved data explains the problem and offers New Game without
 a working Continue option. New Game asks before replacing any existing record,
@@ -433,10 +427,10 @@ including unusable saves. Cancel leaves it untouched. Construction must succeed
 before one replacement write; if construction or writing fails, old progress and
 the previous active game remain. The record is never removed first.
 
-If an automatic checkpoint write fails after entry, committed gameplay and its
+If an automatic progress write fails after entry, committed gameplay and its
 in-memory checkpoint remain. A warning explains that closing the page may lose
-progress since the last stored checkpoint, whose bytes remain intact. A later
-successful checkpoint write clears that warning; no timer/unload retries occur.
+progress since the last successful save, whose bytes remain intact. A later
+successful committed save clears that warning; no timer/unload retries occur.
 When storage is inaccessible or a new game cannot be saved, Play without saving
 requires explicit consent and leaves old saved progress untouched. That mode
 clearly states that progress will be lost on closing. Technical diagnostics are
@@ -1075,8 +1069,8 @@ syntax. Stage 9A adds application-level save identity configuration without new
 syntax. Stage 9B adds the static browser story library without altering either
 story or this language. Stages 9C–9D add authoring preflight and bounded return probes without new syntax.
 
-Continue Game resumes the single checkpoint when reopening, and New Game confirms
-before replacing saved progress. Both are implemented in Stage 7B.
+Continue Game resumes the latest committed passage when reopening, and New Game confirms
+before replacing saved progress. Checkpoint startup began in Stage 7B; last-passage resume is Stage 12A.
 
 There will be no traditional Undo, choice-history stack, manual rewind, Return to
 Checkpoint control, manual saves, or save slots. `*death`, guarded Try Again,

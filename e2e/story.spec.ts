@@ -38,7 +38,12 @@ for (const ending of ['guard', 'refuge'] as const) {
     await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Try Again', exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
-    expect(await checkpointRecord(page)).toBe(saved);
+    expect(JSON.parse((await checkpointRecord(page))!).checkpoint).toEqual(JSON.parse(saved!).checkpoint);
+    const endingSave = await checkpointRecord(page);
+    await page.reload();
+    await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
+    await expectPassage(page, ending === 'guard' ? 'An Order Posted at Dawn' : 'A Town Above the Water');
+    expect(await checkpointRecord(page)).toBe(endingSave);
   });
 }
 

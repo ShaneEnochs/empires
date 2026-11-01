@@ -16,7 +16,8 @@ test('first visit directly offers Provincial Crisis startup and captures its ini
   await expectInitialState(page);
   const save = JSON.parse((await checkpointRecord(page))!);
   expect(save).toEqual({
-    formatVersion: 1, storyId: 'provincial-crisis', storyRevision: 1,
+    formatVersion: 2, storyId: 'provincial-crisis', storyRevision: 1,
+    currentState: expect.objectContaining({ passageId: 'quayside', inventory: { coin: 4, sealed_writ: 1 } }),
     checkpoint: { state: {
       passageId: 'quayside',
       variables: { envoy_name: 'Mara Vale', authority: 2, trust: 0, plan: 'Undecided', workers_fed: false, river_warning: false, bonded: false },
@@ -25,43 +26,44 @@ test('first visit directly offers Provincial Crisis startup and captures its ini
   });
 });
 
-test('Continue Game resumes the initial checkpoint and drops ordinary unsaved passage progress', async ({ page }) => {
+test('Continue Game resumes the latest ordinary passage without replaying its effects', async ({ page }) => {
   await observeCheckpointWrites(page);
   await startGame(page);
-  const saved = await checkpointRecord(page);
+  let saved = await checkpointRecord(page);
   await choose(page, 'Keep the name Mara Vale and begin');
   await choose(page, 'You mediated disputes at the provincial court');
   await expectPassage(page, "A Clerk's Reputation");
   await expectCharacter(page, ['Mara Vale', '3', '0', 'Undecided']);
-  expect(await checkpointRecord(page)).toBe(saved);
-  expect(await checkpointWrites(page)).toBe(1);
+  expect(await checkpointRecord(page)).not.toBe(saved);
+  saved = await checkpointRecord(page);
+  expect(await checkpointWrites(page)).toBe(3);
   await page.reload();
   await expectStartup(page);
   await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
-  await expectPassage(page, 'The Last Ferry');
-  await expectInitialState(page);
+  await expectPassage(page, "A Clerk's Reputation");
+  await expectCharacter(page, ['Mara Vale', '3', '0', 'Undecided']);
   expect(await checkpointRecord(page)).toBe(saved);
   expect(await checkpointWrites(page)).toBe(0);
 });
 
-test('a new page resumes a revision-1 authored checkpoint, accepted name, and complete acquired state', async ({ page, context }) => {
+test('a new page resumes the latest reward passage, accepted name, and complete acquired state', async ({ page, context }) => {
   await startGame(page);
   await reachBriefing(page, 'Eleanor');
-  const saved = await checkpointRecord(page);
   await choose(page, 'Investigate the mill accounts');
   await choose(page, 'Pay two coins for attested accounts');
   await expectPassage(page, 'Ink Paid For');
+  const saved = await checkpointRecord(page);
   const reopened = await context.newPage();
   await observeCheckpointWrites(reopened);
   for (let load = 0; load < 2; load++) {
     await reopened.goto('/');
     await expectStartup(reopened);
     await reopened.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
-    await expectPassage(reopened, 'Six Sacks and a Day');
-    await expectCharacter(reopened, ['Eleanor', '3', '1', 'Undecided']);
-    await expectItems(reopened, 'Journal', [arrival, 'Eleanor returned as a former river surveyor.', 'Eleanor accepted six public grain sacks with authority 3.']);
+    await expectPassage(reopened, 'Ink Paid For');
+    await expectCharacter(reopened, ['Eleanor', '4', '1', 'Undecided']);
+    await expectItems(reopened, 'Journal', [arrival, 'Eleanor returned as a former river surveyor.', 'Eleanor accepted six public grain sacks with authority 3.', 'Eleanor paid two coins for attested grain accounts.']);
     await expectItems(reopened, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
-    await expectItems(reopened, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
+    await expectItems(reopened, 'Inventory', ['Dispatch Coin × 2', 'Emergency Writ × 1', 'Grain Sack × 6', 'Attested Grain Accounts × 1']);
     await expect(reopened.getByRole('textbox')).toHaveCount(0);
     expect(await checkpointRecord(reopened)).toBe(saved);
     expect(await checkpointWrites(reopened)).toBe(0);

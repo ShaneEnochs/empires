@@ -65,15 +65,15 @@ for (const named of [false, true]) {
       assert.deepEqual(session.game!.state, expected);
       assert.equal(session.game!.checkpoint, checkpoint);
       assert.equal(records.get(STORAGE_KEY), saved);
-      assert.equal(writes, count);
+      assert.equal(writes, count + (cycle + 1) * 3);
     }
     const reopened = new GameSession(story, storage);
     assert.deepEqual(reopened.startup, { status: 'ready' });
     assert.deepEqual(reopened.continueGame().state, expected);
-    assert.equal(writes, count);
+    assert.equal(writes, count + 9);
     assert.equal(records.get(STORAGE_KEY), saved);
     const envelope = JSON.parse(saved);
-    assert.equal(envelope.formatVersion, 1);
+    assert.equal(envelope.formatVersion, 2);
     assert.equal(envelope.storyId, 'empires-example');
     assert.equal(envelope.storyRevision, 1);
   });
