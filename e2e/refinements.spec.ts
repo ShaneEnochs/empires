@@ -86,7 +86,7 @@ for (const width of [320, 375, 768, 1280]) {
     expect(Math.abs(size - expectedSize)).toBeLessThan(0.1);
     const chapter = page.locator('.chapter-label');
     await expect(chapter).toHaveCSS('text-align', 'center');
-    await expect(chapter).toHaveCSS('font-size', '14.4px');
+    await expect(chapter).toHaveCSS('font-size', '20px');
     const geometry = await page.evaluate(() => {
       const tabs = document.querySelector('.view-navigation')!.getBoundingClientRect();
       const chapter = document.querySelector('.chapter-label')!.getBoundingClientRect();
@@ -95,8 +95,8 @@ for (const width of [320, 375, 768, 1280]) {
         scrollPadding: parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) };
     });
     expect(geometry.gap).toBe(0);
-    expect(geometry.chapterHeight).toBeLessThan(30);
-    expect(geometry.headerHeight).toBeLessThan(75);
+    expect(geometry.chapterHeight).toBeLessThan(37);
+    expect(geometry.headerHeight).toBeLessThan(81);
     expect(Math.abs(geometry.scrollPadding - geometry.headerHeight)).toBeLessThanOrEqual(1);
     await expect(page.locator('#story-content > p').first()).toHaveCSS('text-align', 'start');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
@@ -113,7 +113,14 @@ for (const width of [320, 375, 768, 1280]) {
     const heading = page.locator('#passage-heading');
     const metrics = await heading.evaluate(element => ({ height: element.getBoundingClientRect().height, line: parseFloat(getComputedStyle(element).lineHeight) }));
     if (width <= 375) expect(metrics.height).toBeGreaterThan(metrics.line * 1.5);
+    await page.locator('.chapter-label').evaluate(element => {
+      element.textContent = 'A Council Beyond the Flooded Provincial Border';
+    });
     await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+    await expect(page.locator('.chapter-label')).toHaveCSS('font-size', '40px');
+    await expect.poll(() => page.evaluate(() => Math.abs(
+      parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) -
+      document.querySelector('.reading-header')!.getBoundingClientRect().height))).toBeLessThan(1);
     for (const view of ['Story', ...panelNames]) {
       if (view === 'Story') await returnToStory(page); else await openPanel(page, view as typeof panelNames[number]);
       const active = page.getByRole('heading', { level: view === 'Story' ? 1 : 2 });
