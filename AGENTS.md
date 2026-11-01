@@ -61,10 +61,10 @@ libraries. Use the existing checkout; no frontend framework is needed.
   never cache variable values. Character uses text-only semantic name/value
   pairs, Yes/No booleans, and ordinary number/string text. Selecting a view must
   not execute effects, navigate, submit drafts, or access persistence. Preserve
-  existing action/focus/error handling in main; do not build a component system.
+  existing action/focus/error handling in reader.ts; do not build a component system.
 - Keep one inline view active: Story, Character, Journal, or People. Character
   contains Character Statistics, Skills, and Inventory with unchanged formatting
-  and author/acquisition order. Main owns only transient view/choice selection;
+  and author/acquisition order. The shared reader owns only transient view/choice selection;
   panels.ts renders the three information views. Preserve the story DOM subtree
   while hidden, including uncommitted choices, input drafts, and errors.
   Use native pressed buttons, hide inactive subtrees from all interaction, and
