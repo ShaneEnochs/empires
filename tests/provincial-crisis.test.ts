@@ -308,7 +308,7 @@ for (const destination of ['briefing', 'night_council']) {
     const record = storage.record!;
     const writes = storage.writes;
     const envelope = JSON.parse(record);
-    assert.deepEqual(Object.keys(envelope), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint']);
+    assert.deepEqual(Object.keys(envelope), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint', 'currentState']);
     assert.equal(envelope.formatVersion, SAVE_FORMAT_VERSION);
     assert.equal(envelope.storyId, identity.storyId);
     assert.equal(envelope.storyRevision, identity.storyRevision);
@@ -322,7 +322,7 @@ for (const destination of ['briefing', 'night_council']) {
     assert.deepEqual(session.game!.state, expected);
     assert.equal(session.game!.checkpoint, checkpoint);
     assert.equal(storage.record, record);
-    assert.equal(storage.writes, writes);
+    assert.equal(storage.writes, writes + deathPath.length + 1);
 
     const copiedStorage = new MemoryStorage();
     copiedStorage.record = JSON.stringify(JSON.parse(record));
@@ -338,6 +338,6 @@ for (const destination of ['briefing', 'night_council']) {
       : ['evidence_hearing', 'ending_compact'];
     for (const id of finish) reopened.navigate(id);
     assert.equal(continued.passage.id, finish.at(-1));
-    assert.equal(copiedStorage.writes, destination === 'briefing' ? 1 : 0);
+    assert.equal(copiedStorage.writes, finish.length);
   });
 }

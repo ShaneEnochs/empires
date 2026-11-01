@@ -64,7 +64,8 @@ for (const width of [320, 375, 768, 1280]) {
     await expect(page.getByRole('radio')).toHaveCount(0);
     await expect(advance).toHaveCount(1);
     await expect(advance).toBeEnabled();
-    expect(await checkpointRecord(page)).toBe(saved);
+    expect(JSON.parse((await checkpointRecord(page))!).checkpoint).toEqual(JSON.parse(saved!).checkpoint);
+    expect(JSON.parse((await checkpointRecord(page))!).currentState.passageId).toBe('river_background');
     await advance.click();
     await expectPassage(page, 'Six Sacks and a Day');
     await expectCharacter(page, ['Mara Vale', '3', '1', 'Undecided']);
@@ -148,6 +149,7 @@ test('failed Continue retains its selection and error, with no effects or save w
   await page.evaluate(key => {
     const save = JSON.parse(localStorage.getItem(key)!);
     save.checkpoint.state.inventory.grain_sack = 1;
+    save.currentState.inventory.grain_sack = 3;
     localStorage.setItem(key, JSON.stringify(save));
   }, key);
   await page.reload();

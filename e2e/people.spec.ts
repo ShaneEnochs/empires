@@ -1,6 +1,6 @@
 import { titlePage } from '../src/title-page';
 import { expect, test } from '@playwright/test';
-import { choose, expectPassage, openPanel, returnToStory, expectStartup, startGame } from './helpers';
+import { choose, crisisKey, expectPassage, openPanel, returnToStory, expectStartup, startGame } from './helpers';
 
 test('Character combines statistics, skills, and inventory while Journal remains independent', async ({ page }) => {
   await startGame(page);
@@ -38,7 +38,13 @@ test('Provincial references wait for recording and checkpoint recovery removes l
   await expect(people.getByText('The grain merchant', { exact: true })).toHaveCount(0);
   await expect(people.getByText('The guard captain', { exact: true })).toHaveCount(0);
   await returnToStory(page);
-  // Return to the saved briefing checkpoint on reload, before these encounters.
+  // A legacy checkpoint-only record must still return before later encounters.
+  await page.evaluate(key => {
+    const saved = JSON.parse(localStorage.getItem(key)!);
+    if (saved.currentState.passageId !== 'hired_pilot') throw Error('Expected committed pilot progress');
+    delete saved.currentState; saved.formatVersion = 1;
+    localStorage.setItem(key, JSON.stringify(saved));
+  }, crisisKey);
   await page.reload();
   await expectStartup(page);
   await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();

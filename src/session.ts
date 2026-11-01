@@ -1,5 +1,5 @@
 import { Game } from './game';
-import { DEFAULT_SAVE_IDENTITY, loadCheckpoint, saveCheckpoint, validateSaveIdentity } from './storage';
+import { DEFAULT_SAVE_IDENTITY, loadCheckpoint, saveProgress, validateSaveIdentity } from './storage';
 import type { CheckpointStorage, StorySaveIdentity } from './storage';
 import type { Story } from './types';
 
@@ -24,7 +24,7 @@ export class GameSession {
     const saved = loadCheckpoint(storage, story, this.identity);
     if (saved.status === 'loaded') {
       try {
-        this.preparedGame = new Game(story, { checkpoint: saved.checkpoint });
+        this.preparedGame = new Game(story, { checkpoint: saved.checkpoint, ...(saved.currentState === undefined ? {} : { committedState: saved.currentState }) });
         this.startup = { status: 'ready' };
       } catch (error) {
         this.startup = { status: 'invalid', message: 'The saved checkpoint cannot be entered in this story.', error };
@@ -56,7 +56,7 @@ export class GameSession {
     if (saved.status !== 'empty' && !confirmReplacement()) return 'cancelled';
     const candidate = this.prepareNewGame();
     if (candidate === undefined) return 'failed';
-    const result = saveCheckpoint(this.storage, this.story, candidate.checkpoint, this.identity);
+    const result = saveProgress(this.storage, this.story, candidate.state, candidate.checkpoint, this.identity);
     if (!result.ok) {
       this.unsavedAvailable = true;
       return this.failure('The new game was not started because it could not be saved. Any previous progress was kept.', result.error);
@@ -91,8 +91,7 @@ export class GameSession {
 
   retryAfterDeath(): void {
     if (this.currentGame === undefined) throw new Error('Start or continue a game first.');
-    // Recovery preserves the checkpoint, stored bytes, and any save-failure notice.
-    this.currentGame.retryAfterDeath();
+    this.act(game => game.retryAfterDeath());
   }
 
   private prepareNewGame(): Game | undefined {
@@ -113,12 +112,11 @@ export class GameSession {
   private act(action: (game: Game) => void): void {
     const game = this.currentGame;
     if (game === undefined) throw new Error('Start or continue a game first.');
-    const previousCheckpoint = game.checkpoint;
     action(game); // A rejected action throws before any persistence attempt.
-    if (this.savingEnabled && game.checkpoint !== previousCheckpoint) {
-      const result = saveCheckpoint(this.storage, this.story, game.checkpoint, this.identity);
+    if (this.savingEnabled) {
+      const result = saveProgress(this.storage, this.story, game.state, game.checkpoint, this.identity);
       this.currentNotice = result.ok ? undefined : {
-        message: 'The latest checkpoint could not be saved. Closing this page may lose progress since the last saved checkpoint.',
+        message: 'Recent progress could not be saved. Closing this page may lose progress since the last successful save.',
         error: result.error,
       };
     }

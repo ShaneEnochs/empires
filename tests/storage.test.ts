@@ -59,7 +59,7 @@ const story = parseStory([
 function atCamp(): Game { const game = new Game(story); game.navigate('camp'); return game; }
 const checkpoint = atCamp().checkpoint;
 function encode(snapshot: GameSnapshot = checkpoint): string {
-  return JSON.stringify({ formatVersion: SAVE_FORMAT_VERSION, storyId: STORY_ID, storyRevision: STORY_REVISION, checkpoint: snapshot });
+  return JSON.stringify({ formatVersion: 1, storyId: STORY_ID, storyRevision: STORY_REVISION, checkpoint: snapshot });
 }
 function withSave(record = encode()): FakeStorage {
   const storage = new FakeStorage(); storage.record = record; return storage;
@@ -147,7 +147,7 @@ for (const field of ['extra', 'currentState', 'versionHistory', '__proto__']) {
 }
 
 for (const [field, value, reason] of [
-  ['formatVersion', 0, /save format/], ['formatVersion', 2, /save format/], ['formatVersion', '1', /save format/],
+  ['formatVersion', 0, /save format/], ['formatVersion', 3, /save format/], ['formatVersion', '1', /save format/],
   ['formatVersion', null, /save format/], ['storyId', 'another-story', /another story/],
   ['storyId', 1, /another story/], ['storyRevision', 0, /story revision/],
   ['storyRevision', 2, /story revision/], ['storyRevision', '1', /story revision/],
@@ -297,7 +297,7 @@ test('cancelled New Game preserves save, active game, checkpoint, and notice', (
   assert.equal(session.game!.checkpoint, checkpoint);
   assert.equal(session.notice, notice);
   assert.equal(storage.record, record);
-  assert.equal(storage.writes, 1);
+  assert.equal(storage.writes, 2);
 });
 
 test('New Game requires confirmation even for an unusable record', () => {
@@ -329,7 +329,7 @@ test('confirmed New Game resets all progress and atomically replaces the save on
   assert.deepEqual(session.game!.state, new Game(story).state);
   assert.equal(session.game!.state.variables.character_name, 'Alexander');
   assert.equal(session.game!.checkpoint.state.variables.character_name, 'Unknown');
-  assert.equal(storage.writes, 3); // Initial, submitted-name checkpoint, new initial.
+  assert.equal(storage.writes, 4); // Initial, name passage, submitted-name checkpoint, new initial.
   assert.equal(JSON.parse(storage.record!).checkpoint.state.passageId, 'gate');
 });
 
@@ -387,7 +387,7 @@ test('New Game construction failure preserves the save and an active restored ga
   assert.equal(storage.writes, 1);
 });
 
-test('ordinary navigation, state reads, and condition/interpolation views never write', () => {
+test('ordinary navigation saves once; state and condition/interpolation reads never write', () => {
   const storage = new FakeStorage();
   const session = start(storage);
   session.navigate('ordinary');
@@ -396,7 +396,7 @@ test('ordinary navigation, state reads, and condition/interpolation views never 
     session.game!.state; session.game!.checkpoint; session.game!.availableChoices; session.game!.visibleParagraphs;
   }
   assert.equal(storage.record, record);
-  assert.equal(storage.writes, 1);
+  assert.equal(storage.writes, 2);
 });
 
 test('marked entry and legitimate same-passage checkpoint re-entry each write exactly once', () => {
@@ -406,31 +406,31 @@ test('marked entry and legitimate same-passage checkpoint re-entry each write ex
   assert.equal(storage.writes, 2);
   assert.equal(JSON.parse(storage.record!).checkpoint.state.variables.influence, 10);
   session.navigate('ordinary');
-  assert.equal(storage.writes, 2);
-  session.navigate('camp');
   assert.equal(storage.writes, 3);
+  session.navigate('camp');
+  assert.equal(storage.writes, 4);
   assert.equal(JSON.parse(storage.record!).checkpoint.state.variables.influence, 16);
 });
 
-test('submitted Unicode names persist before entry, with journal text and order reconstructed on Continue', () => {
+test('submitted Unicode names and subsequent ordinary progress resume with exact journal order', () => {
   const storage = new FakeStorage();
   const session = start(storage);
   session.navigate('choose_name');
-  assert.equal(storage.writes, 1);
+  assert.equal(storage.writes, 2);
   const name = 'Éléonore 李 — عائشة';
   session.submitText('  ' + name + '  ');
-  assert.equal(storage.writes, 2);
+  assert.equal(storage.writes, 3);
   const envelope = JSON.parse(storage.record!);
   assert.equal(envelope.checkpoint.state.variables.character_name, name);
   assert.deepEqual(envelope.checkpoint.state.journal.map((e: { id: string }) => e.id), ['arrived']);
+  session.navigate('ordinary');
   const expected = session.game!.state;
-  session.navigate('ordinary'); // Unsaved name/stat/item changes must disappear after reopen.
   const reopened = new GameSession(story, storage);
   const resumed = reopened.continueGame();
   assert.deepEqual(resumed.state, expected);
   assert.equal(resumed.passage.textInput, undefined);
-  assert.deepEqual(resumed.state.journal.map(e => e.text), ['Arrival Alexander.', 'Welcome, ' + name + '.']);
-  assert.equal(storage.writes, 2);
+  assert.deepEqual(resumed.state.journal.map(e => e.text), ['Arrival Alexander.', 'Welcome, ' + name + '.', 'Ordinary.']);
+  assert.equal(storage.writes, 4);
 });
 
 test('failed ordinary/marked transitions, invalid input, and bypass attempts never write', () => {
@@ -442,10 +442,11 @@ test('failed ordinary/marked transitions, invalid input, and bypass attempts nev
     assert.equal(storage.record, before);
   }
   session.navigate('choose_name');
+  const inputRecord = storage.record;
   assert.throws(() => session.submitText(' '));
   assert.throws(() => session.navigate('named_camp'));
-  assert.equal(storage.writes, 1);
-  assert.equal(storage.record, before);
+  assert.equal(storage.writes, 2);
+  assert.equal(storage.record, inputRecord);
 });
 
 test('a rejected text destination entry never writes or commits its accepted name', () => {
@@ -463,7 +464,7 @@ test('a rejected text destination entry never writes or commits its accepted nam
   assert.equal(storage.writes, 1);
 });
 
-test('automatic write failure keeps committed state/checkpoint and warns until a later real checkpoint saves', () => {
+test('automatic write failure keeps state/checkpoint and warns until a later committed save', () => {
   const storage = new FakeStorage();
   const session = start(storage);
   const saved = storage.record;
@@ -474,16 +475,16 @@ test('automatic write failure keeps committed state/checkpoint and warns until a
   assert.equal(session.game!.state.variables.influence, 15);
   assert.notEqual(session.game!.checkpoint, oldCheckpoint);
   assert.equal(storage.record, saved);
-  assert.match(session.notice!.message, /latest checkpoint could not be saved/);
+  assert.match(session.notice!.message, /Recent progress could not be saved/);
   assert.match(session.notice!.message, /Closing this page may lose progress/);
   const notice = session.notice;
   session.navigate('ordinary');
-  assert.equal(session.notice, notice);
-  assert.equal(storage.writes, 2);
+  assert.equal(session.notice!.message, notice!.message);
+  assert.equal(storage.writes, 3);
   storage.writeFailure = false;
   session.navigate('camp');
   assert.equal(session.notice, undefined);
-  assert.equal(storage.writes, 3);
+  assert.equal(storage.writes, 4);
 });
 
 test('text submission remains committed when its automatic save fails', () => {

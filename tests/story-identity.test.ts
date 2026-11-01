@@ -69,7 +69,7 @@ test('default identity preserves the exact existing revision-1 key and applicati
   assert.ok(Object.isFrozen(DEFAULT_SAVE_IDENTITY));
   assert.equal(STORY_ID, 'empires-example');
   assert.equal(STORY_REVISION, 1);
-  assert.equal(SAVE_FORMAT_VERSION, 1);
+  assert.equal(SAVE_FORMAT_VERSION, 2);
   assert.equal(STORAGE_KEY, 'empires:checkpoint:empires-example');
   assert.equal(checkpointKey(), STORAGE_KEY);
   assert.notEqual(exampleKey, crisisKey);
@@ -159,10 +159,10 @@ test('two real stories independently save and Continue complete ordered state us
   ] as const) {
     const key = checkpointKey(identity);
     const envelope = JSON.parse(storage.records.get(key)!);
-    assert.deepEqual(Object.keys(envelope), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint']);
+    assert.deepEqual(Object.keys(envelope), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint', 'currentState']);
     assert.equal(envelope.storyId, identity.storyId);
     assert.equal(envelope.storyRevision, 1);
-    assert.equal(envelope.formatVersion, 1);
+    assert.equal(envelope.formatVersion, 2);
     storage.reads.length = 0;
     const writes = storage.writes.length;
     const reopened = new GameSession(story, storage, identity);
@@ -245,7 +245,7 @@ test('a revision change reports incompatibility at the same key until confirmed 
   assert.equal(storage.writes.length, 1);
   const replacement = JSON.parse(storage.records.get(crisisKey)!);
   assert.equal(replacement.storyRevision, 2);
-  assert.equal(replacement.formatVersion, 1);
+  assert.equal(replacement.formatVersion, 2);
   assert.equal(storage.records.get(exampleKey), firstBytes);
   assert.equal(loadCheckpoint(storage, crisis, crisisIdentity).status, 'invalid');
   assert.equal(loadCheckpoint(storage, crisis, revision2).status, 'loaded');
@@ -309,7 +309,7 @@ test('session retains its identity when caller configuration changes, including 
   assert.equal(JSON.parse(storage.records.get(crisisKey)!).storyRevision, 1);
 });
 
-test('failed writes are isolated and retry uses the newer in-memory checkpoint without persistence', () => {
+test('failed writes are isolated; retry attempts saving the newer in-memory checkpoint', () => {
   const storage = new SharedStorage();
   const first = startExample(storage);
   const second = startCrisis(storage);
@@ -330,8 +330,8 @@ test('failed writes are isolated and retry uses the newer in-memory checkpoint w
   second.retryAfterDeath();
   assert.deepEqual(second.game!.state, councilState);
   assert.equal(second.game!.checkpoint, checkpoint);
-  assert.equal(second.notice, warning);
-  assert.equal(storage.writes.length, writes);
+  assert.equal(second.notice?.message, warning?.message);
+  assert.equal(storage.writes.length, writes + 3);
   assert.equal(storage.records.get(crisisKey), persistedBriefing);
   assert.deepEqual(new GameSession(crisis, storage, crisisIdentity).continueGame().state, briefingState);
   assert.equal(first.newGame(() => true), 'started');
@@ -382,7 +382,7 @@ test('read failures never fall back to another story; explicit unsaved play and 
   onlyAccessed(storage, crisisKey);
 });
 
-test('independent story checkpoints, death, and retry preserve both records and exactly-once effects', () => {
+test('independent death and retry autosaves restore both records and exactly-once effects', () => {
   const storage = new SharedStorage();
   const first = startExample(storage);
   const second = startCrisis(storage);
@@ -402,5 +402,5 @@ test('independent story checkpoints, death, and retry preserve both records and 
     assert.deepEqual(second.game!.state, secondState);
   }
   assert.deepEqual([...storage.records], records);
-  assert.equal(storage.writes.length, writes);
+  assert.equal(storage.writes.length, writes + 18);
 });
