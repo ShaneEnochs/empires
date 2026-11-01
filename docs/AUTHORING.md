@@ -2,7 +2,7 @@
 
 Open the repository folder in VS Code, then run `npm ci` in its terminal.
 Place drafts in a folder of your choice, for example `drafts/my adventure.story`.
-They are ordinary UTF-8 text files. The project associates `.story` with plaintext.
+They are ordinary UTF-8 text files. The project associates `.story` with the optional Empires Story language (see below).
 Use Ctrl+Space and type `emp-` to discover snippets; Tab moves through placeholders.
 Declarations belong before chapters, checkpoint metadata directly after the title,
 and effects before prose. See [SCRIPTING.md](SCRIPTING.md) for placement and syntax.
@@ -39,3 +39,13 @@ People definitions if needed, and submit a reviewed catalog/source change.
 Draft preview does none of those steps. The normal builds include only the player
 entry; `author.html` is absent from `dist/` and the Pages build checks that boundary.
 Run `npm run test:author` for the separate development-server browser suite.
+
+## Optional VS Code language extension
+
+Build and locally install the [Empires Story extension](../tools/vscode-empires/README.md)
+for syntax highlighting and parser-backed open/save errors in the Problems panel.
+Cloning does not install it. `.story` files and all 20 workspace snippets now use
+`empires-story`; after installation the language mode reads **Empires Story**.
+Without installation, select Plain Text manually to edit. Automatic diagnostics
+stop at the first parser error; the existing preflight tasks remain the deeper
+analysis workflow. The local browser preview and public game are unchanged.

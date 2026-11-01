@@ -1,0 +1,148 @@
+{
+  "scopeName": "source.empires-story",
+  "patterns": [
+    {
+      "begin": "^\\s*(\\*)(passage)(\\s+)([a-z][a-z0-9_-]*)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.directive.empires"
+        },
+        "2": {
+          "name": "keyword.control.directive.empires"
+        },
+        "4": {
+          "name": "entity.name.label.empires"
+        }
+      },
+      "end": "$"
+    },
+    {
+      "begin": "^\\s*(\\*)(var|stat|skill|item|chapter|passage|title|choice|continue|input_text|checkpoint|journal|set|add|grant_skill|revoke_skill|add_item|remove_item|death|show_if)(?=\\s|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.directive.empires"
+        },
+        "2": {
+          "name": "keyword.control.directive.empires"
+        }
+      },
+      "end": "$",
+      "patterns": [
+        {
+          "match": "(->)(\\s*)([a-z][a-z0-9_-]*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.separator.destination.empires"
+            },
+            "3": {
+              "name": "entity.name.label.empires"
+            }
+          }
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#interpolation"
+        },
+        {
+          "name": "keyword.operator.comparison.empires",
+          "match": "==|!=|>=|<=|>|<"
+        },
+        {
+          "name": "keyword.control.condition.empires",
+          "match": "\\b(?:if|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
+        },
+        {
+          "name": "constant.language.empires",
+          "match": "\\b(?:true|false)\\b"
+        },
+        {
+          "name": "constant.numeric.empires",
+          "match": "(?<![\\w-])-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b"
+        },
+        {
+          "name": "punctuation.separator.destination.empires",
+          "match": "->"
+        },
+        {
+          "name": "variable.other.empires",
+          "match": "\\b[a-z][a-z0-9_-]*\\b"
+        }
+      ]
+    },
+    {
+      "begin": "^\\s*(#)(.*?)(\\s*->\\s*)([a-z][a-z0-9_-]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.choice.empires"
+        },
+        "2": {
+          "name": "string.unquoted.choice.empires"
+        },
+        "3": {
+          "name": "punctuation.separator.destination.empires"
+        },
+        "4": {
+          "name": "entity.name.label.empires"
+        }
+      },
+      "end": "$",
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#interpolation"
+        },
+        {
+          "name": "keyword.operator.comparison.empires",
+          "match": "==|!=|>=|<=|>|<"
+        },
+        {
+          "name": "keyword.control.condition.empires",
+          "match": "\\b(?:if|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
+        },
+        {
+          "name": "constant.language.empires",
+          "match": "\\b(?:true|false)\\b"
+        },
+        {
+          "name": "constant.numeric.empires",
+          "match": "(?<![\\w-])-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b"
+        },
+        {
+          "name": "punctuation.separator.destination.empires",
+          "match": "->"
+        },
+        {
+          "name": "variable.other.empires",
+          "match": "\\b[a-z][a-z0-9_-]*\\b"
+        }
+      ]
+    },
+    {
+      "include": "#interpolation"
+    }
+  ],
+  "repository": {
+    "string": {
+      "name": "string.quoted.double.empires",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.empires",
+          "match": "\\\\."
+        },
+        {
+          "include": "#interpolation"
+        }
+      ]
+    },
+    "interpolation": {
+      "name": "variable.other.interpolated.empires",
+      "match": "\\$\\{[a-z][a-z0-9_-]*\\}"
+    }
+  }
+}

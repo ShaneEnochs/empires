@@ -1,0 +1,26 @@
+name: VS Code extension
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  extension:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/vscode-empires/package-lock.json
+      - run: npm ci --prefix tools/vscode-empires
+      - run: npm test --prefix tools/vscode-empires
+      - run: npm run package --prefix tools/vscode-empires
+      - uses: actions/upload-artifact@v7
+        with:
+          name: empires-story-vsix
+          path: tools/vscode-empires/*.vsix

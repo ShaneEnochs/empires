@@ -679,3 +679,7 @@ preflight tasks, the local `/author.html` file preview, and its searchable passa
 reference. The preview uses the same reader with memory-only progress; it never
 uploads, publishes, registers drafts, or touches public saves. Re-select saved
 files after external edits. Run `npm run test:author` for its separate browser tests.
+
+For optional VS Code syntax highlighting and parser-backed Problems diagnostics,
+see [local extension installation](tools/vscode-empires/README.md). Its build and
+dependencies are separate from the game. Existing preflight tasks remain available.

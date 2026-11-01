@@ -1,8 +1,8 @@
 {
   "files.associations": {
-    "*.story": "plaintext"
+    "*.story": "empires-story"
   },
-  "[plaintext]": {
+  "[empires-story]": {
     "editor.quickSuggestions": {
       "other": true,
       "comments": false,

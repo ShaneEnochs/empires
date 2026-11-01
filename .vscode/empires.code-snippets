@@ -1,6 +1,6 @@
 {
   "var": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-var",
     "body": [
       "*var ${1:name} ${2:0}"
@@ -8,7 +8,7 @@
     "description": "Empires var"
   },
   "stat": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-stat",
     "body": [
       "*stat ${1:name} \"${2:Label}\""
@@ -16,7 +16,7 @@
     "description": "Empires stat"
   },
   "skill": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-skill",
     "body": [
       "*skill ${1:skill_id} \"${2:Skill name}\""
@@ -24,7 +24,7 @@
     "description": "Empires skill"
   },
   "item": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-item",
     "body": [
       "*item ${1:item_id} \"${2:Item name}\""
@@ -32,7 +32,7 @@
     "description": "Empires item"
   },
   "chapter": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-chapter",
     "body": [
       "*chapter ${1:Chapter name}"
@@ -40,7 +40,7 @@
     "description": "Empires chapter"
   },
   "passage": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-passage",
     "body": [
       "*passage ${1:passage_id}",
@@ -53,7 +53,7 @@
     "description": "Empires passage"
   },
   "choice": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-choice",
     "body": [
       "*choice",
@@ -63,7 +63,7 @@
     "description": "Empires choice"
   },
   "conditional-choice": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-conditional-choice",
     "body": [
       "*choice",
@@ -74,7 +74,7 @@
     "description": "Empires conditional-choice"
   },
   "show-if": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-show-if",
     "body": [
       "*show_if ${1:variable} == ${2:true}",
@@ -85,7 +85,7 @@
     "description": "Empires show-if"
   },
   "continue": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-continue",
     "body": [
       "*continue ${1:destination}"
@@ -93,7 +93,7 @@
     "description": "Empires continue"
   },
   "input-text": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-input-text",
     "body": [
       "*input_text ${1:variable} \"${2:Label}\" -> ${3:destination}"
@@ -101,7 +101,7 @@
     "description": "Empires input-text"
   },
   "checkpoint": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-checkpoint",
     "body": [
       "*checkpoint"
@@ -109,7 +109,7 @@
     "description": "Empires checkpoint"
   },
   "journal": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-journal",
     "body": [
       "*journal ${1:event_id} \"${2:Recorded text}\""
@@ -117,7 +117,7 @@
     "description": "Empires journal"
   },
   "set": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-set",
     "body": [
       "*set ${1:variable} ${2:0}"
@@ -125,7 +125,7 @@
     "description": "Empires set"
   },
   "add": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-add",
     "body": [
       "*add ${1:variable} ${2:1}"
@@ -133,7 +133,7 @@
     "description": "Empires add"
   },
   "grant-skill": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-grant-skill",
     "body": [
       "*grant_skill ${1:skill_id}"
@@ -141,7 +141,7 @@
     "description": "Empires grant-skill"
   },
   "revoke-skill": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-revoke-skill",
     "body": [
       "*revoke_skill ${1:skill_id}"
@@ -149,7 +149,7 @@
     "description": "Empires revoke-skill"
   },
   "add-item": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-add-item",
     "body": [
       "*add_item ${1:item_id} ${2:1}"
@@ -157,7 +157,7 @@
     "description": "Empires add-item"
   },
   "remove-item": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-remove-item",
     "body": [
       "*remove_item ${1:item_id} ${2:1}"
@@ -165,7 +165,7 @@
     "description": "Empires remove-item"
   },
   "death": {
-    "scope": "plaintext",
+    "scope": "empires-story,plaintext",
     "prefix": "emp-death",
     "body": [
       "*death"
