@@ -188,6 +188,12 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
     const header = document.createElement('header');
     header.className = 'reading-header';
     header.append(navigation, chapter);
+    // Wrapped chapter names and text scaling change the sticky obstruction.
+    const headerSize = new ResizeObserver(() => {
+      if (!header.isConnected) { headerSize.disconnect(); return; }
+      document.documentElement.style.setProperty('--reading-header-space', `${header.getBoundingClientRect().height}px`);
+    });
+    headerSize.observe(header);
     function selectView(name: string): void {
       storyContent.hidden = name !== 'Story';
       storyButton.setAttribute('aria-pressed', String(name === 'Story'));
