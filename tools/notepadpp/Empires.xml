@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='utf-8'?>
+<NotepadPlus>
+  <AutoComplete language="Empires">
+    <Environment ignoreCase="no" startFunc="(" stopFunc=")" paramSeparator="," terminal=";" additionalWordChar="*_" />
+    <KeyWord name="*add" />
+    <KeyWord name="*add_item" />
+    <KeyWord name="*chapter" />
+    <KeyWord name="*checkpoint" />
+    <KeyWord name="*choice" />
+    <KeyWord name="*continue" />
+    <KeyWord name="*death" />
+    <KeyWord name="*grant_skill" />
+    <KeyWord name="*input_text" />
+    <KeyWord name="*item" />
+    <KeyWord name="*journal" />
+    <KeyWord name="*passage" />
+    <KeyWord name="*remove_item" />
+    <KeyWord name="*revoke_skill" />
+    <KeyWord name="*set" />
+    <KeyWord name="*show_if" />
+    <KeyWord name="*skill" />
+    <KeyWord name="*stat" />
+    <KeyWord name="*title" />
+    <KeyWord name="*var" />
+  </AutoComplete>
+</NotepadPlus>

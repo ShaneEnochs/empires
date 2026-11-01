@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { Game } from '../src/game';
-import { cityGatePeople, provincialCrisisPeople, encounteredPeople, validatePeople } from '../src/people';
+import { cityGatePeople, provincialCrisisPeople, encounteredPeople, validatePeople, parsePeople } from '../src/people';
 import { parseStory } from '../src/story';
 
 const city = parseStory(readFileSync(new URL('../src/example.story', import.meta.url), 'utf8'));
@@ -66,3 +66,14 @@ for (const [background, encounter] of [['river_background', 'copied_records'], [
     assert.equal(game.state, before);
   });
 }
+
+test('People JSON rejects malformed shapes and freezes safe presentation records', () => {
+  const person = cityGatePeople[0]!;
+  for (const value of [null, {}, 'people', [null], [7], [{ ...person, name: 5 }],
+    [{ ...person, discoveryEvents: 'met_messenger' }], [{ ...person, discoveryEvents: [null] }]]) {
+    assert.throws(() => parsePeople(value), /People/);
+  }
+  const parsed = parsePeople([{ ...person, description: '<b>Plain text</b>' }]);
+  assert.equal(parsed[0]!.description, '<b>Plain text</b>');
+  assert.ok(Object.isFrozen(parsed[0]!.discoveryEvents));
+});

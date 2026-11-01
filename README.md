@@ -727,3 +727,14 @@ Only one normal-style asset is shipped; declared weights are 400–600. System U
 fonts remain on controls and statistics. `font-display: swap` keeps text visible
 while loading; Georgia and generic serif cover loading failures and characters
 outside the Latin subset. No external font service is contacted.
+
+## Notepad++ authoring
+
+The [Notepad++ toolkit](tools/notepadpp/README.md) provides importable highlighting,
+optional command completion, a Windows saved-file validation launcher, and a playable
+starter. Preview `.story` and optional `.people.json` files at the local development
+server’s `/author.html` without VS Code. People descriptions are ordinary JSON;
+journal/skills/inventory remain in the story, and public startup text remains in
+`content/title-page.json`. Local drafts are never automatically published. VS Code
+support remains available. Windows interactive verification was unavailable; see
+the toolkit’s tested scope and installation instructions.

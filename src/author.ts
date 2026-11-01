@@ -1,3 +1,5 @@
+import { parsePeople, validatePeople } from './people';
+import type { PersonReference } from './people';
 import { parseStory } from './story';
 import type { Passage, Story } from './types';
 import { mountReader } from './reader';
@@ -11,11 +13,18 @@ tools.className = 'author-tools';
 const title = document.createElement('h1');
 title.textContent = 'Local story preview';
 const note = document.createElement('p');
-note.textContent = 'Files stay in this browser. Save edits in VS Code, then select the file again. Preview progress is temporary. People requires separate catalog metadata.';
+note.textContent = 'Files stay in this browser. Save edits in your editor, then select the files again. Preview progress is temporary. Optional People metadata stays local.';
 const label = document.createElement('label');
 label.textContent = 'Open a .story file';
 const file = document.createElement('input');
 file.type = 'file'; file.accept = '.story'; label.append(file);
+const peopleLabel = document.createElement('label');
+peopleLabel.textContent = 'Open optional .people.json file';
+const peopleFile = document.createElement('input');
+peopleFile.type = 'file'; peopleFile.accept = '.json'; peopleLabel.append(peopleFile);
+const clearPeople = document.createElement('button');
+clearPeople.textContent = 'Clear People file';
+let people: readonly PersonReference[] = [];
 const status = document.createElement('p');
 status.setAttribute('role', 'status');
 const restart = document.createElement('button');
@@ -35,7 +44,7 @@ function start(): void {
   if (!story) return;
   // A fresh private slot for each restart; never consult browser storage.
   const records = new Map<string, string>();
-  mountReader(reader, { title: filename, identity: { storyId: 'author-preview', storyRevision: 1 }, people: [] }, story, {
+  mountReader(reader, { title: filename, identity: { storyId: 'author-preview', storyRevision: 1 }, people }, story, {
     getItem: key => records.get(key) ?? null,
     setItem: (key, value) => { records.set(key, value); },
   });
@@ -78,6 +87,7 @@ file.addEventListener('change', async () => {
     const source = new TextDecoder('utf-8', { fatal: true }).decode(await selected.arrayBuffer());
     if (version !== selection) return;
     story = parseStory(source); filename = selected.name;
+    validatePeople(story, people);
     status.textContent = `Loaded ${filename}: ${story.passages.length} passages. Run preflight for bounded route analysis.`;
     restart.disabled = false; search.disabled = false; renderIndex(); start();
   } catch (error) {
@@ -85,6 +95,39 @@ file.addEventListener('change', async () => {
     status.textContent = `Could not open story: ${error instanceof Error ? error.message : String(error)}`;
   }
 });
+function resetPreview(): void {
+  reader.replaceChildren(); detail.replaceChildren();
+  if (story) {
+    try {
+      validatePeople(story, people); start();
+      restart.disabled = false; search.disabled = false; renderIndex();
+      status.textContent = `Loaded ${filename} with ${people.length} People references.`;
+    } catch (error) {
+      restart.disabled = true; search.disabled = true; index.replaceChildren();
+      status.textContent = `Could not open People: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+}
+peopleFile.addEventListener('change', async () => {
+  const selected = peopleFile.files?.[0]; peopleFile.value = '';
+  if (!selected) return;
+  const version = ++selection;
+  reader.replaceChildren(); index.replaceChildren(); detail.replaceChildren();
+  restart.disabled = true; search.disabled = true;
+  try {
+    if (!selected.name.endsWith('.people.json')) throw new Error('Select a .people.json file.');
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(await selected.arrayBuffer());
+    if (version !== selection) return;
+    people = parsePeople(JSON.parse(text));
+    status.textContent = `Loaded ${selected.name}. Select a story to preview.`;
+    resetPreview();
+  } catch (error) {
+    if (version !== selection) return;
+    people = [];
+    status.textContent = `Could not open People: ${error instanceof Error ? error.message : String(error)}`;
+  }
+});
+clearPeople.addEventListener('click', () => { ++selection; people = []; resetPreview(); });
 restart.addEventListener('click', start);
 search.addEventListener('input', renderIndex);
-tools.append(title, note, label, status, restart, searchLabel, index, detail);
+tools.append(title, note, label, peopleLabel, clearPeople, status, restart, searchLabel, index, detail);
