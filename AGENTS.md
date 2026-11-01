@@ -72,15 +72,18 @@ libraries. Use the existing checkout; no frontend framework is needed.
   actions, access persistence, or clear notices. Successful gameplay returns to
   Story. Use four equal-width grid tabs in one row with at least 44px targets;
   keep tabs and the current passage's chapter in one opaque CSS sticky wrapper.
-  Keep passage titles in the reading content and focus clear of the wrapper.
+  Use approximately 0.9rem tab labels with no text underline in any state; the
+  active bottom border is the sole selection indicator. Center the compact chapter
+  label and passage titles; enlarge passage titles about 10%, keep prose left-aligned,
+  and preserve startup/library heading styles. Keep focus clear of the wrapper.
   Preserve the muted palette, system fonts, and absence of motion or nested scrolling.
 - Authored choices use native radios, initially unselected, followed by a disabled
-  Next until selection. Selection only changes presentation; Next alone calls
+  Continue until selection. Selection only changes presentation; Continue alone calls
   GameSession.navigate with the authored destination. Use Game.availableChoices;
   keep eligibility/effects in Game. Failed navigation retains selection/error;
   successful navigation resets selection. View switching retains it; reload may
-  discard it. Continue, text submission, Try Again, and New Game keep their existing
-  action/confirmation behavior. Terminal passages have no Next.
+  discard it. Ordinary Continue, text submission, Try Again, and New Game keep their existing
+  action/confirmation behavior. Terminal passages have no Continue.
 - People definitions in `people.ts` are immutable per-story presentation metadata
   associated through `catalog.ts`: stable ID, name/role, short supported description,
   and discovery event IDs. Validate IDs against the selected parsed story before
@@ -88,7 +91,7 @@ libraries. Use the existing checkout; no frontend framework is needed.
   including after recovery; omit people without a recorded encounter. Do not add
   tracking, story directives, state fields, save data, or engine behavior.
 - Keep responsive reading changes in CSS and small presentation hooks. Preserve
-  the separate passage-action/tools groups, exclusive inline view visibility, native
+  the passage-action group, exclusive inline view visibility, native
   focus and error handling, at least 44px touch targets, and browser zoom. Wrap
   long content without hiding page overflow, truncating data, or adding nested
   panel scrolling. Do not add animations or change gameplay/save semantics for UI.
@@ -127,16 +130,18 @@ libraries. Use the existing checkout; no frontend framework is needed.
   new Game. Explicit actions compare checkpoint references and write once only
   after replacement; ordinary transitions, failed actions, renders, panel controls,
   and form edits never save. No timers or unload saves.
-- Keep the browser library a static `catalog.ts` list of explicit ID, title,
-  description, raw source, and save identity. Freeze configuration and validate
-  distinct catalog/save IDs. Preserve The City Gate's `empires-example` and
-  Provincial Crisis's `provincial-crisis`, both revision 1. Never infer identities.
-  Library rendering must not parse/enter stories, construct sessions, or inspect
-  storage. Only selection constructs the corresponding session. Keep its Story,
-  session, Game, handlers, and panel metadata together in the selection closure.
-  Back to Stories exists only before gameplay and performs no storage work or
-  Game initialization. Do not add in-game switching, cross-story state, discovery,
-  a content-management framework, or a second renderer.
+- Keep `catalog.ts` a static frozen list of explicit ID, title, description,
+  raw source, People metadata, and validated save identity. Provincial Crisis is
+  currently the sole public entry, opening its startup directly. Use the existing
+  library and pre-game Back to Stories only if multiple entries are configured.
+  Keep the selected Story/session/Game/handlers/metadata together in their closure.
+  Do not add test routes, hidden story controls, or an in-game restart/switcher.
+  New Game exists only on startup; reload/reopen to replace progress. Preserve
+  invalid-save, confirmation, Continue Game, and explicit unsaved-play behavior.
+  Retain The City Gate source as an internal regression fixture and leave its
+  `empires-example` record/default exports untouched. Provincial Crisis keeps
+  `provincial-crisis`, revision 1, and its exact key. Never infer or reuse identities.
+  Public startup accesses only its configured save; library rendering stays inert.
 - `*death` is immutable passage metadata and one concluding action after prose.
   Reject arguments, duplicates, other actions, conditional placement, a checkpoint
   in the same passage, and a starting death passage. No `isDead` state/history.
@@ -216,12 +221,13 @@ Provincial Crisis authoring/playtest example are implemented. Keep that example
 under `examples/` and test it through parser/Game APIs and isolated memory storage;
 do not replace the shipped story or reuse its browser save slot. Stage 9A's
 explicit story save identities and shared-memory storage tests are implemented.
-Stage 9B's static browser library makes both stories playable through the same
-renderer/startup flow and isolated save identities. Stages 9C–9D add standalone
+Stage 9B introduced the static browser library and isolated save identities. Stages 9C–9D add standalone
 authoring preflight, bounded first-return/immediate-exit probes, explicit coverage
 limits, and a CLI. Stages 10A–10B provide exclusive reading views, compact sticky
-tabs/chapter bar, consolidated Character, journal-linked People, and select-then-Next
-choices without changing stories, game state, or save compatibility.
+tabs/chapter bar, consolidated Character, journal-linked People, and select-then-Continue
+choices without changing stories, game state, or save compatibility. Stage 10C
+refines tab/title/chapter typography, uses Continue for choice confirmation, removes
+in-game New Game, and opens the sole public story (Provincial Crisis) directly.
 Do not start later stages without a request.
 There are no migrations, manual saves, multiple slots, or cloud storage.
 Death shows authored prose without saving dead state over the checkpoint.

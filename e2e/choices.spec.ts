@@ -1,19 +1,20 @@
 import { expect, test } from '@playwright/test';
 import { checkpointKey } from '../src/storage';
 import {
-  arrival, checkpointRecord, choose, chooseName, confirmNewGame, expectCharacter,
-  expectItems, expectPassage, openPanel, panelNames, returnToStory, selectStory, startGame,
+  arrival, checkpointRecord, choose, expectCharacter, expectInitialState,
+  expectItems, expectPassage, openPanel, panelNames, reachBriefing, returnToStory, expectStartup, startGame,
 } from './helpers';
 
 for (const width of [320, 375, 768, 1280]) {
-  test('deliberate choices preserve state and selection at ' + width + 'px', async ({ page }) => {
+  test('deliberate Continue preserves state and selection at ' + width + 'px', async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await startGame(page);
-    const next = page.getByRole('button', { name: 'Next', exact: true });
-    const radios = page.getByRole('radio');
-    await expect(radios).toHaveCount(4);
+    const advance = page.getByRole('button', { name: 'Continue', exact: true });
+    await expect(advance).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Next', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('radio')).toHaveCount(2);
     await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
-    await expect(next).toBeDisabled();
+    await expect(advance).toBeDisabled();
     const saved = await checkpointRecord(page);
     await page.evaluate(() => {
       const calls: string[] = [];
@@ -26,93 +27,98 @@ for (const width of [320, 375, 768, 1280]) {
         }});
       }
     });
-    const messenger = page.getByRole('radio', { name: 'Speak to the messenger', exact: true });
-    // The label is a touch target too; double clicks must only select.
-    await messenger.locator('..').dblclick();
-    await expect(messenger).toBeChecked();
-    await expect(next).toBeEnabled();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('The City Gate');
-    await page.getByRole('radio', { name: 'Go straight to the council', exact: true }).check();
-    await expect(messenger).not.toBeChecked();
+    const record = page.getByRole('radio', { name: 'Enter a different name in the public record', exact: true });
+    await record.locator('..').dblclick();
+    await expect(record).toBeChecked();
+    await expect(advance).toBeEnabled();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Last Ferry');
+    const keep = page.getByRole('radio', { name: 'Keep the name Mara Vale and begin', exact: true });
+    await keep.check();
+    await expect(record).not.toBeChecked();
     await expect(page.locator('input[type="radio"]:checked')).toHaveCount(1);
-    await messenger.check();
-    const node = await messenger.elementHandle();
+    const node = await keep.elementHandle();
     for (const name of panelNames) {
       await openPanel(page, name);
       await expect(page.getByRole('navigation', { name: 'Passage actions' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
       await returnToStory(page);
-      await expect(messenger).toBeChecked();
-      await expect(next).toBeEnabled();
-      expect(await node!.evaluate(element => element === document.querySelector('input[type="radio"]'))).toBe(true);
+      await expect(keep).toBeChecked();
+      await expect(advance).toBeEnabled();
+      expect(await node!.evaluate(element => element === document.querySelectorAll('input[type="radio"]')[1])).toBe(true);
     }
-    await expectCharacter(page, ['Alexander', '1', '5', 'No']);
-    await expectItems(page, 'Journal', [arrival]);
-    await expectItems(page, 'Skills', ['Composure']);
-    await expectItems(page, 'Inventory', ['Gold Coin × 10', 'Gate Token × 1']);
+    await expectInitialState(page);
     await openPanel(page, 'People');
     await expect(page.getByText('No people recorded yet.', { exact: true })).toBeVisible();
     await returnToStory(page);
     expect(await page.evaluate(() => Reflect.get(window, '__choiceStorageCalls'))).toEqual([]);
-    await next.click();
-    await expectPassage(page, 'A Quiet Warning');
-    await expectCharacter(page, ['Alexander', '3', '4', 'Yes']);
-    await expectItems(page, 'Journal', [arrival, 'The messenger accepted your oath. Influence: 3.']);
-    await expectItems(page, 'Inventory', ['Gold Coin × 12', 'Gate Token × 1']);
+    await advance.click();
+    await expectPassage(page, 'What You Bring');
+    await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
+    await expect(advance).toBeDisabled();
+    await choose(page, 'You surveyed these river channels');
+    await expectPassage(page, 'Old Watermarks');
+    await expectCharacter(page, ['Mara Vale', '2', '1', 'Undecided']);
+    await expectItems(page, 'Journal', [arrival, 'Mara Vale returned as a former river surveyor.']);
+    await expectItems(page, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
     await expect(page.getByRole('radio')).toHaveCount(0);
-    await expect(next).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeEnabled();
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
-    await expectPassage(page, 'The Empty Chair');
-    await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveCount(0);
+    await expect(advance).toHaveCount(1);
+    await expect(advance).toBeEnabled();
     expect(await checkpointRecord(page)).toBe(saved);
+    await advance.click();
+    await expectPassage(page, 'Six Sacks and a Day');
+    await expectCharacter(page, ['Mara Vale', '3', '1', 'Undecided']);
+    await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
+    await expect(advance).toBeDisabled();
   });
 }
 
-test('native keyboard selection changes one option without advancing and Next receives focus', async ({ page }) => {
+test('native keyboard selection changes one option without advancing and Continue receives focus', async ({ page }) => {
   await startGame(page);
   await page.keyboard.press('Tab');
-  const messenger = page.getByRole('radio', { name: 'Speak to the messenger', exact: true });
-  await expect(messenger).toBeFocused();
+  const record = page.getByRole('radio', { name: 'Enter a different name in the public record', exact: true });
+  await expect(record).toBeFocused();
   await page.keyboard.press('Space');
-  await expect(messenger).toBeChecked();
+  await expect(record).toBeChecked();
   await page.keyboard.press('ArrowDown');
-  const council = page.getByRole('radio', { name: 'Go straight to the council', exact: true });
-  await expect(council).toBeChecked();
-  await expect(council).toBeFocused();
-  await expect(messenger).not.toBeChecked();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('The City Gate');
+  const keep = page.getByRole('radio', { name: 'Keep the name Mara Vale and begin', exact: true });
+  await expect(keep).toBeChecked();
+  await expect(keep).toBeFocused();
+  await expect(record).not.toBeChecked();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Last Ferry');
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
-  await expectPassage(page, 'The Empty Chair');
-  await expectCharacter(page, ['Alexander', '0.5', '5', 'No']);
+  await expectPassage(page, 'What You Bring');
+  await expectInitialState(page);
 });
 
-test('new passages and reloads start unselected; cancelled New Game keeps the selection', async ({ page }) => {
+test('reload discards an uncommitted choice and in-game restart controls are absent', async ({ page }) => {
   await startGame(page);
-  await chooseName(page, 'Eleanor');
+  await reachBriefing(page, 'Eleanor');
   await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
-  const noble = page.getByRole('radio', { name: 'Raised among nobility', exact: true });
-  await noble.check();
-  await confirmNewGame(page, false);
-  await expect(noble).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
+  await page.getByRole('radio', { name: 'Investigate the mill accounts', exact: true }).check();
+  for (const name of panelNames) {
+    await openPanel(page, name);
+    await expect(page.getByRole('button', { name: 'New Game', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('group', { name: 'Game tools' })).toHaveCount(0);
+  }
   await page.reload();
-  await selectStory(page);
+  await expectStartup(page);
   await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
-  await expectPassage(page, 'Choose Your Background');
+  await expectPassage(page, 'Six Sacks and a Day');
   await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
 });
 
 test('successive authored choice passages clear selection and expose only eligible options', async ({ page }) => {
   await page.goto('/');
-  await selectStory(page, 'Provincial Crisis');
+  await expectStartup(page);
   await page.getByRole('button', { name: 'New Game', exact: true }).click();
   await choose(page, 'Keep the name Mara Vale and begin');
   await expectPassage(page, 'What You Bring');
   await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
   await choose(page, 'You surveyed these river channels');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await choose(page, 'Investigate the mill accounts');
@@ -121,12 +127,12 @@ test('successive authored choice passages clear selection and expose only eligib
   await expect(page.getByRole('radio', { name: 'Leave the clerk in peace and inspect the levee', exact: true })).toBeVisible();
   await expect(page.getByRole('radio', { name: 'Negotiate a protected statement', exact: true })).toHaveCount(0);
   await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
 });
 
-test('failed Next retains its selection and error, with no effects or save write', async ({ page }) => {
+test('failed Continue retains its selection and error, with no effects or save write', async ({ page }) => {
   await page.goto('/');
-  await selectStory(page, 'Provincial Crisis');
+  await expectStartup(page);
   await page.getByRole('button', { name: 'New Game', exact: true }).click();
   await choose(page, 'Keep the name Mara Vale and begin');
   await choose(page, 'You mediated disputes at the provincial court');
@@ -144,7 +150,7 @@ test('failed Next retains its selection and error, with no effects or save write
     localStorage.setItem(key, JSON.stringify(save));
   }, key);
   await page.reload();
-  await selectStory(page, 'Provincial Crisis');
+  await expectStartup(page);
   await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
   await choose(page, 'Present the attested grain accounts');
   const saved = await checkpointRecord(page, key);
@@ -156,7 +162,7 @@ test('failed Next retains its selection and error, with no effects or save write
   await returnToStory(page);
   await page.evaluate(() => {
     let writes = 0;
-    Object.defineProperty(window, '__failedNextWrites', { get: () => writes });
+    Object.defineProperty(window, '__failedContinueWrites', { get: () => writes });
     const original = Storage.prototype.setItem;
     Storage.prototype.setItem = function (key: string, value: string) {
       writes++;
@@ -166,7 +172,7 @@ test('failed Next retains its selection and error, with no effects or save write
   await choose(page, 'Negotiate a supervised civic compact');
   const selected = page.getByRole('radio', { name: 'Negotiate a supervised civic compact', exact: true });
   await expect(selected).toBeChecked();
-  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeEnabled();
   const error = 'Story error: Passage "ending_compact": insufficient inventory for "grain_sack"; cannot remove 6 from 3.';
   await expect(page.getByRole('alert')).toHaveText(error);
   const after = await openPanel(page, 'Character');
@@ -179,11 +185,11 @@ test('failed Next retains its selection and error, with no effects or save write
   await returnToStory(page);
   await expect(selected).toBeChecked();
   await expect(page.getByRole('alert')).toHaveText(error);
-  expect(await page.evaluate(() => Reflect.get(window, '__failedNextWrites'))).toBe(0);
+  expect(await page.evaluate(() => Reflect.get(window, '__failedContinueWrites'))).toBe(0);
   expect(await checkpointRecord(page, key)).toBe(saved);
   await choose(page, 'Set the hearing aside and evacuate');
   await expectPassage(page, 'Boats Before Possessions');
   await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
 });

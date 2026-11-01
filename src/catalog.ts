@@ -1,8 +1,7 @@
-import cityGateSource from './example.story?raw';
 import provincialCrisisSource from '../examples/provincial-crisis.story?raw';
-import { DEFAULT_SAVE_IDENTITY, validateSaveIdentity } from './storage';
+import { validateSaveIdentity } from './storage';
 import type { StorySaveIdentity } from './storage';
-import { cityGatePeople, provincialCrisisPeople } from './people';
+import { provincialCrisisPeople } from './people';
 import type { PersonReference } from './people';
 
 export interface CatalogStory {
@@ -16,14 +15,6 @@ export interface CatalogStory {
 
 /** Static application configuration; importing the catalog never reads saves or enters passages. */
 export const storyCatalog: readonly CatalogStory[] = Object.freeze([
-  {
-    id: 'city-gate',
-    title: 'The City Gate',
-    description: 'A short introductory adventure involving a city council, an optional character background, and a dangerous watchtower.',
-    source: cityGateSource,
-    identity: DEFAULT_SAVE_IDENTITY,
-    people: cityGatePeople,
-  },
   {
     id: 'provincial-crisis',
     title: 'Provincial Crisis',

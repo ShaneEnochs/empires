@@ -108,11 +108,13 @@ function selectStory(entry: CatalogStory): void {
     start.textContent = 'New Game';
     start.addEventListener('click', startNewGame);
     actions.append(start);
-    const back = document.createElement('button');
-    back.type = 'button';
-    back.textContent = 'Back to Stories';
-    back.addEventListener('click', renderLibrary);
-    actions.append(back);
+    if (storyCatalog.length > 1) {
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.textContent = 'Back to Stories';
+      back.addEventListener('click', renderLibrary);
+      actions.append(back);
+    }
     root.append(actions);
     renderNotice();
     heading.focus();
@@ -204,10 +206,10 @@ function selectStory(entry: CatalogStory): void {
           legend.textContent = 'Choose an action';
           group.append(legend);
           let selected: typeof choices[number] | undefined;
-          const next = addAction('Next', () => {
+          const continueButton = addAction('Continue', () => {
             if (selected !== undefined) session.navigate(selected.destinationId);
           });
-          next.disabled = true;
+          continueButton.disabled = true;
           for (const [index, choice] of choices.entries()) {
             const row = document.createElement('label');
             row.className = 'choice-row';
@@ -218,7 +220,7 @@ function selectStory(entry: CatalogStory): void {
             radio.value = String(index);
             radio.addEventListener('change', () => {
               selected = choice;
-              next.disabled = false;
+              continueButton.disabled = false;
             });
             const text = document.createElement('span');
             text.textContent = choice.label;
@@ -266,21 +268,12 @@ function selectStory(entry: CatalogStory): void {
 
       chapter.textContent = passage.chapter;
       storyContent.replaceChildren(heading, ...paragraphs, actions);
-      root.replaceChildren(header, storyContent, ...panels.sections, utilities);
+      root.replaceChildren(header, storyContent, ...panels.sections);
       selectView('Story');
       renderNotice();
       heading.focus();
     }
 
-    const newGameButton = document.createElement('button');
-    newGameButton.type = 'button';
-    newGameButton.textContent = 'New Game';
-    newGameButton.addEventListener('click', startNewGame);
-    const utilities = document.createElement('div');
-    utilities.className = 'utility-controls';
-    utilities.setAttribute('role', 'group');
-    utilities.setAttribute('aria-label', 'Game tools');
-    utilities.append(newGameButton);
     render();
   }
 
@@ -315,4 +308,8 @@ function renderLibrary(): void {
   heading.focus();
 }
 
-renderLibrary();
+if (storyCatalog.length === 1) {
+  try { selectStory(storyCatalog[0]!); } catch (error) { showError(error); }
+} else {
+  renderLibrary();
+}
