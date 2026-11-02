@@ -18,10 +18,8 @@ for (const width of [320, 375, 768, 1280]) {
     }));
     for (const [index, bounds] of dimensions.entries()) {
       expect(bounds.width).toBeGreaterThanOrEqual(44);
-      const rowStart = width <= 420 && index >= 3 ? 3 : 0;
-      expect(bounds.y).toBe(dimensions[rowStart]!.y);
-      expect(Math.abs(bounds.width - dimensions[rowStart]!.width)).toBeLessThanOrEqual(1);
-      if (width <= 420 && index >= 3) expect(bounds.y).toBeGreaterThan(dimensions[0]!.y);
+      expect(bounds.y).toBe(dimensions[0]!.y);
+      expect(Math.abs(bounds.width - dimensions[0]!.width)).toBeLessThanOrEqual(1);
       expect(bounds.height).toBe(44);
     }
     await expect(page.locator('.chapter-label')).toHaveText('The Writ');
