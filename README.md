@@ -5,9 +5,11 @@ by Roman architecture and civic institutions. Contestants earn eight Laurels thr
 many kinds of accomplishment; battling is not required. The three highest-ranked
 contestants with eight Laurels qualify for the Triumvirate championship.
 
-The current foundation is deliberately short: arrive by ferry in Lezano, enter a
-trainer name, choose He / Him, She / Her, or They / Them, examine three starters,
-and partner with Charmander, Chikorita, or Piplup. All three are equally available.
+The playable opening begins aboard a crowded ferry to Lezano. Meet Lucia, give
+your first name and pronouns in conversation, then learn more about the League,
+speak to other contestants, listen in, or enjoy a quiet moment on deck. After
+arriving, examine three starters and partner with Charmander, Chikorita, or Piplup.
+All three are equally available.
 Keep the species name or enter a nickname. The story ends after the partnership.
 No battles, evolution, levels, storage boxes, rankings, or external Pokémon services
 are implemented. The rest of the narrative will be written separately.
@@ -28,7 +30,7 @@ Unicode code points, trims outer whitespace, and rejects controls and line break
 The read-only views are Story, Character, Party, Journal, and People. Character
 shows trainer name/pronouns plus any authored skills/inventory. Party shows up to
 six companions in joining order, as `Pip (Piplup)` or `Piplup`. It has no management
-buttons. Tabs use two rows at narrow widths and retain 44px touch targets. Opening
+buttons. Tabs retain one row at narrow widths with 44px touch targets. Opening
 information never advances the story, submits a draft, or saves.
 
 ## Writing stories
@@ -98,7 +100,7 @@ published build. No editor uploads, accounts, APIs, or new runtime dependencies 
 
 ## Saves and recovery
 
-The sole public story has `storyId: aurelian-league`, `storyRevision: 1`, and key
+The sole public story has `storyId: aurelian-league`, `storyRevision: 2`, and key
 `pokemon:checkpoint:aurelian-league`. This fresh namespace never reads, migrates,
 or deletes the former game's browser records.
 
