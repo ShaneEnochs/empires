@@ -13,7 +13,7 @@ for (const [species, pronouns, nickname] of [
   await page.setViewportSize({width,height:800});
   await page.goto('/');
   await expect(page.getByRole('heading',{level:1})).toHaveText('The Aurelian League');
-  await expect(page.getByText('Begin your Pokémon journey in the Torvesca region, where eight Laurels stand between you and the inaugural Aurelian championship.',{exact:true})).toBeVisible();
+  await expect(page.getByText('Begin your Pokémon journey in the Aurelia region, where eight Laurels stand between you and the inaugural Aurelian championship.',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'New Game',exact:true}).click();
   await expect(page.getByRole('heading',{level:1})).toHaveText('Approaching Lezano');
   const tabs = page.getByRole('navigation',{name:'Reading views'}).getByRole('button');
