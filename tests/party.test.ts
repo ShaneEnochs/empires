@@ -154,7 +154,6 @@ test('public ferry story starts with an empty party and preserves character choi
   const storage=new Memory(),session=new GameSession(publicStory,storage);session.newGame(()=>true);
   session.navigate('ferry_windows');session.navigate('ferry_context');session.navigate('ferry_ad');
   session.advancePage();session.navigate('name');session.submitText('  Ari  ');
-  session.navigate('contact_question');
   session.navigate(contact);session.navigate('pronouns');session.navigate(pronoun);session.navigate('lucia_chat');
   session.navigate('open_deck');session.navigate('rail');session.navigate('dock_approach');
   const state=session.game!.state;
