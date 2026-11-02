@@ -113,9 +113,11 @@ h1[tabindex='-1']:focus-visible, h2[tabindex='-1']:focus-visible { outline: none
 .confirmation-actions button { flex: 1 1 8rem; }
 .choice-row:has(input:disabled) { opacity: 0.6; cursor: default; }
 
+/* Keep all five tabs in one row on phones without reducing touch targets. */
 @media (max-width: 420px) {
-  :root { --reading-header-space: calc(2 * var(--tab-height) + 2.175rem + 1px); }
-  .view-navigation { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .view-navigation button { grid-column: span 2; min-block-size: 44px; }
-  .view-navigation button:nth-child(n + 4) { grid-column: span 3; }
+  .view-navigation button {
+    font-size: clamp(0.72rem, 3.25vw, 0.84rem);
+    letter-spacing: -0.04em;
+    padding-inline: 0;
+  }
 }
