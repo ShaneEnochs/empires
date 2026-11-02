@@ -29,7 +29,7 @@ for (const [species, pronouns, nickname] of [
   await page.getByRole('button',{name:'People',exact:true}).click();
   await expect(page.locator('#people')).toContainText('Lucia');
   await page.getByRole('button',{name:'Story',exact:true}).click();
-  await choose(page,'Tell her you'd like to look around before docking');
+  await choose(page,"Tell her you'd like to look around before docking");
   await choose(page,'Go up to the observation deck instead');
   await proceed(page);await proceed(page);await proceed(page);
   for (const examine of ['Charmander','Chikorita','Piplup']) {
@@ -67,7 +67,7 @@ for (const species of ['Charmander','Chikorita','Piplup']) test(`keep ${species}
  await page.getByRole('button',{name:'New Game',exact:true}).click();await proceed(page);await proceed(page);await proceed(page);
  await page.getByRole('textbox',{name:'Your first name',exact:true}).fill('Ari');await proceed(page);
  await choose(page,'They / Them');await proceed(page);
- await choose(page,'Tell her you'd like to look around before docking');
+ await choose(page,"Tell her you'd like to look around before docking");
  await choose(page,'Introduce yourself to the two contestants');
  await proceed(page);await proceed(page);await proceed(page);
  await choose(page,'Examine '+species);await choose(page,'Choose '+species);await choose(page,'Keep the species name');
