@@ -21,7 +21,7 @@ for (const [species, pronouns, nickname] of [
   for (const tab of await tabs.all()) {const bounds=await tab.boundingBox();expect(bounds!.height).toBeGreaterThanOrEqual(44);expect(bounds!.width).toBeGreaterThanOrEqual(44);}
   await page.getByRole('button',{name:'Party',exact:true}).click();
   await expect(page.getByText("You haven't partnered with any Pokémon yet.")).toBeVisible();
-  await page.getByRole('button',{name:'Story',exact:true}).click(); await proceed(page);await proceed(page);
+  await page.getByRole('button',{name:'Story',exact:true}).click(); await proceed(page);await proceed(page);await proceed(page);
   const input = page.getByRole('textbox',{name:'Your first name',exact:true});
   await input.fill('   ');await input.press('Enter');await expect(page.getByRole('alert')).toBeVisible();
   await input.fill('  Rowan 周  ');await input.press('Enter');
@@ -29,8 +29,8 @@ for (const [species, pronouns, nickname] of [
   await page.getByRole('button',{name:'People',exact:true}).click();
   await expect(page.locator('#people')).toContainText('Lucia');
   await page.getByRole('button',{name:'Story',exact:true}).click();
-  await choose(page,'Wish her luck and look around the ferry');
-  await choose(page,'Head outside for some peace and quiet');
+  await choose(page,"Tell her you'd like to look around before docking");
+  await choose(page,'Go up to the observation deck instead');
   await proceed(page);await proceed(page);await proceed(page);
   for (const examine of ['Charmander','Chikorita','Piplup']) {
    await choose(page,'Examine '+examine);
@@ -64,11 +64,11 @@ for (const species of ['Charmander','Chikorita','Piplup']) test(`keep ${species}
  // Intentionally seed the former namespace to verify it is left untouched.
  await page.addInitScript(()=>localStorage.setItem('empires:checkpoint:provincial-crisis','old progress'));
  await page.goto('/'); await expect(page.getByRole('button',{name:'Continue Game',exact:true})).toHaveCount(0);
- await page.getByRole('button',{name:'New Game',exact:true}).click();await proceed(page);await proceed(page);
+ await page.getByRole('button',{name:'New Game',exact:true}).click();await proceed(page);await proceed(page);await proceed(page);
  await page.getByRole('textbox',{name:'Your first name',exact:true}).fill('Ari');await proceed(page);
  await choose(page,'They / Them');await proceed(page);
- await choose(page,'Wish her luck and look around the ferry');
- await choose(page,'Go over and speak to the two contestants');
+ await choose(page,"Tell her you'd like to look around before docking");
+ await choose(page,'Introduce yourself to the two contestants');
  await proceed(page);await proceed(page);await proceed(page);
  await choose(page,'Examine '+species);await choose(page,'Choose '+species);await choose(page,'Keep the species name');
  await page.getByRole('button',{name:'Party',exact:true}).click();await expect(page.locator('#party li')).toHaveText([species]);

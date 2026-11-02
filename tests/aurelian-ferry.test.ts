@@ -13,6 +13,8 @@ function startFerryConversation(name = 'Alex', pronouns = 'they'): Game {
   assert.equal(game.passage.id, 'ferry');
   assert.equal(game.canAdvancePage, true);
   game.advancePage();
+  assert.equal(game.canAdvancePage, true);
+  game.advancePage();
   assert.equal(game.canAdvancePage, false);
   game.navigate('name');
   game.submitText(name);
@@ -22,16 +24,20 @@ function startFerryConversation(name = 'Alex', pronouns = 'they'): Game {
   return game;
 }
 
-test('the ferry opens with two reading pages and name and pronouns arise in Lucia dialogue', () => {
+test('the user-written ferry opening has three reading pages before natural name and pronoun questions', () => {
   const game = new Game(story);
-  assert.equal(game.currentParagraphs.length, 3);
+  assert.equal(game.currentParagraphs.length, 5);
   assert.equal(game.passage.title, 'Approaching Lezano');
+  assert.match(game.currentParagraphs.map(p => p.text).join(' '), /only received your Pokémon Trainer license last week/);
   game.advancePage();
-  assert.equal(game.currentParagraphs.length, 3);
+  assert.equal(game.currentParagraphs.length, 5);
+  game.advancePage();
+  assert.equal(game.currentParagraphs.length, 4);
+  assert.match(game.currentParagraphs.map(p => p.text).join(' '), /Pretty exciting, isn't it/);
   game.navigate('name');
-  assert.match(game.currentParagraphs.map(p => p.text).join(' '), /first name is fine/);
+  assert.match(game.currentParagraphs.map(p => p.text).join(' '), /Just your first name/);
   game.submitText('Jordan');
-  assert.match(game.currentParagraphs.map(p => p.text).join(' '), /what about you/i);
+  assert.match(game.currentParagraphs.map(p => p.text).join(' '), /What pronouns do you use/);
   assert.deepEqual(game.visibleChoices.map(x => x.label), ['He / Him', 'She / Her', 'They / Them']);
 });
 

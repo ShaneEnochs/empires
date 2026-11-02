@@ -22,7 +22,7 @@ export const storyCatalog: readonly CatalogStory[] = Object.freeze([
     title: titlePage.title,
     description: titlePage.description,
     source: aurelianLeagueSource,
-    identity: { storyId: 'aurelian-league', storyRevision: 2 },
+    identity: { storyId: 'aurelian-league', storyRevision: 3 },
     people: parsePeople(aurelianPeople),
   },
 ].map(entry => Object.freeze({ ...entry, identity: validateSaveIdentity(entry.identity) })));
