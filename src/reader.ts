@@ -1,3 +1,4 @@
+import { renderNarrative } from './format';
 import type { TitlePage } from './title-page';
 import type { Game } from './game';
 import type { Story } from './types';
@@ -224,9 +225,9 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
       heading.textContent = passage.title;
       heading.tabIndex = -1;
 
-      const paragraphs = game.visibleParagraphs.map(({ text }) => {
+      const paragraphs = game.currentParagraphs.map(({ text }) => {
         const paragraph = document.createElement('p');
-        paragraph.textContent = interpolate(text, game.state.variables);
+        paragraph.append(renderNarrative(text, game.variables));
         return paragraph;
       });
 
@@ -250,10 +251,11 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
         return button;
       }
 
-      if (passage.death) {
+      if (game.canAdvancePage) { addAction('Continue', () => session.advancePage()); }
+      else if (passage.death) {
         addAction('Try Again', () => session.retryAfterDeath());
       } else {
-        const choices = game.availableChoices;
+        const choices = game.visibleChoices;
         if (choices.length > 0) {
           const group = document.createElement('fieldset');
           group.className = 'choices';
@@ -271,6 +273,7 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
             row.className = 'choice-row';
             const radio = document.createElement('input');
             radio.type = 'radio';
+            radio.disabled = !game.isSelectable(choice);
             radio.name = 'passage-choice';
             // Use the option index: distinct authored choices may share a destination.
             radio.value = String(index);
@@ -289,7 +292,7 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
         if (destination !== undefined) addAction('Continue', () => session.navigate(destination));
       }
 
-      if (passage.textInput !== undefined) {
+      if (!game.canAdvancePage && passage.textInput !== undefined) {
         const action = passage.textInput;
         const form = document.createElement('form');
         form.setAttribute('aria-label', 'Text input');

@@ -777,3 +777,66 @@ in-memory storage. The preview index reads structural metadata only and never
 navigates Game. File selection alone parses; restart reuses that immutable Story.
 The production build has only index.html; Pages checks exclude author.html and
 its code. VS Code tasks reuse the bounded CLI. See [AUTHORING.md](AUTHORING.md).
+
+## Advanced authoring (Stage 12C)
+
+See [the complete playable example](../examples/advanced-authoring.story). It is a
+local draft/example, not a public catalog entry. Select it at `/author.html` to
+exercise pronoun presets, plural agreement, Unicode capitalization, nested guards,
+conditional effects, local variables, formatting, pages, and unavailable choices.
+
+- `${name}` is unchanged; `$!{name}` uppercases the first Unicode code point and
+  `$!!{name}` uppercases the complete value, without changing the variable. Numbers
+  and booleans are converted to their existing string representation first.
+- `@{plural_verbs are|is}` selects between two authored strings using a declared
+  boolean. Exactly one pipe, a single-line expression, and no nested inline
+  expressions are supported. Branch whitespace is literal after the separator;
+  normal variable/pronoun substitutions inside the selected branch are supported.
+  Missing delimiters and non-boolean selectors are errors. Only the selected
+  branch is resolved at runtime; player values are never recursively interpreted.
+  Gender is independent; configure `plural_verbs` explicitly for custom pronouns.
+- `*comment Author note` requires nonempty note text. It is ignored between
+  declarations, narrative lines, and choices, without flushing paragraphs.
+- Conditional blocks use spaces and a consistently indented body. Align `*elseif`
+  and `*else` with their `*if`; dedent to finish. Nested blocks are supported.
+  Operators have precedence: comparisons/presence predicates, then `not`, then
+  `and`, then `or`. Parentheses override precedence. Boolean variables can stand
+  alone. Comparisons retain strict literal typing; skill and inventory predicates
+  use their existing declarations. These conditions also work in `*show_if` and
+  flat choice suffixes. Effects still must precede all narrative: putting effects
+  in a later branch after narrative is an error, not a reason to reorder them.
+  Entry guards select each branch once against the candidate state at that point;
+  earlier effects, including temp changes, are visible. Narrative and choice guards
+  use committed state. Only individual choice lines can be guarded; action blocks,
+  passage headers, declarations, and navigation directives cannot be conditional.
+- `[b]bold [i]and italic[/i][/b]` produces semantic strong/emphasis nodes in
+  narrative. Tags must balance within each paragraph. Player values use text nodes,
+  so hostile-looking input never becomes formatting or HTML. Journal output stays
+  plain text (format tags in a journal are literal).
+- `*page_break` has no label/arguments. Continue reveals the next visible page;
+  final choices/input/Continue/Try Again remain hidden until the final page.
+  Empty conditional pages are skipped. Each page advance saves once and focuses
+  the passage heading; it never re-enters a passage or captures a checkpoint.
+- `[if condition]` hides a choice. `[selectable_if condition]` keeps it visible
+  with a disabled native radio control. Disabled choices are rejected by the engine
+  and excluded from preflight routes. Every conditional menu needs an unconditional,
+  enabled fallback. No nested choice menus are introduced.
+- `*temp local_name false` declares a passage-local typed literal after title and
+  optional checkpoint, before effects. Temps cannot shadow globals, appear in stats,
+  or receive text-input submissions. Existing `*set`/`*add` can change them. They
+  work in interpolation, inline booleans, conditions, and journal templates, then
+  disappear on leaving. Re-entry and checkpoint recovery initialize them afresh.
+
+Format 3 is used when progress needs page/temp context; it adds validated `context`
+with `page` and `temps` alongside the existing currentState and checkpoint. Plain
+passages continue writing format 2. Formats 1 and 2 remain readable for their
+compatible stories, never rewritten during startup. Missing context for a passage
+whose declarations changed is incompatible rather than guessed. Page targets must
+be authored visible pages and temp fields/types must exactly match declarations.
+The global GameState and pre-entry checkpoint schema remain unchanged. Authored
+story changes still require intentional revision management. Save keys, warnings,
+atomic writes, memory-only author preview, and death recovery retain their meaning.
+
+Preflight advances through visible pages without replaying effects, then explores
+only enabled routes. Analysis is bounded; it does not prove all loops/resources or
+all possible input-dependent grammar. Use local playtests alongside diagnostics.

@@ -171,5 +171,113 @@
       "*death"
     ],
     "description": "Empires death"
+  },
+  "comment": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-comment",
+    "body": [
+      "*comment ${1:Author note}"
+    ],
+    "description": "Empires comment"
+  },
+  "if": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-if",
+    "body": [
+      "*if ${1:condition}",
+      "  ${2:Text}"
+    ],
+    "description": "Empires if"
+  },
+  "elseif": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-elseif",
+    "body": [
+      "*elseif ${1:condition}",
+      "  ${2:Text}"
+    ],
+    "description": "Empires elseif"
+  },
+  "else": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-else",
+    "body": [
+      "*else",
+      "  ${1:Text}"
+    ],
+    "description": "Empires else"
+  },
+  "page_break": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-page_break",
+    "body": [
+      "*page_break"
+    ],
+    "description": "Empires page_break"
+  },
+  "temp": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-temp",
+    "body": [
+      "*temp ${1:local_name} ${2:false}"
+    ],
+    "description": "Empires temp"
+  },
+  "capitalize": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-capitalize",
+    "body": [
+      "\\$!{${1:name}}"
+    ],
+    "description": "Empires capitalize"
+  },
+  "uppercase": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-uppercase",
+    "body": [
+      "\\$!!{${1:name}}"
+    ],
+    "description": "Empires uppercase"
+  },
+  "inline": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-inline",
+    "body": [
+      "@{${1:plural_verbs} ${2:are}|${3:is}}"
+    ],
+    "description": "Empires inline"
+  },
+  "bold": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-bold",
+    "body": [
+      "[b]${1:text}[/b]"
+    ],
+    "description": "Empires bold"
+  },
+  "italic": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-italic",
+    "body": [
+      "[i]${1:text}[/i]"
+    ],
+    "description": "Empires italic"
+  },
+  "selectable_choice": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-selectable_choice",
+    "body": [
+      "#${1:Choice} -> ${2:destination} [selectable_if ${3:gold} >= ${4:10}]"
+    ],
+    "description": "Empires selectable_choice"
+  },
+  "compound_condition": {
+    "scope": "empires-story,plaintext",
+    "prefix": "emp-compound_condition",
+    "body": [
+      "*if (${1:ready}) and not (${2:blocked})",
+      "  ${3:Text}"
+    ],
+    "description": "Empires compound_condition"
   }
 }

@@ -2,6 +2,10 @@ import type { Condition, GameState } from './types';
 
 /** Check validated conditions against committed state without executing effects. */
 export function evaluateCondition(condition: Condition, state: GameState): boolean {
+  if (condition.operator === 'literal') return condition.value;
+  if (condition.operator === 'and') return evaluateCondition(condition.left, state) && evaluateCondition(condition.right, state);
+  if (condition.operator === 'or') return evaluateCondition(condition.left, state) || evaluateCondition(condition.right, state);
+  if (condition.operator === 'not') return !evaluateCondition(condition.operand, state);
   if ('skillId' in condition) {
     const acquired = state.skills.includes(condition.skillId);
     return condition.operator === 'has_skill' ? acquired : !acquired;

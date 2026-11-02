@@ -24,7 +24,7 @@ export class GameSession {
     const saved = loadCheckpoint(storage, story, this.identity);
     if (saved.status === 'loaded') {
       try {
-        this.preparedGame = new Game(story, { checkpoint: saved.checkpoint, ...(saved.currentState === undefined ? {} : { committedState: saved.currentState }) });
+        this.preparedGame = new Game(story, { checkpoint: saved.checkpoint, ...(saved.currentState === undefined ? {} : { committedState: saved.currentState, context: saved.context }) });
         this.startup = { status: 'ready' };
       } catch (error) {
         this.startup = { status: 'invalid', message: 'The saved checkpoint cannot be entered in this story.', error };
@@ -56,7 +56,7 @@ export class GameSession {
     if (saved.status !== 'empty' && !confirmReplacement()) return 'cancelled';
     const candidate = this.prepareNewGame();
     if (candidate === undefined) return 'failed';
-    const result = saveProgress(this.storage, this.story, candidate.state, candidate.checkpoint, this.identity);
+    const result = saveProgress(this.storage, this.story, candidate.state, candidate.checkpoint, this.identity, candidate.resumeContext);
     if (!result.ok) {
       this.unsavedAvailable = true;
       return this.failure('The new game was not started because it could not be saved. Any previous progress was kept.', result.error);
@@ -80,6 +80,8 @@ export class GameSession {
     this.currentNotice = { message: 'Playing without saving. Progress in this game will be lost when this page closes. Existing saved progress is unchanged.' };
     return 'started';
   }
+
+  advancePage(): void { this.act(game => game.advancePage()); }
 
   navigate(destinationId: string): void {
     this.act(game => game.navigate(destinationId));
@@ -114,7 +116,7 @@ export class GameSession {
     if (game === undefined) throw new Error('Start or continue a game first.');
     action(game); // A rejected action throws before any persistence attempt.
     if (this.savingEnabled) {
-      const result = saveProgress(this.storage, this.story, game.state, game.checkpoint, this.identity);
+      const result = saveProgress(this.storage, this.story, game.state, game.checkpoint, this.identity, game.resumeContext);
       this.currentNotice = result.ok ? undefined : {
         message: 'Recent progress could not be saved. Closing this page may lose progress since the last successful save.',
         error: result.error,

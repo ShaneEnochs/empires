@@ -1,7 +1,11 @@
+import { validateContext } from './context';
+import type { ResumeContext } from './types';
 import { validateCommittedState, validateSnapshot } from './snapshot';
 import type { GameSnapshot, GameState, Story } from './types';
 
+/** Base records remain format 2; feature context uses the extended format 3. */
 export const SAVE_FORMAT_VERSION = 2;
+export const CONTEXT_SAVE_FORMAT_VERSION = 3;
 export const STORY_ID = 'empires-example';
 export const STORY_REVISION = 1;
 export const STORAGE_KEY = 'empires:checkpoint:' + STORY_ID;
@@ -56,7 +60,7 @@ export interface CheckpointStorage {
 
 export type LoadedCheckpoint =
   | { readonly status: 'empty' }
-  | { readonly status: 'loaded'; readonly checkpoint: GameSnapshot; readonly currentState?: GameState }
+  | { readonly status: 'loaded'; readonly checkpoint: GameSnapshot; readonly currentState?: GameState; readonly context?: ResumeContext }
   | { readonly status: 'invalid' | 'unavailable'; readonly message: string; readonly error: unknown };
 
 export type SaveResult = { readonly ok: true } | { readonly ok: false; readonly error: unknown };
@@ -80,11 +84,11 @@ export function loadCheckpoint(storage: CheckpointStorage, story: Story, identit
   if (data === null || typeof data !== 'object' || Array.isArray(data)) return invalid('The saved data has an invalid format.');
   const envelope = data as Record<string, unknown>;
   const fields = ['formatVersion', 'storyId', 'storyRevision', 'checkpoint',
-    ...(envelope.formatVersion === 2 ? ['currentState'] : [])];
+    ...((envelope.formatVersion === 2 || envelope.formatVersion === CONTEXT_SAVE_FORMAT_VERSION) ? ['currentState'] : []), ...(envelope.formatVersion === CONTEXT_SAVE_FORMAT_VERSION ? ['context'] : [])];
   if (Object.keys(envelope).length !== fields.length || fields.some(key => !Object.hasOwn(envelope, key))) {
     return invalid('The saved data has an invalid format.');
   }
-  if (envelope.formatVersion !== 1 && envelope.formatVersion !== SAVE_FORMAT_VERSION) return invalid('This save uses a different save format.');
+  if (envelope.formatVersion !== 1 && envelope.formatVersion !== SAVE_FORMAT_VERSION && envelope.formatVersion !== CONTEXT_SAVE_FORMAT_VERSION) return invalid('This save uses a different save format.');
   if (envelope.storyId !== configured.storyId) return invalid('This save belongs to another story.');
   if (envelope.storyRevision !== configured.storyRevision) return invalid('This save is from an incompatible story revision.');
   try {
@@ -92,7 +96,10 @@ export function loadCheckpoint(storage: CheckpointStorage, story: Story, identit
     if (envelope.formatVersion === 1) return { status: 'loaded', checkpoint };
     const target = story.passages.find(passage => passage.id === checkpoint.state.passageId)!;
     if (target.id !== story.startId && !target.checkpoint) throw new Error('Recovery target must be the start or an authored checkpoint.');
-    return { status: 'loaded', checkpoint, currentState: validateCommittedState(envelope.currentState, story) };
+    const currentState = validateCommittedState(envelope.currentState, story);
+    const passage = story.passages.find(p => p.id === currentState.passageId)!;
+    if (envelope.formatVersion !== CONTEXT_SAVE_FORMAT_VERSION && (passage.temps || passage.paragraphs.some(p => p.page))) throw Error('Legacy progress lacks required passage context.');
+    return { status: 'loaded', checkpoint, currentState, ...(envelope.formatVersion === CONTEXT_SAVE_FORMAT_VERSION ? { context: validateContext(envelope.context, passage, currentState) } : {}) };
   } catch (error) {
     return invalid('The saved checkpoint is not compatible with this story.', error);
   }
@@ -115,10 +122,12 @@ export function saveCheckpoint(storage: CheckpointStorage, story: Story, checkpo
 
 /** Current post-entry progress and its independent recovery boundary, in one write. */
 export function saveProgress(storage: CheckpointStorage, story: Story, currentState: GameState,
-  checkpoint: GameSnapshot, identity: StorySaveIdentity = DEFAULT_SAVE_IDENTITY): SaveResult {
+  checkpoint: GameSnapshot, identity: StorySaveIdentity = DEFAULT_SAVE_IDENTITY, context?: ResumeContext): SaveResult {
   const configured = validateSaveIdentity(identity);
   try {
-    const envelope = { formatVersion: SAVE_FORMAT_VERSION, storyId: configured.storyId,
+    const passage = story.passages.find(p => p.id === currentState.passageId);
+    if (!context && passage && (passage.temps || passage.paragraphs.some(p => p.page))) throw Error('Progress requires passage context.');
+    const envelope = { ...(context ? { context: validateContext(context, story.passages.find(p => p.id === currentState.passageId)!, currentState) } : {}), formatVersion: context ? CONTEXT_SAVE_FORMAT_VERSION : SAVE_FORMAT_VERSION, storyId: configured.storyId,
       storyRevision: configured.storyRevision, checkpoint: validateSnapshot(checkpoint, story),
       currentState: validateCommittedState(currentState, story) };
     const target = story.passages.find(passage => passage.id === envelope.checkpoint.state.passageId)!;

@@ -141,7 +141,7 @@ test('rejects prose or further directives after choices and Continue', () => {
   invalid(`${end}\n*continue end\n*continue end`, /must conclude the passage/);
 });
 
-for (const directive of ['*random', '*if flag', '*comment hidden', '*call setup', '*while true', '*choice_nested', '*passagex wrong']) {
+for (const directive of ['*random', '*iff flag', '*comments hidden', '*call setup', '*while true', '*choice_nested', '*passagex wrong']) {
   test(`rejects an unsupported directive: ${directive}`, () => {
     invalid(`${end}\n${directive}`, /Line 4, passage "end": Unsupported directive/);
   });

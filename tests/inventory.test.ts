@@ -133,7 +133,7 @@ for (const condition of [
   'item_count potion >= NaN', 'item_count potion >= Infinity', 'item_count potion >= 1e309',
   'item_count potion >= ' + String(max + 1), 'item_count potion >= "1"',
   'item_count potion >= other', 'item_count potion >= 1 + 2',
-  'has_item potion && lacks_item gold_coin', '(has_item potion)',
+  'has_item potion && lacks_item gold_coin', '(has_item potion',
   'item_count (potion) >= 1', 'item_count potion >= 1 || true', '!has_item potion',
 ]) {
   test('rejects item conditions in both contexts: ' + condition, () => {

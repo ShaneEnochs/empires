@@ -126,7 +126,7 @@ for (const condition of [
   'has_skill', 'lacks_skill', 'has_skill unknown', 'lacks_skill unknown',
   'has_skill "diplomacy"', 'has_skill 1skill', 'lacks_skill Upper',
   'has_skill diplomacy == true', 'has_skill diplomacy >= 1', 'has_skill diplomacy 1',
-  'has_skill diplomacy && lacks_skill swordsmanship', '(has_skill diplomacy)',
+  'has_skill diplomacy && lacks_skill swordsmanship', '(has_skill diplomacy',
   'has_skill (diplomacy)', '!has_skill diplomacy', 'lacks_skill diplomacy extra',
 ]) {
   test(`rejects malformed skill conditions in both contexts: ${condition}`, () => {

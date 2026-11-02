@@ -123,6 +123,12 @@ messenger route and five on the direct route. Neither route can underflow.
 | `*revoke_skill id` | Removes a declared skill if present. Same placement as `*set`. |
 | `*add_item id quantity` | Adds a positive safe integer literal quantity of a declared item. Same placement as `*set`. |
 | `*remove_item id quantity` | Removes that quantity, failing entry if insufficient; zero deletes the property. Same placement as `*set`. |
+| `*comment text` | Author-only note, ignored without interrupting surrounding content. |
+| `*temp name literal` | Passage-local declaration after title/checkpoint, before effects. |
+| `*if condition` | Indented conditional narrative/effects or individual choices. |
+| `*elseif condition` | Alternate branch aligned with its if. |
+| `*else` | Final alternate branch; no arguments. |
+| `*page_break` | Split narrative into resumable pages; no arguments. |
 | Narrative text | At least one unconditional paragraph per passage. Nonblank consecutive lines join with spaces; blank lines separate paragraphs. |
 | `*show_if name operator literal` | At a paragraph boundary after the title/effects, conditions only the paragraph starting on the immediately following source line. |
 | `*show_if has_skill id` / `*show_if lacks_skill id` | Conditions the next paragraph on possession/absence of a declared skill, with the same paragraph boundaries. |
@@ -1227,3 +1233,66 @@ author-controlled boolean, not an engine rule; choose appropriate conditional
 paragraphs for custom pronouns and language. Adding variables to a published story
 can require a story revision change under existing save-compatibility rules;
 this feature does not alter shipped stories, save schemas, or revisions.
+
+## Advanced authoring (Stage 12C)
+
+See [the complete playable example](../examples/advanced-authoring.story). It is a
+local draft/example, not a public catalog entry. Select it at `/author.html` to
+exercise pronoun presets, plural agreement, Unicode capitalization, nested guards,
+conditional effects, local variables, formatting, pages, and unavailable choices.
+
+- `${name}` is unchanged; `$!{name}` uppercases the first Unicode code point and
+  `$!!{name}` uppercases the complete value, without changing the variable. Numbers
+  and booleans are converted to their existing string representation first.
+- `@{plural_verbs are|is}` selects between two authored strings using a declared
+  boolean. Exactly one pipe, a single-line expression, and no nested inline
+  expressions are supported. Branch whitespace is literal after the separator;
+  normal variable/pronoun substitutions inside the selected branch are supported.
+  Missing delimiters and non-boolean selectors are errors. Only the selected
+  branch is resolved at runtime; player values are never recursively interpreted.
+  Gender is independent; configure `plural_verbs` explicitly for custom pronouns.
+- `*comment Author note` requires nonempty note text. It is ignored between
+  declarations, narrative lines, and choices, without flushing paragraphs.
+- Conditional blocks use spaces and a consistently indented body. Align `*elseif`
+  and `*else` with their `*if`; dedent to finish. Nested blocks are supported.
+  Operators have precedence: comparisons/presence predicates, then `not`, then
+  `and`, then `or`. Parentheses override precedence. Boolean variables can stand
+  alone. Comparisons retain strict literal typing; skill and inventory predicates
+  use their existing declarations. These conditions also work in `*show_if` and
+  flat choice suffixes. Effects still must precede all narrative: putting effects
+  in a later branch after narrative is an error, not a reason to reorder them.
+  Entry guards select each branch once against the candidate state at that point;
+  earlier effects, including temp changes, are visible. Narrative and choice guards
+  use committed state. Only individual choice lines can be guarded; action blocks,
+  passage headers, declarations, and navigation directives cannot be conditional.
+- `[b]bold [i]and italic[/i][/b]` produces semantic strong/emphasis nodes in
+  narrative. Tags must balance within each paragraph. Player values use text nodes,
+  so hostile-looking input never becomes formatting or HTML. Journal output stays
+  plain text (format tags in a journal are literal).
+- `*page_break` has no label/arguments. Continue reveals the next visible page;
+  final choices/input/Continue/Try Again remain hidden until the final page.
+  Empty conditional pages are skipped. Each page advance saves once and focuses
+  the passage heading; it never re-enters a passage or captures a checkpoint.
+- `[if condition]` hides a choice. `[selectable_if condition]` keeps it visible
+  with a disabled native radio control. Disabled choices are rejected by the engine
+  and excluded from preflight routes. Every conditional menu needs an unconditional,
+  enabled fallback. No nested choice menus are introduced.
+- `*temp local_name false` declares a passage-local typed literal after title and
+  optional checkpoint, before effects. Temps cannot shadow globals, appear in stats,
+  or receive text-input submissions. Existing `*set`/`*add` can change them. They
+  work in interpolation, inline booleans, conditions, and journal templates, then
+  disappear on leaving. Re-entry and checkpoint recovery initialize them afresh.
+
+Format 3 is used when progress needs page/temp context; it adds validated `context`
+with `page` and `temps` alongside the existing currentState and checkpoint. Plain
+passages continue writing format 2. Formats 1 and 2 remain readable for their
+compatible stories, never rewritten during startup. Missing context for a passage
+whose declarations changed is incompatible rather than guessed. Page targets must
+be authored visible pages and temp fields/types must exactly match declarations.
+The global GameState and pre-entry checkpoint schema remain unchanged. Authored
+story changes still require intentional revision management. Save keys, warnings,
+atomic writes, memory-only author preview, and death recovery retain their meaning.
+
+Preflight advances through visible pages without replaying effects, then explores
+only enabled routes. Analysis is bounded; it does not prove all loops/resources or
+all possible input-dependent grammar. Use local playtests alongside diagnostics.

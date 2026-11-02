@@ -1,3 +1,5 @@
+import { validateContext, visiblePages } from './context';
+import type { ResumeContext, Variables } from './types';
 import { evaluateCondition } from './condition';
 import { interpolate } from './interpolate';
 import { validateTextInput } from './input';
@@ -5,12 +7,14 @@ import { validateCommittedState, validateSnapshot } from './snapshot';
 import type { Choice, GameSnapshot, GameState, NarrativeParagraph, Passage, Story } from './types';
 
 export class Game {
+  private temps: Variables = Object.freeze({});
+  private page = 0;
   private currentState: GameState;
   private currentCheckpoint: GameSnapshot;
 
   /** committedState is storage restoration only: validated post-entry data skips entry.
    * New games and checkpoint-only legacy/recovery construction retain normal entry. */
-  constructor(private readonly story: Story, options?: { readonly checkpoint: unknown; readonly committedState?: unknown }) {
+  constructor(private readonly story: Story, options?: { readonly checkpoint: unknown; readonly committedState?: unknown; readonly context?: unknown }) {
     const snapshot = validateSnapshot(options === undefined ? {
       state: { passageId: story.startId, variables: story.initialVariables, journal: [], skills: [], inventory: {} },
     } : options.checkpoint, story);
@@ -19,6 +23,12 @@ export class Game {
       : this.enterPassage(snapshot.state);
     this.currentState = next;
     this.currentCheckpoint = snapshot;
+    if (options && Object.hasOwn(options, 'committedState')) {
+      if (options.context === undefined && (this.passage.temps || this.passage.paragraphs.some(p => p.page))) throw Error('Saved progress lacks passage context.');
+      if (options.context !== undefined) {
+        const context = validateContext(options.context, this.passage, this.state); this.temps = context.temps; this.page = context.page;
+      }
+    }
   }
 
   get state(): GameState {
@@ -37,6 +47,7 @@ export class Game {
 
   /** Player recovery is available only after reading an authored death passage. */
   retryAfterDeath(): void {
+    if (this.canAdvancePage) throw Error('Finish reading this passage first.');
     if (!this.passage.death) throw new Error('Try Again is only available on a death passage.');
     this.restoreCheckpoint();
   }
@@ -45,18 +56,30 @@ export class Game {
     return this.findPassage(this.currentState.passageId);
   }
 
+  get variables(): Variables { return Object.freeze({ ...this.state.variables, ...this.temps }); }
+  get resumeContext(): ResumeContext | undefined {
+    return this.passage.temps || this.passage.paragraphs.some(p => p.page) ? Object.freeze({ temps: this.temps, page: this.page }) : undefined;
+  }
+  get canAdvancePage(): boolean { return visiblePages(this.passage, this.state, this.temps).at(-1) !== this.page; }
+  advancePage(): void {
+    const pages = visiblePages(this.passage, this.state, this.temps); const next = pages[pages.indexOf(this.page) + 1];
+    if (next === undefined) throw Error('No further narrative page.'); this.page = next;
+  }
+  get currentParagraphs(): readonly NarrativeParagraph[] { return this.visibleParagraphs.filter(p => (p.page ?? 0) === this.page); }
+  get visibleChoices(): readonly Choice[] { return this.passage.choices.filter(c => !c.condition || evaluateCondition(c.condition, { ...this.state, variables: this.variables })); }
+  isSelectable(choice: Choice): boolean { return !choice.selectable || evaluateCondition(choice.selectable, { ...this.state, variables: this.variables }); }
   get availableChoices(): readonly Choice[] {
-    return Object.freeze(this.passage.choices.filter(choice =>
-      choice.condition === undefined || evaluateCondition(choice.condition, this.currentState)));
+    return Object.freeze(this.visibleChoices.filter(choice => this.isSelectable(choice)));
   }
 
   get visibleParagraphs(): readonly NarrativeParagraph[] {
     return Object.freeze(this.passage.paragraphs.filter(paragraph =>
-      paragraph.condition === undefined || evaluateCondition(paragraph.condition, this.currentState)));
+      paragraph.condition === undefined || evaluateCondition(paragraph.condition, { ...this.currentState, variables: this.variables })));
   }
 
   /** One explicit action enters one passage; there is no automatic traversal. */
   navigate(destinationId: string): void {
+    if (this.canAdvancePage) throw Error('Finish reading this passage first.');
     const current = this.passage;
     const allowed = current.continueTo === destinationId
       || this.availableChoices.some(choice => choice.destinationId === destinationId);
@@ -68,6 +91,7 @@ export class Game {
 
   /** The validated current passage alone selects the variable and destination. */
   submitText(value: unknown): void {
+    if (this.canAdvancePage) throw Error('Finish reading this passage first.');
     const action = this.passage.textInput;
     if (action === undefined) throw new Error(`Passage "${this.passage.id}" does not offer text input.`);
     const text = validateTextInput(value);
@@ -94,19 +118,27 @@ export class Game {
       passageId, variables: { ...input.variables }, journal: [...input.journal],
       skills: [...input.skills], inventory: { ...input.inventory },
     };
+    const temporary = { ...passage.temps };
+    const decisions = new Map<number, number>();
+    const candidate = () => ({ ...next, variables: { ...next.variables, ...temporary } });
     for (const effect of passage.effects) {
+      if (effect.guards?.some(guard => {
+        if (!decisions.has(guard.id)) decisions.set(guard.id, guard.conditions.findIndex(condition => evaluateCondition(condition, candidate())));
+        return decisions.get(guard.id) !== guard.branch;
+      })) continue;
+      const variableTarget = 'variable' in effect && Object.hasOwn(temporary, effect.variable) ? temporary : next.variables;
       if (effect.kind === 'set') {
-        next.variables[effect.variable] = effect.value;
+        variableTarget[effect.variable] = effect.value;
       } else if (effect.kind === 'add') {
-        const before = next.variables[effect.variable];
+        const before = variableTarget[effect.variable];
         if (typeof before !== 'number') throw new Error(`Passage "${passageId}": *add requires a numeric variable.`);
         const value = before + effect.value;
         if (!Number.isFinite(value)) throw new Error(`Passage "${passageId}": *add on "${effect.variable}" produced a non-finite number.`);
-        next.variables[effect.variable] = value;
+        variableTarget[effect.variable] = value;
       } else if (effect.kind === 'journal') {
         if (!next.journal.some(entry => entry.id === effect.id)) {
           next.journal.push(Object.freeze({
-            id: effect.id, chapter: passage.chapter, text: interpolate(effect.text, next.variables),
+            id: effect.id, chapter: passage.chapter, text: interpolate(effect.text, candidate().variables),
           }));
         }
       } else if (effect.kind === 'grant_skill') {
@@ -127,6 +159,8 @@ export class Game {
         else next.inventory[effect.itemId] = quantity;
       }
     }
+    this.temps = Object.freeze(temporary);
+    this.page = visiblePages(passage, next, temporary)[0]!;
     Object.freeze(next.variables);
     Object.freeze(next.journal);
     Object.freeze(next.skills);

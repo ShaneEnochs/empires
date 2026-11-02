@@ -298,7 +298,7 @@ browser tests and preserve all existing regression suites. See docs/AUTHORING.md
 existing parser for open/save diagnostics; do not duplicate syntax validation or
 run bounded preflight on edits. Keep exact parser messages and zero-based ranges
 only for reliable source lines, isolate documents, and clear corrected/closed files.
-TextMate highlighting is presentation, not validation. Keep all 20 workspace
+TextMate highlighting is presentation, not validation. Keep all 33 workspace
 snippets as the single source under empires-story; do not contribute a duplicate
 extension snippet set. Extension dependencies/build/VSIX files stay outside the
 player bundle. Never publish automatically or alter game/preview/save semantics.
@@ -324,3 +324,15 @@ Stage 12A: Continue restores validated committed current state without entry eff
 format-1 saves use their old checkpoint-entry behavior until the next committed save.
 Do not implement browser history/Undo, URL state, manual slots, timers, or unload saves.
 Browser-local progress does not synchronize across devices. Keep preview memory-only.
+
+## Stage 12C authoring extensions
+
+Use the shared typed condition AST/parser for blocks, show_if, choices and inline
+boolean selectors. Conditional entry guards select once against candidate state
+in source order; narrative reads committed state. Never move effects after prose.
+Temps and page position belong in validated format-3 resume context, not global
+GameState or pre-entry checkpoints. Retain format-1/2 reads and ordinary format-2
+writes. Page advance is one committed save, never passage entry. Disabled choices
+remain visible but are excluded from engine/preflight eligibility. Render author
+formatting with safe DOM nodes before inserting player text; substitutions remain
+single-pass. Keep comments/editor commands aligned with the documented language.
