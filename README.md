@@ -1,6 +1,6 @@
 # The Aurelian League
 
-A Pokémon interactive-fiction prototype set in Torvesca, a modern region influenced
+A Pokémon interactive-fiction prototype set in Aurelia, a modern region influenced
 by Roman architecture and civic institutions. Contestants earn eight Laurels through
 many kinds of accomplishment; battling is not required. The three highest-ranked
 contestants with eight Laurels qualify for the Triumvirate championship.
@@ -82,7 +82,7 @@ conditional narrative/actions/effects, checkpoints, automatic saves, text input,
 pronoun tokens, safe formatting, passage-local temps, and resumable reading pages.
 [Advanced authoring](examples/advanced-authoring.story), [Center Visit](src/example.story),
 and [Harbor Practice](examples/harbor-practice.story) are private regression examples,
-not additional Torvesca lore or public catalog entries.
+not additional Aurelia lore or public catalog entries.
 
 ## Authoring tools and preview
 
