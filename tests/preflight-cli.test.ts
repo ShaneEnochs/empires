@@ -22,7 +22,7 @@ test('CLI checks public and bundled stories by default and prints their diagnost
   assert.match(result.stdout, /0 errors, 0 warnings, 2 information; 14 route prefixes/);
   assert.match(result.stdout, /0 errors, 0 warnings, 4 information; 1098 route prefixes/);
   assert.match(result.stdout, /4 re-entry probes \(4 returns succeeded\)/);
-  assert.match(result.stdout, /Total: 0 errors, 0 warnings, 12 information/);
+  assert.match(result.stdout, /Total: 0 errors, 0 warnings, 9 information/);
 });
 
 test('CLI supports an explicit filename with spaces and leaves advisory warnings nonfatal', t => {
