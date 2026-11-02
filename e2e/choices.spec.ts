@@ -1,4 +1,4 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import { checkpointKey } from '../src/storage';
 import {
@@ -60,7 +60,7 @@ for (const width of [320, 375, 768, 1280]) {
     await expectPassage(page, 'Old Watermarks');
     await expectCharacter(page, ['Mara Vale', '2', '1', 'Undecided']);
     await expectItems(page, 'Journal', [arrival, 'Mara Vale returned as a former river surveyor.']);
-    await expectItems(page, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
+    await expectItems(page, 'Skills', ['Rescue Training', 'Channel Knowledge']);
     await expect(page.getByRole('radio')).toHaveCount(0);
     await expect(advance).toHaveCount(1);
     await expect(advance).toBeEnabled();
@@ -137,13 +137,13 @@ test('failed Continue retains its selection and error, with no effects or save w
   await expectStartup(page);
   await page.getByRole('button', { name: titlePage.newGameLabel, exact: true }).click();
   await choose(page, 'Keep the name Mara Vale and begin');
-  await choose(page, 'You mediated disputes at the provincial court');
+  await choose(page, 'You mediated disputes at the Pokémon care center');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await choose(page, 'Investigate the mill accounts');
   await choose(page, 'Negotiate a protected statement');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await choose(page, 'Take the dry road without fresh soundings');
-  const key = checkpointKey({ storyId: 'provincial-crisis', storyRevision: 1 });
+  const key = checkpointKey({ storyId: 'harbor-practice', storyRevision: 1 });
   // A valid prior save with too little grain exercises the engine's existing
   // atomic entry failure without changing story content or exposing app hooks.
   await page.evaluate(key => {
@@ -179,7 +179,7 @@ test('failed Continue retains its selection and error, with no effects or save w
   const error = 'Story error: Passage "ending_compact": insufficient inventory for "grain_sack"; cannot remove 6 from 3.';
   await expect(page.getByRole('alert')).toHaveText(error);
   const after = await openPanel(page, 'Character');
-  await expect(after.locator('dt')).toHaveText(['Envoy', 'Authority', 'Public trust', 'Settlement']);
+  await expect(after.locator('dt')).toHaveText(['Trainer', 'Authority', 'Public trust', 'Settlement']);
   await expect(after.locator('dd')).toHaveText(values);
   await returnToStory(page);
   await expectItems(page, 'Journal', entries);

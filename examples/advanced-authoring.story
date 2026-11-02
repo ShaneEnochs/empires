@@ -12,10 +12,10 @@
 *skill diplomacy "Diplomacy"
 *item letter "Letter"
 
-*chapter The Audience
+*chapter The Workshop
 *passage creation
 *title Choose Pronouns
-Choose your pronouns. Gender and honorifics are independent of this choice.
+Choose your pronouns. Your Pokémon training exercise begins after this choice.
 *choice
 #He / him -> he
 *comment Choices stay flat.
@@ -50,7 +50,7 @@ Your selection is ready.
 *continue audience
 
 *passage audience
-*title The Royal Audience
+*title The Training Briefing
 *checkpoint
 *temp can_enter false
 *temp multiple_coins true
@@ -77,7 +77,7 @@ The document reads $!!{name}.
 
 *page_break
 
-The king reads the letter. {They} @{plural_verbs are|is} waiting.
+The Pokémon instructor reads the letter. {They} @{plural_verbs are|is} waiting.
 You have ${gold} @{multiple_coins coins|coin}.
 
 *page_break
@@ -85,16 +85,16 @@ You have ${gold} @{multiple_coins coins|coin}.
 He lowers the letter. Your response matters.
 
 *choice
-#Buy a sword (10 gold) -> purchase [selectable_if gold >= 10]
+#Take the advanced route (10 tokens) -> purchase [selectable_if gold >= 10]
 *if can_enter
   #Explain yourself -> explanation
 #Leave quietly -> road
-#Risk an insult -> fatal
+#Risk the crossing -> fatal
 
 *passage purchase
-*title A Purchase
+*title An Advanced Route
 *remove_item letter 1
-The deal is done.
+You return the borrowed letter and take the marked route.
 
 *passage explanation
 *title An Explanation
@@ -108,6 +108,6 @@ You explain your visit.
 The story ends here.
 
 *passage fatal
-*title A Fatal Insult
-The king orders your execution.
+*title An Unsafe Crossing
+A loose plank gives way beneath you. This practice route ends here.
 *death

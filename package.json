@@ -1,5 +1,5 @@
 {
-  "name": "empires",
+  "name": "pokemon",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,12 +9,13 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
-    "build:pages": "npm run build -- --base=/empires/ && node scripts/check-pages.mjs",
+    "build:pages": "npm run build -- --base=/pokemon/ && node scripts/check-pages.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "check:stories": "node --import tsx scripts/check-stories.ts",
-    "test:author": "playwright test --config playwright.author.config.ts"
+    "test:author": "playwright test --config playwright.author.config.ts",
+    "build:regression": "vite build --config vite.regression.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

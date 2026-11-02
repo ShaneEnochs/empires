@@ -1,338 +1,113 @@
-# Working on Empires
+# Working on The Aurelian League
 
-Empires is a lightweight, passage-based TypeScript interactive-fiction engine.
-Keep it understandable, maintainable, and minimally dependent on external
-libraries. Use the existing checkout; no frontend framework is needed.
+This repository is the Pokémon interactive-fiction game The Aurelian League.
+Use the existing checkout; cloud tasks are already isolated. Do not create a Git
+worktree unless requested. Work on a feature branch and prepare PRs against main;
+never merge automatically or commit directly to main.
 
-## Permanent development rules
+## Product and scope
 
-- Read `docs/ENGINE.md` and `docs/SCRIPTING.md` before changing behavior. Authors
-  edit `.story` text; `parseStory` converts it to the existing passage data model.
-- Story execution must be deterministic. Each action enters one explicit
-  destination; there is no automatic execution of subsequent passages.
-- `Game` owns one `GameState`. All present and future gameplay state belongs
-  there. Rendering reads state and must never cause gameplay changes.
-- Entry effects run once in source order on a private candidate state; commit
-  only when every effect succeeds. Initial entry and navigation share this path.
-  Never apply effects from rendering, getters, or interpolation. Keep declarations,
-  effects, and exposed variable records immutable; preserve declared types and
-  finite numeric values.
-- Chapter labels are static immutable passage metadata, never an independent
-  mutable current-chapter state. Journal events belong only to `GameState.journal`.
-  Apply them in entry-effect order, resolve text once when first recorded, and
-  deduplicate by stable event ID. Copy the journal array for candidates and freeze
-  entries; failed entry must commit neither variables nor journal changes.
-- The Journal control is presentation only: viewing/grouping entries must never
-  trigger entry effects, navigation, or gameplay changes. Keep recorded chapter
-  and text values intact in checkpoints and persistent storage.
-- Skill definitions are immutable `Story.skills` metadata containing only IDs and
-  display names. Acquired IDs belong only to `GameState.skills`: a unique,
-  acquisition-ordered, frozen JSON array. Clone it for entry candidates so mixed
-  skill, journal, and variable effects commit atomically. Skill IDs and variable
-  IDs have separate namespaces; use the existing condition parser/evaluator for
-  explicit `has_skill`/`lacks_skill` checks. The Skills section in Character is presentation
-  only; checkpoints preserve acquired IDs, not duplicate definitions.
-- Item definitions are immutable `Story.items` ID/name metadata. Quantities belong
-  only to the frozen `GameState.inventory` record, with positive safe integers
-  and no zero properties. Clone the record for each entry candidate; every item
-  operation must succeed before committing any gameplay changes. Use own-property
-  checks for item reads, including `constructor`. Deletion and reacquisition must
-  preserve object insertion order. Reuse shared conditions/navigation enforcement;
-  inventory inspection is presentation only. The checkpoint preserves the
-  complete inventory alongside variables, skills, and journal.
-- `*input_text` is one concluding player action, never an entry effect. It targets
-  a declared string variable and explicit destination from immutable passage data.
-  Only `Game.submitText` may execute it; ordinary navigation cannot bypass it.
-  Use the shared text validator: reject controls/line breaks, trim outer whitespace,
-  and require 1–80 Unicode code points. Prepare the accepted value before the
-  destination's pre-entry snapshot boundary and effects; commit only after every
-  effect succeeds. Failed submissions preserve every committed field.
-- Character names/background attributes are ordinary `GameState.variables`; use
-  choices and normal effects for backgrounds. Do not add a CharacterState model,
-  allocation engine, or form framework. Draft text may live in the native input
-  until submission, but rendering and panel controls must never submit it.
-- `*stat variable "Label"` is presentation metadata only. References require an
-  earlier own `*var` declaration; labels use nonempty JSON strings, and each
-  variable may be displayed once. Keep author order and freeze `Story.stats`
-  and its entries. Never add stat definitions/values to gameplay state or saves.
-  Presentation-only stat edits do not require a story-revision change.
-- Keep `panels.ts` limited to Character, Journal, and People and their small
-  shared native rendering helpers. Read current GameState for every refresh;
-  never cache variable values. Character uses text-only semantic name/value
-  pairs, Yes/No booleans, and ordinary number/string text. Selecting a view must
-  not execute effects, navigate, submit drafts, or access persistence. Preserve
-  existing action/focus/error handling in reader.ts; do not build a component system.
-- Keep one inline view active: Story, Character, Journal, or People. Character
-  contains Character Statistics, Skills, and Inventory with unchanged formatting
-  and author/acquisition order. The shared reader owns only transient view/choice selection;
-  panels.ts renders the three information views. Preserve the story DOM subtree
-  while hidden, including uncommitted choices, input drafts, and errors.
-  Use native pressed buttons, hide inactive subtrees from all interaction, and
-  focus the presented heading. View switching must never call gameplay/session
-  actions, access persistence, or clear notices. Successful gameplay returns to
-  Story. Use four equal-width grid tabs in one row with at least 44px targets;
-  keep tabs and the current passage's chapter in one opaque CSS sticky wrapper.
-  Use approximately 0.9rem tab labels with no text underline in any state; the
-  active bottom border is the sole selection indicator. Center the compact chapter
-  label and passage titles; enlarge passage titles about 10%, keep prose left-aligned,
-  and preserve startup/library heading styles. Keep focus clear of the wrapper.
-  Preserve the muted palette, system fonts, and absence of motion or nested scrolling.
-- Authored choices use native radios, initially unselected, followed by a disabled
-  Continue until selection. Selection only changes presentation; Continue alone calls
-  GameSession.navigate with the authored destination. Use Game.availableChoices;
-  keep eligibility/effects in Game. Failed navigation retains selection/error;
-  successful navigation resets selection. View switching retains it; reload may
-  discard it. Ordinary Continue, text submission, Try Again, and New Game keep their existing
-  action/confirmation behavior. Terminal passages have no Continue.
-- People definitions in `people.ts` are immutable per-story presentation metadata
-  associated through `catalog.ts`: stable ID, name/role, short supported description,
-  and discovery event IDs. Validate IDs against the selected parsed story before
-  session construction. Derive visibility only from current GameState.journal,
-  including after recovery; omit people without a recorded encounter. Do not add
-  tracking, story directives, state fields, save data, or engine behavior.
-- Keep responsive reading changes in CSS and small presentation hooks. Preserve
-  the passage-action group, exclusive inline view visibility, native
-  focus and error handling, at least 44px touch targets, and browser zoom. Wrap
-  long content without hiding page overflow, truncating data, or adding nested
-  panel scrolling. Do not add animations or change gameplay/save semantics for UI.
-- Passage IDs are authored, unique, and stable. Never derive them from order,
-  titles, prose, timestamps, or random values. Preserve IDs for navigation and
-  future checkpoint compatibility.
-- `Game` owns exactly one in-memory `GameSnapshot`, independent of current state.
-  Always capture complete pre-entry state, including accepted submitted text.
-  The start passage has an automatic initial checkpoint. Authored `*checkpoint`
-  is immutable passage metadata immediately after the title, before effects/prose.
-  Replace the checkpoint only after successful entry, even on re-entry to the same
-  ID; ordinary passages and reads must not capture. Failures preserve both state
-  and checkpoint. Copy/freeze records, arrays, and journal entries explicitly.
-- Validate snapshot input against current story definitions before restoration;
-  reject missing/extra fields, incompatible variables, invalid IDs/quantities,
-  duplicates, inherited data, and accessor callbacks. `restoreCheckpoint()` replays
-  the saved pre-entry state exactly once and preserves the checkpoint itself.
-  Fresh `new Game(story, { checkpoint: data })` enters that destination directly;
-  never initialize the starting passage before restoring. These are engine APIs,
-  not player rewind controls. Persistence must save this pre-entry snapshot.
-  Do not add traditional Undo, a history stack, manual rewind, or a player-facing
-  Return to Checkpoint command.
-- Keep `Game` and snapshot semantics independent of browser storage. `storage.ts`
-  reads/writes only `empires:checkpoint:<storyId>` for a validated explicit
-  `StorySaveIdentity`. IDs match `^[a-z][a-z0-9_-]*$`; revisions are positive safe
-  integers. Assign unique IDs to independent stories, never infer/normalize them.
-  Validate and copy/freeze configuration before any storage access. GameSession
-  retains that copy for every read/write, including rechecks and failure paths.
-  Revisions stay out of keys so old progress reports incompatibility. Never scan,
-  fall back to another story's key, or share the shipped slot for another story.
-  Preserve default `empires-example`, revision 1, its exact legacy key/exports,
-  format-1 reading compatibility and full snapshot validation. Write format 2 with
-  validated current post-entry state and the independent pre-entry checkpoint in
-  one atomic record. Never repair, rewrite on startup, or delete before replacement.
-- `GameSession` prepares a restored Game once before offering Continue, then
-  activates it without re-entering or writing. Empty startup must not construct a
-  new Game. Successful navigation, text submission, and Try Again each write once. Failed
-  actions, renders, panel controls, uncommitted choices, and form drafts never save. No timers or unload saves.
-- Keep `catalog.ts` a static frozen list of explicit ID, title, description,
-  raw source, People metadata, and validated save identity. Provincial Crisis is
-  currently the sole public entry, opening its startup directly. Use the existing
-  library and pre-game Back to Stories only if multiple entries are configured.
-  Keep the selected Story/session/Game/handlers/metadata together in their closure.
-  Do not add test routes, hidden story controls, or an in-game restart/switcher.
-  New Game exists only on startup; reload/reopen to replace progress. Preserve
-  invalid-save, confirmation, Continue Game, and explicit unsaved-play behavior.
-  Retain The City Gate source as an internal regression fixture and leave its
-  `empires-example` record/default exports untouched. Provincial Crisis keeps
-  `provincial-crisis`, revision 1, and its exact key. Never infer or reuse identities.
-  Public startup accesses only its configured save; library rendering stays inert.
-- `*death` is immutable passage metadata and one concluding action after prose.
-  Reject arguments, duplicates, other actions, conditional placement, a checkpoint
-  in the same passage, and a starting death passage. No `isDead` state/history.
-  Ordinary death entry effects use the existing atomic path. Display death prose
-  before allowing recovery; no automatic retry or arbitrary outgoing navigation.
-- Player recovery goes only through guarded `Game.retryAfterDeath()`, delegating
-  to existing atomic `restoreCheckpoint()`. Session retry saves recovered current state once, without capturing a checkpoint.
-  Use the newest in-memory checkpoint even after a failed write; reload uses the
-  last successfully stored progress. Clear save warnings only on successful saves.
-  Preserve accepted names, all state/order, and the checkpoint reference. Failed
-  retry leaves death visible and recoverable. Reject death checkpoints; validated committed progress may target death.
-- New Game rechecks record presence, confirms replacement even for unusable saves,
-  constructs successfully before writing, and activates only after one successful
-  replacement write. Cancellation and failed construction/writes preserve the old
-  game/save. Automatic write failure instead keeps committed gameplay/checkpoint
-  and displays a progress-loss warning. Inaccessible storage permits only explicit
-  consent to play without saving; never imply reload survival in that mode.
-- Keep stable passage/item/skill/journal/variable IDs. Bump the configured story revision for
-  incompatible story changes, including entry-effect changes; bump
-  `SAVE_FORMAT_VERSION` for incompatible envelope changes. Identity/revision are
-  explicit application configuration, never mutable gameplay fields or scripting directives.
-- Implement new features only when explicitly requested. Do not replace working
-  features with elaborate abstractions without a demonstrated benefit. Keep one
-  authoring format; avoid parser frameworks and hypothetical extension layers.
-- Every behavioral change requires appropriate tests. Keep documentation accurate
-  when supported syntax or architecture changes. Test invalid input as well as
-  successful paths, and validate a whole story before initializing a game.
-- Keep preflight in the separate `preflight.ts` module and CLI. Use the permissive
-  authored graph for structural reachability/cycle warnings, and fresh Game
-  replays for confirmed eligible failures. Never duplicate effect arithmetic or
-  condition evaluation, mutate an active game, fabricate snapshots for branching,
-  access storage, or import diagnostics into browser gameplay. Keep deterministic
-  ordering, explicit input values in failure routes, and one shared bounded queue
-  (default 2,000 prefixes) for ordinary simple paths, first returns, and immediate
-  exits. Each eligible first return is replayed through fresh Game; it may have
-  one subsequent transition per branch only to an unvisited passage, then stops.
-  Never allow another repeated entry, expand follow-ups, or invoke checkpoint
-  restoration/Try Again. Preserve normal checkpoint updates and atomic failures.
-  Count executed prefixes and distinct return probes accurately, aggregate
-  return results, and retain distinct failure routes while deduplicating identical
-  route/message failures. Report budget and one-repeat omissions and representative input
-  (`"Preflight Reader"`); never claim a clean report proves all routes safe.
-  Journal-only cycles are not accumulation errors. Warnings are advisory; only
-  parser/file errors and reproduced runtime failures make the CLI fail. Keep
-  authored route/recovery tests and review findings without automatically editing
-  stories or bumping revisions.
-- Preserve the Node suite under `tests/` and keep `npm test` dedicated to it.
-  Committed Chromium integration tests live in `e2e/` and run with
-  `npm run test:e2e` against a freshly built production preview on port 4175.
-  Playwright owns server start/stop and creates isolated contexts per test.
-  Use accessible selectors and retrying assertions; no sleeps, screenshot
-  baselines, test-only app routes, app hooks, or internal Game/session access.
-  Observe storage through native browser APIs when asserting writes. Keep the
-  responsive selection at 320/375/768/1280px and preserve native keyboard checks.
-  Do not weaken a failed test; distinguish a real defect from a test/setup issue.
-- Render authored content with `textContent`, never as HTML. Keep native keyboard
-  access and the small UI; visual changes require a concrete request.
-- Use `Game.availableChoices` for display and enforce the same eligibility inside
-  navigation. Conditions are immutable data evaluated against committed state;
-  eligibility checks must never mutate state or repeat entry effects. Conditional
-  choice blocks require an unconditional fallback. Use `Game.visibleParagraphs`
-  for narrative; choices and paragraphs share one condition parser/evaluator.
-  Every passage must have unconditional prose. `*show_if` marks one paragraph,
-  never commands or nested blocks, and visibility must remain read-only.
-- System Awakening is reference material only. Do not modify it, copy its engine,
-  or reuse its save, undo, interpreter, or UI architecture.
+Torvesca is a modern Pokémon region influenced by Roman architecture and civic
+institutions. The public game is `content/aurelian-league.story`, the sole catalog
+entry. Its identity is `aurelian-league`, revision 1. It begins aboard a ferry to
+Lezano. The player is a young adult, starts without Pokémon, enters a name and
+chooses pronouns, then examines and selects Charmander, Chikorita, or Piplup with
+an optional nickname. All three starters must remain equally available.
 
-## Planned features, only when requested
+Eight Laurels can be earned without battling; the three highest-ranked contestants
+with all eight qualify for the Triumvirate. Do not invent major characters,
+challenges, mystery explanations, or the full chapter unless explicitly requested.
+Do not add evolution, battles, levels/XP, moves/abilities, HP, storage boxes,
+trading, sprites, Pokédex tracking, shops/crafting, random encounters, relationship
+systems, character backgrounds/classes, or Laurel/ranking calculations.
 
-Stages 7A–7C are implemented: one in-memory checkpoint, automatic initial
-capture, author-controlled `*checkpoint`, validated restoration, one versioned
-localStorage record, startup, Continue Game, confirmed New Game, and death/Try Again.
-Stage 8A's static stat-display metadata, read-only Character panel, and limited
-panel-code extraction are implemented, as are Stage 8B's responsive reading styles.
-Stage 8C's permanent production browser suite and Stage 8D's independent
-Provincial Crisis authoring/playtest example are implemented. Keep that example
-under `examples/` and test it through parser/Game APIs and isolated memory storage;
-do not replace the shipped story or reuse its browser save slot. Stage 9A's
-explicit story save identities and shared-memory storage tests are implemented.
-Stage 9B introduced the static browser library and isolated save identities. Stages 9C–9D add standalone
-authoring preflight, bounded first-return/immediate-exit probes, explicit coverage
-limits, and a CLI. Stages 10A–10B provide exclusive reading views, compact sticky
-tabs/chapter bar, consolidated Character, journal-linked People, and select-then-Continue
-choices without changing stories, game state, or save compatibility. Stage 10C
-refines tab/title/chapter typography, uses Continue for choice confirmation, removes
-in-game New Game, and opens the sole public story (Provincial Crisis) directly.
-Do not start later stages without a request.
-There are no migrations, manual saves, multiple slots, or cloud storage.
-Death shows authored prose without saving dead state over the checkpoint.
-Try Again restores the existing complete pre-entry snapshot.
-Submitted names and character attributes are ordinary variables; a checkpoint at
-their destination already includes them. Restoring a genuine input passage permits
-a new submission when rendered. There are no manual save slots or rewind controls.
-Further character features and expressions still require separate requests.
-Primitive variables, literal `*set`/`*add` effects, and narrative interpolation
-are implemented, as are single typed conditions on choices and narrative
-paragraphs, chapter metadata, the chapter-organized journal, binary skills, item
-quantities, and text input for story-driven character creation. Item operands
-use decimal integer literals, never variables or
-expressions; do not add shops, equipment, crafting, weight, rarity, durability,
-categories, capacity, descriptions, or passive effects.
-Skills have no levels, experience, purchasing, rarity, cooldowns, passive bonuses,
-or progression trees. Keep these small without expanding into a general evaluator
-or event framework.
-Text input remains one string field per passage; exclude numeric inputs, complex
-forms, point-buy, portraits, visual customization, and an editable character sheet.
+## Architecture and permanent rules
 
-Unless a future task explicitly changes the requirements, exclude random
-mechanics, glossary systems, shops, skill purchasing, manual saving, save slots,
-import/export, procedures, subroutines, loops, and plugin architectures.
+Read docs/ENGINE.md, docs/SCRIPTING.md, and docs/AUTHORING.md before behavior changes.
+Keep the existing TypeScript parser and small native DOM reader. No framework,
+external Pokémon API/database, new runtime dependency, generalized manager,
+interpreter rewrite, or unrelated abstraction is needed.
 
-## Commands
+- `parseStory` returns immutable Story metadata and passage data. IDs are authored,
+  stable and validated, never derived from titles/order/random values. Validate
+  the entire story, including hidden/unreachable paths, before play.
+- `Game` owns the single authoritative immutable `GameState`: passageId, variables,
+  journal, skills, inventory, and party. Views own only transient selection/drafts.
+- Every navigation/input entry executes effects once in source order against a
+  private candidate. Commit state, context, and checkpoint only after success.
+  Failures preserve all previous fields and the checkpoint. Conditions and rendering
+  never execute effects or mutate state. Guard decisions use candidate state;
+  narrative/choice eligibility uses committed state with local temps.
+- Pokémon definitions are frozen `{id,species}` individuals in `Story.pokemon`.
+  `GameState.party` is a frozen joining-ordered array of frozen `{id,species,nickname?}`.
+  Limit six. Duplicate adds and absent removes are no-ops; remove/rejoin appends.
+  Resolve a global-string nickname once on joining; never link it to the variable.
+  Pokémon are never inventory items. Keep party operations atomic with all effects.
+- Global values retain declared primitive types and finite numeric values. Journal
+  IDs deduplicate; text resolves once on first entry. Skills retain unique acquisition
+  order. Inventory uses positive safe integers, deletes zero properties, preserves
+  insertion order, and uses own-property reads (including `constructor`).
+- Name and nickname input uses the shared validator (1–80 Unicode code points,
+  trim outer whitespace, reject controls/line breaks). Only submitText accepts the
+  current authored concluding input action; navigation cannot bypass it. Accept
+  text before destination checkpoint/effects and roll it back on any failure.
+- Pronouns use ordinary global strings and an authored plural-verb boolean, not a
+  gender subsystem. Character shows current name/pronouns with existing stats.
+- Checkpoints capture the entire pre-entry state; initial entry and authored
+  checkpoint entry share one path. Recovery replays effects once and does not
+  recapture. Death is immutable passage metadata, not gameplay state. Try Again is
+  guarded and uses the latest in-memory checkpoint, even if the last save failed.
+- Continue restores exact committed post-entry state and page/temp context without
+  replaying effects. Page advance saves once without passage re-entry. Temps are
+  local, cannot shadow globals, receive input, or appear in stats.
+- Validate snapshots/committed state against the story. Reject missing/extra fields,
+  unknown IDs, wrong types, nonfinite numbers, duplicates, invalid quantities,
+  party overflow/species/nicknames, inherited data and accessors without executing
+  callbacks. Copy and freeze nested data. No repair or guessing defaults.
+- Public saves use only `pokemon:checkpoint:aurelian-league`; never read, migrate,
+  or delete former-game records. Formats 4/5 explicitly contain party state;
+  checkpoint-only engine helpers use format 6. Formats 1–3 are incompatible.
+  Incompatible story changes require an intentional revision bump; envelope/schema
+  changes require an explicit format decision.
+- Session startup inspects without constructing a new game or writing. Continue
+  activates validated committed state without re-entry. New Game rechecks and
+  confirms replacement, constructs successfully, then writes once before activation.
+  Failure preserves old bytes/game. Automatic write failures keep committed gameplay
+  and display a warning. Storage failure requires explicit unsaved-play consent.
+- Keep Story, Character, Party, Journal and People exclusive inline views. Preserve
+  the hidden story DOM, draft text/choices/errors and save warnings. Switching views
+  changes no gameplay or storage. Focus the active heading. Use native pressed
+  buttons, 44px targets, a simple responsive five-tab layout, sticky chapter/header,
+  clear focus, no animation or nested panel scrolling, and safe wrapping at 320px.
+- Choices are native unselected radios; Continue alone commits. Failed navigation
+  preserves selection/error. Render authored formatting with safe DOM nodes; player
+  input stays text and is never HTML, commands, or a recursive template.
+- People metadata is immutable and validated against journal events; discovery is
+  derived from current journal after recovery. No separate tracking/save data.
+- Preflight stays separate from gameplay, reuses fresh Game replays, shares its
+  bounded deterministic queue, reports omissions and does not claim exhaustive safety.
+- Author preview is development-only, local File API input and memory-only storage.
+  No uploads, public-save access, test routes or runtime fixture switches. The private
+  regression build substitutes its catalog at compile time only. Never publish it.
+- Preserve behavioral coverage. Center Visit, Harbor Practice, and advanced authoring
+  are private Pokémon-themed engine fixtures, not public game lore. Retain parser,
+  effects, checkpoint/recovery, input, inventory, skills, journal, People and browser
+  regression tests. Do not weaken assertions to accommodate failures.
 
-Keep the default Vite base at `/` for development and browser tests. Use
-`npm run build:pages` for `/empires/` hosting and its asset-path check. Pages
-deployment must depend on passing checks and run only on pushes to main, never
-pull requests. Keep Pages/OIDC write permissions limited to the deployment job;
-publish `dist/` as an artifact, never commit generated files.
+## Commands and tools
 
-Use Node.js 22.12+ and npm. Run `npm ci`, `npm test`, `npm run check:stories`, `npm run build`, and
-`npm run test:e2e`; start development with `npm run dev`. Install the pinned
-Playwright Chromium with `npx playwright install chromium`, or
-`npx playwright install --with-deps chromium` on Linux when system libraries
-are needed. Tests automatically serve `dist/` at `127.0.0.1:4175`; rebuild after
-app changes and keep that port free. See README for the optional installed-browser
-override in restricted environments.
-`npm run check:stories -- path/to/file.story` checks explicit files instead of the
-two defaults. The CLI and its subprocess tests use the existing `tsx` dev dependency.
+Node 22.12+ and npm: `npm ci`, `npm test`, `npm run check:stories`, `npm run build`,
+`npm run test:e2e`, `npm run test:author`, `npm run build:pages`. Browser tests use
+Chromium; install with `npx playwright install --with-deps chromium` or use the
+documented installed-browser override. The production, regression and author test
+servers own ports 4175, 4176 and 4177. Rebuild with the default root base after Pages
+checks. `npm run dev` starts development; author.html stays out of production.
 
-CI runs those checks on Node.js 22 for pull requests to `main` and pushes to
-`main`, installs Chromium/system dependencies, and has a 10-minute job limit.
-Browser tests have zero retries and retain failure traces/screenshots; CI uploads
-`test-results/` and `playwright-report/` on failure for seven days. Both are ignored,
-as are `dist/` and `node_modules/`. Commit source/config and the lockfile, not
-generated reports. Work on a feature branch and keep pull requests focused;
-do not commit directly to `main`.
+The Pokémon Story extension is separate under tools/vscode-pokemon. Run its npm ci,
+test and package commands after editor/parser changes. Keep TextMate/Notepad++
+highlighting, autocomplete, `pkmn-` snippets, diagnostics and docs aligned with the
+same .story grammar. Never automatically publish the extension.
 
-## Local authoring toolkit (Stage 11A)
-
-VS Code snippets/tasks use existing syntax and the existing preflight CLI; process
-arguments preserve paths containing spaces. `author.html` is development-only and
-must stay out of production builds and public navigation. `author.ts` parses local
-File API input only on selection, and uses the shared `reader.ts` with GameSession
-and a fresh memory adapter per preview/restart. Never access production storage,
-upload drafts, write source files, assign production identities, add catalog entries,
-or run continuous analysis. People metadata cannot be inferred from draft prose.
-The searchable passage index reads parsed structure only; never teleport, fabricate
-state, or navigate from it. Keep `npm run test:author` separate from production
-browser tests and preserve all existing regression suites. See docs/AUTHORING.md.
-
-## VS Code language support (Stage 11B)
-
-`tools/vscode-empires` is an independent locally packaged extension. Bundle the
-existing parser for open/save diagnostics; do not duplicate syntax validation or
-run bounded preflight on edits. Keep exact parser messages and zero-based ranges
-only for reliable source lines, isolate documents, and clear corrected/closed files.
-TextMate highlighting is presentation, not validation. Keep all 33 workspace
-snippets as the single source under empires-story; do not contribute a duplicate
-extension snippet set. Extension dependencies/build/VSIX files stay outside the
-player bundle. Never publish automatically or alter game/preview/save semantics.
-
-Startup confirmation uses a native modal dialog in the shared reader. Probe
-GameSession.newGame with a rejecting callback, then call it again with explicit
-approval only after consent; keep the synchronous session API and normal recheck.
-Cancel/Escape must preserve progress/startup and restore focus. Guard duplicate
-approval, keep unsaved-play consent explicit, and never remove interactive focus
-outlines when suppressing focused heading outlines. Startup styles must stay
-scoped away from reading content; descriptions come from existing catalog data.
-
-## Notepad++ and People JSON
-
-Keep Notepad++ UDL/completion commands aligned with SCRIPTING.md; these are lexical
-aids, never another parser. The CMD launcher invokes existing preflight with quoted
-paths. Public People definitions live in content/provincial-crisis.people.json.
-Validate unknown JSON shapes before discovery-event checks. Preview may select
-optional .people.json through File API, resetting temporary progress on replacement;
-keep it development-only and isolated from public storage and publishing.
-
-Stage 12A: Continue restores validated committed current state without entry effects;
-format-1 saves use their old checkpoint-entry behavior until the next committed save.
-Do not implement browser history/Undo, URL state, manual slots, timers, or unload saves.
-Browser-local progress does not synchronize across devices. Keep preview memory-only.
-
-## Stage 12C authoring extensions
-
-Use the shared typed condition AST/parser for blocks, show_if, choices and inline
-boolean selectors. Conditional entry guards select once against candidate state
-in source order; narrative reads committed state. Never move effects after prose.
-Temps and page position belong in validated format-3 resume context, not global
-GameState or pre-entry checkpoints. Retain format-1/2 reads and ordinary format-2
-writes. Page advance is one committed save, never passage entry. Disabled choices
-remain visible but are excluded from engine/preflight eligibility. Render author
-formatting with safe DOM nodes before inserting player text; substitutions remain
-single-pass. Keep comments/editor commands aligned with the documented language.
+Pages uses `/pokemon/`, deploys only on main after checks, with write/OIDC permissions
+limited to deployment. Commit source/config/lockfiles, never generated dist, VSIX,
+node_modules or test reports. Preserve third-party font assets and licenses.

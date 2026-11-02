@@ -1,4 +1,3 @@
-import provincialPeopleData from '../content/provincial-crisis.people.json' with { type: 'json' };
 import type { GameState, Story } from './types';
 
 /** Author-maintained presentation metadata; never part of a game or save. */
@@ -14,19 +13,6 @@ function definitions(entries: readonly PersonReference[]): readonly PersonRefere
     ...entry, discoveryEvents: Object.freeze([...entry.discoveryEvents]),
   })));
 }
-
-export const cityGatePeople = definitions([
-  {
-    id: 'messenger', name: 'The messenger',
-    description: 'A messenger at the city gate who asks you to listen to the council and gives you two gold coins.',
-    discoveryEvents: ['met_messenger'],
-  },
-  {
-    id: 'council_clerk', name: 'The council clerk',
-    description: 'The clerk who collects your gate token and the five-coin entry fee at the council hall.',
-    discoveryEvents: ['met_council'],
-  },
-]);
 
 /** Validate ordinary JSON without trusting runtime field types. */
 export function parsePeople(value: unknown): readonly PersonReference[] {
@@ -46,8 +32,6 @@ export function parsePeople(value: unknown): readonly PersonReference[] {
   });
   return definitions(entries);
 }
-
-export const provincialCrisisPeople = parsePeople(provincialPeopleData);
 
 /** Validate the selected story before constructing its session or reading storage. */
 export function validatePeople(story: Story, people: readonly PersonReference[]): readonly PersonReference[] {

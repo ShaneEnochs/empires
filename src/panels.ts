@@ -52,7 +52,7 @@ function list(section: HTMLElement, entries: readonly string[], emptyText: strin
   section.append(items);
 }
 
-/** The three fixed read-only views; passage actions and focus stay in main.ts. */
+/** The four fixed read-only views; passage actions and focus stay in main.ts. */
 export function createPanels(story: Story, game: Game, people: readonly PersonReference[], select: (title: string) => void) {
   const character = panel('character', 'Character', select, section => {
     const statistics = document.createElement('section');
@@ -133,7 +133,25 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
     section.append(entries);
   });
 
-  const panels = [character, journal, reference];
+  const party = panel('party', 'Party', select, section => {
+    const heading = document.createElement('h3');
+    heading.textContent = 'Your Pokémon';
+    const count = document.createElement('p');
+    count.textContent = `${game.state.party.length} / 6`;
+    section.append(heading, count);
+    if (game.state.party.length === 0) {
+      list(section, [], "You haven't partnered with any Pokémon yet.");
+    } else {
+      const members = document.createElement('ol');
+      for (const member of game.state.party) {
+        const item = document.createElement('li');
+        item.textContent = member.nickname ? `${member.nickname} (${member.species})` : member.species;
+        members.append(item);
+      }
+      section.append(members);
+    }
+  });
+  const panels = [character, party, journal, reference];
   return {
     buttons: panels.map(panel => panel.button),
     sections: panels.map(panel => panel.section),

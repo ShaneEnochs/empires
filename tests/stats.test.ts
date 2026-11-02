@@ -223,8 +223,8 @@ test('adding/reordering/renaming stat displays preserves old saves, snapshot sch
   const envelope = JSON.parse(saved!);
   assert.deepEqual(Object.keys(envelope), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint', 'currentState']);
   assert.deepEqual(Object.keys(envelope.checkpoint), ['state']);
-  assert.deepEqual(Object.keys(envelope.checkpoint.state), ['passageId', 'variables', 'journal', 'skills', 'inventory']);
-  assert.equal(envelope.formatVersion, SAVE_FORMAT_VERSION); assert.equal(SAVE_FORMAT_VERSION, 2);
+  assert.deepEqual(Object.keys(envelope.checkpoint.state), ['passageId', 'variables', 'journal', 'party', 'skills', 'inventory']);
+  assert.equal(envelope.formatVersion, SAVE_FORMAT_VERSION); assert.equal(SAVE_FORMAT_VERSION, 4);
   assert.equal(envelope.storyId, STORY_ID); assert.equal(STORY_REVISION, 1);
   for (const stats of [displays, '*stat loyal "Oath"\n*stat name "Alias"\n', '']) {
     const revised = parseStory(definitions + stats + source);
@@ -245,7 +245,7 @@ test('the example displays ordinary character variables in order without changin
   for (const messenger of [false, true]) {
     const game = new Game(example);
     if (messenger) game.navigate('messenger');
-    game.navigate('council');
+    game.navigate('center');
     assert.deepEqual(characterStats(example, game.state).map(row => row.value),
       messenger ? ['Alexander', '2.5', '4', 'Yes'] : ['Alexander', '0.5', '5', 'No']);
   }

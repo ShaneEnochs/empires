@@ -1,9 +1,7 @@
 name: VS Code extension
 on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
+  workflow_call:
+
 permissions:
   contents: read
 jobs:
@@ -16,11 +14,11 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: tools/vscode-empires/package-lock.json
-      - run: npm ci --prefix tools/vscode-empires
-      - run: npm test --prefix tools/vscode-empires
-      - run: npm run package --prefix tools/vscode-empires
+          cache-dependency-path: tools/vscode-pokemon/package-lock.json
+      - run: npm ci --prefix tools/vscode-pokemon
+      - run: npm test --prefix tools/vscode-pokemon
+      - run: npm run package --prefix tools/vscode-pokemon
       - uses: actions/upload-artifact@v7
         with:
-          name: empires-story-vsix
-          path: tools/vscode-empires/*.vsix
+          name: pokemon-story-vsix
+          path: tools/vscode-pokemon/*.vsix

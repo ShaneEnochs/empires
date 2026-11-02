@@ -28,7 +28,7 @@ test('death is immutable JSON-serializable passage metadata, not an effect or ga
   assert.deepEqual(JSON.parse(JSON.stringify(passage)), passage);
   const game = new Game(story);
   game.navigate('fatal');
-  assert.deepEqual(Object.keys(game.state), ['passageId', 'variables', 'journal', 'skills', 'inventory']);
+  assert.deepEqual(Object.keys(game.state), ['passageId', 'variables', 'journal', 'party', 'skills', 'inventory']);
 });
 
 for (const suffix of ['', '\n', '\n\n*passage end\n*title End\nSafe.', '\n*chapter Epilogue\n*passage end\n*title End\nSafe.']) {
@@ -413,7 +413,7 @@ test('the example death route preserves initial recovery and accepted names with
   assert.equal(game.state.variables.character_name, 'Eleanor');
   assert.equal(game.passage.textInput, undefined);
   assert.equal(game.checkpoint, checkpoint); assert.equal(STORY_REVISION, 1);
-  game.navigate('noble_origin'); game.navigate('council');
+  game.navigate('carer_origin'); game.navigate('center');
   assert.equal(game.state.variables.influence, 2.5);
 });
 
@@ -426,11 +426,11 @@ test('existing revision 1 initial and named checkpoint records remain loadable a
         variables: { influence: named ? 1 : 0, honor: 5, loyal: false, character_name: named ? 'Eleanor' : 'Unknown' },
         journal: named ? [{ id: 'arrived_city', chapter: 'Prologue', text: 'Alexander reached the city with influence 1.' }] : [],
         skills: named ? ['composure'] : [],
-        inventory: named ? { gold_coin: 10, gate_token: 1 } : {},
+        party: [], inventory: named ? { gold_coin: 10, gate_token: 1 } : {},
       },
     };
     const storage = new FakeStorage();
-    storage.record = JSON.stringify({ formatVersion: 1, storyId: 'empires-example', storyRevision: 1, checkpoint: snapshot });
+    storage.record = JSON.stringify({ formatVersion: 6, storyId: 'aurelian-league', storyRevision: 1, checkpoint: snapshot });
     const session = new GameSession(parsed, storage);
     assert.equal(session.startup.status, 'ready');
     const game = session.continueGame();

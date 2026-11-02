@@ -3,5 +3,6 @@ dist/
 test-results/
 playwright-report/
 test-results-author/
-tools/vscode-empires/dist/
+tools/vscode-pokemon/dist/
 *.vsix
+regression-dist/

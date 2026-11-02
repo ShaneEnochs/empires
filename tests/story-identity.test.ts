@@ -11,8 +11,8 @@ import {
 import type { CheckpointStorage, StorySaveIdentity } from '../src/storage';
 
 const example = parseStory(readFileSync(new URL('../src/example.story', import.meta.url), 'utf8'));
-const crisis = parseStory(readFileSync(new URL('../examples/provincial-crisis.story', import.meta.url), 'utf8'));
-const crisisIdentity = validateSaveIdentity({ storyId: 'provincial-crisis', storyRevision: 1 });
+const crisis = parseStory(readFileSync(new URL('../examples/harbor-practice.story', import.meta.url), 'utf8'));
+const crisisIdentity = validateSaveIdentity({ storyId: 'harbor-practice', storyRevision: 1 });
 const exampleKey = checkpointKey(DEFAULT_SAVE_IDENTITY);
 const crisisKey = checkpointKey(crisisIdentity);
 
@@ -55,8 +55,8 @@ function startCrisis(storage: SharedStorage, identity = crisisIdentity): GameSes
   return session;
 }
 
-function reachCouncil(session: GameSession): void {
-  for (const id of ['mill_yard', 'copied_records', 'levee_path', 'flood_survey', 'night_council']) session.navigate(id);
+function reachCenter(session: GameSession): void {
+  for (const id of ['mill_yard', 'copied_records', 'levee_path', 'flood_survey', 'night_center']) session.navigate(id);
 }
 
 function onlyAccessed(storage: SharedStorage, key: string): void {
@@ -65,16 +65,16 @@ function onlyAccessed(storage: SharedStorage, key: string): void {
 }
 
 test('default identity preserves the exact existing revision-1 key and application-wide format', () => {
-  assert.deepEqual(DEFAULT_SAVE_IDENTITY, { storyId: 'empires-example', storyRevision: 1 });
+  assert.deepEqual(DEFAULT_SAVE_IDENTITY, { storyId: 'aurelian-league', storyRevision: 1 });
   assert.ok(Object.isFrozen(DEFAULT_SAVE_IDENTITY));
-  assert.equal(STORY_ID, 'empires-example');
+  assert.equal(STORY_ID, 'aurelian-league');
   assert.equal(STORY_REVISION, 1);
-  assert.equal(SAVE_FORMAT_VERSION, 2);
-  assert.equal(STORAGE_KEY, 'empires:checkpoint:empires-example');
+  assert.equal(SAVE_FORMAT_VERSION, 4);
+  assert.equal(STORAGE_KEY, 'pokemon:checkpoint:aurelian-league');
   assert.equal(checkpointKey(), STORAGE_KEY);
   assert.notEqual(exampleKey, crisisKey);
-  assert.equal(crisisKey, 'empires:checkpoint:provincial-crisis');
-  assert.equal(checkpointKey({ storyId: 'provincial-crisis', storyRevision: 2 }), crisisKey);
+  assert.equal(crisisKey, 'pokemon:checkpoint:harbor-practice');
+  assert.equal(checkpointKey({ storyId: 'harbor-practice', storyRevision: 2 }), crisisKey);
 });
 
 test('identity validation copies and freezes explicit configuration without normalizing IDs', () => {
@@ -86,24 +86,24 @@ test('identity validation copies and freezes explicit configuration without norm
   input.storyId = 'other';
   assert.equal(configured.storyId, 'province_2-north');
   assert.throws(() => { (configured as { storyRevision: number }).storyRevision = 2; }, TypeError);
-  assert.equal(checkpointKey({ storyId: 'constructor', storyRevision: 1 }), 'empires:checkpoint:constructor');
+  assert.equal(checkpointKey({ storyId: 'constructor', storyRevision: 1 }), 'pokemon:checkpoint:constructor');
   assert.deepEqual(validateSaveIdentity(Object.assign(Object.create(null), { storyId: 'north', storyRevision: 1 })),
     { storyId: 'north', storyRevision: 1 });
 });
 
 const invalidConfigurations: [string, unknown][] = [
-  ...['', 'Empires', ' empires', 'empires ', 'empires:other', 'empires/other', 'empires\\other',
-    'empires.other', 'empires\n', 'émpires', '1empire'].map(id => ['ID ' + JSON.stringify(id), { storyId: id, storyRevision: 1 }] as [string, unknown]),
+  ...['', 'Aurelian League', ' pokemon', 'pokemon ', 'pokemon:other', 'pokemon/other', 'pokemon\\other',
+    'pokemon.other', 'pokemon\n', 'pokémon', '1pokemon'].map(id => ['ID ' + JSON.stringify(id), { storyId: id, storyRevision: 1 }] as [string, unknown]),
   ...[0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, '1', null].map(revision =>
-    ['revision ' + String(revision), { storyId: 'empires', storyRevision: revision }] as [string, unknown]),
+    ['revision ' + String(revision), { storyId: 'pokemon', storyRevision: revision }] as [string, unknown]),
   ['non-string ID', { storyId: 1, storyRevision: 1 }],
   ['null', null], ['array', []], ['empty object', {}],
-  ['missing revision', { storyId: 'empires' }], ['missing ID', { storyRevision: 1 }],
-  ['extra field', { storyId: 'empires', storyRevision: 1, key: exampleKey }],
-  ['inherited fields', Object.create({ storyId: 'empires', storyRevision: 1 })],
-  ['symbol field', { storyId: 'empires', storyRevision: 1, [Symbol('extra')]: true }],
-  ['hidden field', Object.defineProperty({ storyId: 'empires', storyRevision: 1 }, 'extra', { value: true })],
-  ['hidden required field', Object.defineProperty({ storyRevision: 1 }, 'storyId', { value: 'empires' })],
+  ['missing revision', { storyId: 'pokemon' }], ['missing ID', { storyRevision: 1 }],
+  ['extra field', { storyId: 'pokemon', storyRevision: 1, key: exampleKey }],
+  ['inherited fields', Object.create({ storyId: 'pokemon', storyRevision: 1 })],
+  ['symbol field', { storyId: 'pokemon', storyRevision: 1, [Symbol('extra')]: true }],
+  ['hidden field', Object.defineProperty({ storyId: 'pokemon', storyRevision: 1 }, 'extra', { value: true })],
+  ['hidden required field', Object.defineProperty({ storyRevision: 1 }, 'storyId', { value: 'pokemon' })],
 ];
 
 for (const [description, value] of invalidConfigurations) {
@@ -124,7 +124,7 @@ for (const [description, value] of invalidConfigurations) {
 
 test('configuration accessors are rejected without invoking callbacks', () => {
   let reads = 0;
-  const identity = { get storyId() { reads++; return 'empires'; }, storyRevision: 1 };
+  const identity = { get storyId() { reads++; return 'pokemon'; }, storyRevision: 1 };
   const storage = new SharedStorage();
   assert.throws(() => new GameSession(example, storage, identity), /own data fields/);
   assert.equal(reads, 0);
@@ -137,21 +137,21 @@ test('two real stories independently save and Continue complete ordered state us
   const first = startExample(storage);
   const firstBytes = storage.records.get(exampleKey);
   const second = startCrisis(storage);
-  reachCouncil(second);
+  reachCenter(second);
   assert.equal(storage.records.get(exampleKey), firstBytes);
   assert.deepEqual([...storage.records.keys()], [exampleKey, crisisKey]);
   const firstState = first.game!.state;
   const secondState = second.game!.state;
   assert.deepEqual(firstState.variables, { influence: 1, honor: 5, loyal: false, character_name: 'Éléonore O’Brien' });
   assert.deepEqual(secondState.variables, {
-    envoy_name: 'Rowan 周', authority: 4, trust: 2, plan: 'Undecided',
+    trainer_name: 'Rowan 周', authority: 4, trust: 2, plan: 'Undecided',
     workers_fed: false, river_warning: true, bonded: false,
   });
   assert.deepEqual(firstState.skills, ['composure']);
   assert.deepEqual(secondState.skills, ['channel_knowledge']);
   assert.deepEqual(secondState.inventory, { coin: 2, grain_sack: 8, ledger_copy: 1 });
   assert.deepEqual(secondState.journal.map(entry => entry.id),
-    ['arrival', 'river_background', 'mandate_briefed', 'copied_records', 'flood_survey', 'council_open']);
+    ['arrival', 'river_background', 'mandate_briefed', 'copied_records', 'flood_survey', 'center_open']);
   assert.match(secondState.journal.at(-1)!.text, /Rowan 周/);
 
   for (const [story, identity, expected] of [
@@ -162,7 +162,7 @@ test('two real stories independently save and Continue complete ordered state us
     assert.deepEqual(Object.keys(envelope), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint', 'currentState']);
     assert.equal(envelope.storyId, identity.storyId);
     assert.equal(envelope.storyRevision, 1);
-    assert.equal(envelope.formatVersion, 2);
+    assert.equal(envelope.formatVersion, 4);
     storage.reads.length = 0;
     const writes = storage.writes.length;
     const reopened = new GameSession(story, storage, identity);
@@ -230,7 +230,7 @@ test('a revision change reports incompatibility at the same key until confirmed 
   startCrisis(storage);
   const firstBytes = storage.records.get(exampleKey);
   const oldBytes = storage.records.get(crisisKey);
-  const revision2 = validateSaveIdentity({ storyId: 'provincial-crisis', storyRevision: 2 });
+  const revision2 = validateSaveIdentity({ storyId: 'harbor-practice', storyRevision: 2 });
   storage.reads.length = 0;
   storage.writes.length = 0;
   const session = new GameSession(crisis, storage, revision2);
@@ -245,23 +245,23 @@ test('a revision change reports incompatibility at the same key until confirmed 
   assert.equal(storage.writes.length, 1);
   const replacement = JSON.parse(storage.records.get(crisisKey)!);
   assert.equal(replacement.storyRevision, 2);
-  assert.equal(replacement.formatVersion, 2);
+  assert.equal(replacement.formatVersion, 4);
   assert.equal(storage.records.get(exampleKey), firstBytes);
   assert.equal(loadCheckpoint(storage, crisis, crisisIdentity).status, 'invalid');
   assert.equal(loadCheckpoint(storage, crisis, revision2).status, 'loaded');
   onlyAccessed(storage, crisisKey);
 });
 
-test('literal existing revision-1 Empires saves load with default and explicit configuration without migration', () => {
+test('literal existing revision-1 Aurelian League saves load with default and explicit configuration without migration', () => {
   const storage = new SharedStorage();
   const legacy = JSON.stringify({
-    formatVersion: 1, storyId: 'empires-example', storyRevision: 1,
+    formatVersion: 6, storyId: 'aurelian-league', storyRevision: 1,
     checkpoint: { state: {
       passageId: 'gate', variables: { influence: 0, honor: 5, loyal: false, character_name: 'Unknown' },
-      journal: [], skills: [], inventory: {},
+      journal: [], skills: [], party: [], inventory: {},
     } },
   });
-  storage.records.set('empires:checkpoint:empires-example', legacy);
+  storage.records.set('pokemon:checkpoint:aurelian-league', legacy);
   assert.equal(loadCheckpoint(storage, example).status, 'loaded');
   assert.equal(loadCheckpoint(storage, example, DEFAULT_SAVE_IDENTITY).status, 'loaded');
   const expected = new Game(example).state;
@@ -290,9 +290,9 @@ test('session retains its identity when caller configuration changes, including 
   const storage = new SharedStorage();
   startExample(storage);
   const firstBytes = storage.records.get(exampleKey);
-  const mutable = { storyId: 'provincial-crisis', storyRevision: 1 };
+  const mutable = { storyId: 'harbor-practice', storyRevision: 1 };
   const session = new GameSession(crisis, storage, mutable);
-  mutable.storyId = 'empires-example';
+  mutable.storyId = 'aurelian-league';
   mutable.storyRevision = 99;
   storage.reads.length = 0;
   storage.writes.length = 0;
@@ -317,8 +317,8 @@ test('failed writes are isolated; retry attempts saving the newer in-memory chec
   const persistedBriefing = storage.records.get(crisisKey);
   const briefingState = second.game!.state;
   storage.writeFailure = crisisKey;
-  reachCouncil(second);
-  const councilState = second.game!.state;
+  reachCenter(second);
+  const centerState = second.game!.state;
   const checkpoint = second.game!.checkpoint;
   const warning = second.notice;
   assert.match(warning!.message, /could not be saved/);
@@ -328,7 +328,7 @@ test('failed writes are isolated; retry attempts saving the newer in-memory chec
   second.navigate('evacuation_plan');
   second.navigate('night_breach');
   second.retryAfterDeath();
-  assert.deepEqual(second.game!.state, councilState);
+  assert.deepEqual(second.game!.state, centerState);
   assert.equal(second.game!.checkpoint, checkpoint);
   assert.equal(second.notice?.message, warning?.message);
   assert.equal(storage.writes.length, writes + 3);
@@ -386,7 +386,7 @@ test('independent death and retry autosaves restore both records and exactly-onc
   const storage = new SharedStorage();
   const first = startExample(storage);
   const second = startCrisis(storage);
-  reachCouncil(second);
+  reachCenter(second);
   const records = [...storage.records];
   const firstState = first.game!.state;
   const secondState = second.game!.state;

@@ -64,11 +64,11 @@ test('documented creation template parses and all presets reach the story', () =
 });
 
 test('editor highlighting recognizes exact pronoun tokens without inventing directives', () => {
-  const grammar = JSON.parse(readFileSync('tools/vscode-empires/syntaxes/empires.tmLanguage.json', 'utf8'));
+  const grammar = JSON.parse(readFileSync('tools/vscode-pokemon/syntaxes/pokemon.tmLanguage.json', 'utf8'));
   const pattern = new RegExp(grammar.repository.interpolation.match, 'g');
   const expected = tokens.flatMap(token => [`{${token}}`, `{${token[0]!.toUpperCase() + token.slice(1)}}`]);
   assert.deepEqual(text.match(pattern), expected);
-  const udl = readFileSync('tools/notepadpp/Empires-udl.xml', 'utf8');
+  const udl = readFileSync('tools/notepadpp/Pokemon-udl.xml', 'utf8');
   assert.deepEqual(udl.match(/<Keywords name="Keywords3">([^<]+)</)![1]!.split(' ').sort(), expected.sort());
   assert.equal('{lord} {THEY}'.match(pattern), null);
 });

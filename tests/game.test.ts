@@ -13,7 +13,7 @@ test('enters the authored starting passage', () => {
     passageId: 'gate', variables: { influence: 1, honor: 5, loyal: false, character_name: 'Alexander' },
     journal: [{ id: 'arrived_city', chapter: 'Prologue', text: 'Alexander reached the city with influence 1.' }],
     skills: ['composure'],
-    inventory: { gold_coin: 10, gate_token: 1 },
+    party: [], inventory: { gold_coin: 10, gate_token: 1 },
   });
   assert.equal(game.passage.id, 'gate');
 });
@@ -24,16 +24,16 @@ test('follows a choice then an explicit Continue destination', () => {
   assert.equal(game.state.passageId, 'messenger');
   assert.equal(game.passage.title, 'A Quiet Warning');
   // Continue does not run automatically on entry or when reading the passage.
-  assert.equal(game.passage.continueTo, 'council');
+  assert.equal(game.passage.continueTo, 'center');
   assert.equal(game.state.passageId, 'messenger');
-  game.navigate('council');
-  assert.equal(game.state.passageId, 'council');
+  game.navigate('center');
+  assert.equal(game.state.passageId, 'center');
 });
 
 test('can follow the alternative direct route', () => {
   const game = new Game(story);
-  game.navigate('council');
-  assert.equal(game.passage.id, 'council');
+  game.navigate('center');
+  assert.equal(game.passage.id, 'center');
 });
 
 test('navigation uses IDs even when passage definitions are reordered', () => {
@@ -45,8 +45,8 @@ test('navigation uses IDs even when passage definitions are reordered', () => {
   assert.equal(game.passage.id, 'gate');
   game.navigate('messenger');
   assert.equal(game.passage.id, 'messenger');
-  game.navigate('council');
-  assert.equal(game.passage.id, 'council');
+  game.navigate('center');
+  assert.equal(game.passage.id, 'center');
 });
 
 test('a malformed later passage prevents game initialization altogether', () => {
@@ -81,15 +81,15 @@ test('rejects jumping to an existing passage with no active action to it', () =>
 
 test('terminal passages do not allow further navigation', () => {
   const game = new Game(story);
-  game.navigate('council');
+  game.navigate('center');
   assert.throws(() => game.navigate('gate'), /has no action/);
-  assert.equal(game.state.passageId, 'council');
+  assert.equal(game.state.passageId, 'center');
 });
 
 test('navigation replaces centrally owned state and cannot be mutated by callers', () => {
   const game = new Game(story);
   const before = game.state;
-  assert.equal(Reflect.set(before, 'passageId', 'council'), false);
+  assert.equal(Reflect.set(before, 'passageId', 'center'), false);
   assert.equal(game.state.passageId, 'gate');
   game.navigate('messenger');
   assert.notEqual(game.state, before);
@@ -104,7 +104,7 @@ test('the same actions produce the same state and do not affect another game', (
   assert.equal(second.state.passageId, 'gate');
   second.navigate('messenger');
   assert.deepEqual(first.state, second.state);
-  first.navigate('council');
-  second.navigate('council');
+  first.navigate('center');
+  second.navigate('center');
   assert.deepEqual(first.state, second.state);
 });

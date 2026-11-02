@@ -12,26 +12,26 @@ import { STORAGE_KEY } from '../src/storage';
 const story = parseStory(readFileSync(new URL('../src/example.story', import.meta.url), 'utf8'));
 
 for (const messenger of [false, true]) {
-  test('retired City Gate route keeps its full outcome and conditional prose: ' + (messenger ? 'messenger' : 'direct'), () => {
+  test('retired Center Visit route keeps its full outcome and conditional prose: ' + (messenger ? 'messenger' : 'direct'), () => {
     const game = new Game(story);
     const checkpoint = game.checkpoint;
     if (messenger) game.navigate('messenger');
-    game.navigate('council');
+    game.navigate('center');
     const influence = messenger ? 2.5 : 0.5;
     assert.deepEqual(game.state.variables, { influence, honor: messenger ? 4 : 5, loyal: messenger, character_name: 'Alexander' });
     assert.deepEqual(game.state.skills, messenger ? ['diplomacy'] : []);
     assert.deepEqual(game.state.inventory, { gold_coin: messenger ? 7 : 5 });
     assert.deepEqual(game.state.journal.map(entry => entry.id), messenger
-      ? ['arrived_city', 'met_messenger', 'met_council'] : ['arrived_city', 'met_council']);
+      ? ['arrived_city', 'met_messenger', 'met_center'] : ['arrived_city', 'met_center']);
     assert.equal(game.state.journal[0]!.text, 'Alexander reached the city with influence 1.');
-    assert.equal(game.state.journal.at(-1)!.text, 'You reached the council with influence ' + influence + '.');
+    assert.equal(game.state.journal.at(-1)!.text, 'You reached the center with influence ' + influence + '.');
     assert.deepEqual(characterStats(story, game.state), [
       { label: 'Name', value: 'Alexander' }, { label: 'Influence', value: String(influence) },
       { label: 'Honor', value: messenger ? '4' : '5' }, { label: 'Loyal', value: messenger ? 'Yes' : 'No' },
     ]);
     const prose = game.visibleParagraphs.map(paragraph => interpolate(paragraph.text, game.state.variables)).join('\n');
     assert.equal(prose.includes('Your diplomatic training helps you choose your words.'), messenger);
-    assert.equal(prose.includes('Without diplomatic training, you face the council unaided.'), !messenger);
+    assert.equal(prose.includes('Without diplomatic training, you face the center unaided.'), !messenger);
     assert.equal(prose.includes("The messenger's extra coins remain after the entry fee."), messenger);
     assert.equal(game.availableChoices.length, 0);
     assert.equal(game.passage.continueTo, undefined);
@@ -40,7 +40,7 @@ for (const messenger of [false, true]) {
 }
 
 for (const named of [false, true]) {
-  test('retired City Gate save and repeated death recovery retain complete pre-entry state: ' + (named ? 'named' : 'initial'), () => {
+  test('retired Center Visit save and repeated death recovery retain complete pre-entry state: ' + (named ? 'named' : 'initial'), () => {
     const records = new Map<string, string>();
     let writes = 0;
     const storage = {
@@ -73,8 +73,8 @@ for (const named of [false, true]) {
     assert.equal(writes, count + 9);
     assert.equal(records.get(STORAGE_KEY), saved);
     const envelope = JSON.parse(saved);
-    assert.equal(envelope.formatVersion, 2);
-    assert.equal(envelope.storyId, 'empires-example');
+    assert.equal(envelope.formatVersion, 4);
+    assert.equal(envelope.storyId, 'aurelian-league');
     assert.equal(envelope.storyRevision, 1);
   });
 }

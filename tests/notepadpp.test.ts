@@ -13,10 +13,10 @@ const base = 'tools/notepadpp/';
 test('Notepad++ completion and UDL contain exactly the documented directives', () => {
   const docs = read('docs/SCRIPTING.md').split('## Supported syntax')[1]!.split('## Character statistics')[0]!;
   const commands = [...new Set([...docs.matchAll(/^\| `\*(\w+)/gm)].map(match => '*' + match[1]))].sort();
-  const completion = [...read(base + 'Empires.xml').matchAll(/<KeyWord name="([^"]+)"/g)].map(match => match[1]);
+  const completion = [...read(base + 'Pokemon.xml').matchAll(/<KeyWord name="([^"]+)"/g)].map(match => match[1]);
   assert.deepEqual(completion, commands);
-  const udl = read(base + 'Empires-udl.xml');
-  assert.match(udl, /name="Empires" ext="story" udlVersion="2.1"/);
+  const udl = read(base + 'Pokemon-udl.xml');
+  assert.match(udl, /name="Aurelian League" ext="story" udlVersion="2.1"/);
   assert.deepEqual(udl.match(/<Keywords name="Keywords1">([^<]+)</)![1]!.split(' ').sort(), commands);
 });
 
@@ -33,7 +33,7 @@ test('CMD launcher quotes paths, preserves errors, and invokes the existing CLI'
   assert.match(cmd, /pushd "%~dp0\.\.\\\.\."/);
   assert.match(cmd, /node --import tsx scripts\/check-stories.ts "%STORY_FILE%"/);
   assert.match(cmd, /set "VALIDATION_EXIT=%ERRORLEVEL%"\npopd\nexit \/b %VALIDATION_EXIT%/);
-  const dir = mkdtempSync(join(tmpdir(), 'Empires spaced draft '));
+  const dir = mkdtempSync(join(tmpdir(), 'Aurelian League spaced draft '));
   try {
     const path = join(dir, 'My saved story.story'); copyFileSync(base + 'starter.story', path);
     const run = spawnSync(process.execPath, ['--import', 'tsx', 'scripts/check-stories.ts', path], { encoding: 'utf8' });

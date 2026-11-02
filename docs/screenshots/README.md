@@ -1,9 +1,6 @@
-# Stage 10A browser inspection
+# Historical engine screenshots
 
-Chromium screenshots of the production Pages build at 320×900 and 1280×900.
-The library, fresh City Gate passage, and Journal use the same column and
-navigation structure. These are review illustrations, not screenshot test baselines.
-
-- [Phone library](library-320.png) / [Desktop library](library-1280.png)
-- [Phone story](story-320.png) / [Desktop story](story-1280.png)
-- [Phone Journal](journal-320.png) / [Desktop Journal](journal-1280.png)
+These retained binary images document an earlier interface, before The Aurelian
+League conversion. They are not current branding, current UI references, or test
+baselines. Current automated browser checks cover the public five-view interface
+at narrow and desktop widths. The images have deliberately not been edited.

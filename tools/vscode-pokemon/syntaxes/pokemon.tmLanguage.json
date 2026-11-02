@@ -1,37 +1,37 @@
 {
-  "scopeName": "source.empires-story",
+  "scopeName": "source.pokemon-story",
   "patterns": [
     {
-      "name": "comment.line.empires",
+      "name": "comment.line.pokemon",
       "match": "^\\s*\\*comment(?:\\s.*)?$"
     },
     {
-      "name": "keyword.control.inline.empires",
+      "name": "keyword.control.inline.pokemon",
       "match": "@\\{|\\||\\[/?[bi]\\]|\\b(?:and|or|not|selectable_if)\\b"
     },
     {
       "begin": "^\\s*(\\*)(passage)(\\s+)([a-z][a-z0-9_-]*)\\b",
       "beginCaptures": {
         "1": {
-          "name": "punctuation.definition.directive.empires"
+          "name": "punctuation.definition.directive.pokemon"
         },
         "2": {
-          "name": "keyword.control.directive.empires"
+          "name": "keyword.control.directive.pokemon"
         },
         "4": {
-          "name": "entity.name.label.empires"
+          "name": "entity.name.label.pokemon"
         }
       },
       "end": "$"
     },
     {
-      "begin": "^\\s*(\\*)(comment|if|elseif|else|page_break|temp|var|stat|skill|item|chapter|passage|title|choice|continue|input_text|checkpoint|journal|set|add|grant_skill|revoke_skill|add_item|remove_item|death|show_if)(?=\\s|$)",
+      "begin": "^\\s*(\\*)(comment|if|elseif|else|page_break|temp|var|stat|skill|item|chapter|passage|title|choice|continue|input_text|checkpoint|journal|set|add|pokemon|add_pokemon|remove_pokemon|grant_skill|revoke_skill|add_item|remove_item|death|show_if)(?=\\s|$)",
       "beginCaptures": {
         "1": {
-          "name": "punctuation.definition.directive.empires"
+          "name": "punctuation.definition.directive.pokemon"
         },
         "2": {
-          "name": "keyword.control.directive.empires"
+          "name": "keyword.control.directive.pokemon"
         }
       },
       "end": "$",
@@ -40,10 +40,10 @@
           "match": "(->)(\\s*)([a-z][a-z0-9_-]*)",
           "captures": {
             "1": {
-              "name": "punctuation.separator.destination.empires"
+              "name": "punctuation.separator.destination.pokemon"
             },
             "3": {
-              "name": "entity.name.label.empires"
+              "name": "entity.name.label.pokemon"
             }
           }
         },
@@ -54,27 +54,27 @@
           "include": "#interpolation"
         },
         {
-          "name": "keyword.operator.comparison.empires",
+          "name": "keyword.operator.comparison.pokemon",
           "match": "==|!=|>=|<=|>|<"
         },
         {
-          "name": "keyword.control.condition.empires",
-          "match": "\\b(?:if|selectable_if|and|or|not|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
+          "name": "keyword.control.condition.pokemon",
+          "match": "\\b(?:if|selectable_if|and|or|not|has_pokemon|lacks_pokemon|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
         },
         {
-          "name": "constant.language.empires",
+          "name": "constant.language.pokemon",
           "match": "\\b(?:true|false)\\b"
         },
         {
-          "name": "constant.numeric.empires",
+          "name": "constant.numeric.pokemon",
           "match": "(?<![\\w-])-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b"
         },
         {
-          "name": "punctuation.separator.destination.empires",
+          "name": "punctuation.separator.destination.pokemon",
           "match": "->"
         },
         {
-          "name": "variable.other.empires",
+          "name": "variable.other.pokemon",
           "match": "\\b[a-z][a-z0-9_-]*\\b"
         }
       ]
@@ -83,16 +83,16 @@
       "begin": "^\\s*(#)(.*?)(\\s*->\\s*)([a-z][a-z0-9_-]*)",
       "beginCaptures": {
         "1": {
-          "name": "punctuation.definition.choice.empires"
+          "name": "punctuation.definition.choice.pokemon"
         },
         "2": {
-          "name": "string.unquoted.choice.empires"
+          "name": "string.unquoted.choice.pokemon"
         },
         "3": {
-          "name": "punctuation.separator.destination.empires"
+          "name": "punctuation.separator.destination.pokemon"
         },
         "4": {
-          "name": "entity.name.label.empires"
+          "name": "entity.name.label.pokemon"
         }
       },
       "end": "$",
@@ -104,27 +104,27 @@
           "include": "#interpolation"
         },
         {
-          "name": "keyword.operator.comparison.empires",
+          "name": "keyword.operator.comparison.pokemon",
           "match": "==|!=|>=|<=|>|<"
         },
         {
-          "name": "keyword.control.condition.empires",
-          "match": "\\b(?:if|selectable_if|and|or|not|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
+          "name": "keyword.control.condition.pokemon",
+          "match": "\\b(?:if|selectable_if|and|or|not|has_pokemon|lacks_pokemon|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
         },
         {
-          "name": "constant.language.empires",
+          "name": "constant.language.pokemon",
           "match": "\\b(?:true|false)\\b"
         },
         {
-          "name": "constant.numeric.empires",
+          "name": "constant.numeric.pokemon",
           "match": "(?<![\\w-])-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b"
         },
         {
-          "name": "punctuation.separator.destination.empires",
+          "name": "punctuation.separator.destination.pokemon",
           "match": "->"
         },
         {
-          "name": "variable.other.empires",
+          "name": "variable.other.pokemon",
           "match": "\\b[a-z][a-z0-9_-]*\\b"
         }
       ]
@@ -135,12 +135,12 @@
   ],
   "repository": {
     "string": {
-      "name": "string.quoted.double.empires",
+      "name": "string.quoted.double.pokemon",
       "begin": "\"",
       "end": "\"",
       "patterns": [
         {
-          "name": "constant.character.escape.empires",
+          "name": "constant.character.escape.pokemon",
           "match": "\\\\."
         },
         {
@@ -149,7 +149,7 @@
       ]
     },
     "interpolation": {
-      "name": "variable.other.interpolated.empires",
+      "name": "variable.other.interpolated.pokemon",
       "match": "\\$(?:!!|!)?\\{[a-z][a-z0-9_-]*\\}|(?<!\\$)\\{(?:they|them|their|theirs|themself|They|Them|Their|Theirs|Themself)\\}"
     }
   }

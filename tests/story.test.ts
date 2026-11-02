@@ -14,15 +14,15 @@ function invalid(input: string, expected: RegExp): void {
 test('parses multiple passages, choices, Continue, and terminal content from the example', () => {
   const story = parseStory(readFileSync(new URL('../src/example.story', import.meta.url), 'utf8'));
   assert.equal(story.startId, 'gate');
-  assert.deepEqual(story.passages.map(p => p.id), ['gate', 'messenger', 'council', 'choose_name', 'choose_background', 'noble_origin', 'soldier_origin', 'watchtower', 'fatal_fall']);
+  assert.deepEqual(story.passages.map(p => p.id), ['gate', 'messenger', 'center', 'choose_name', 'choose_background', 'carer_origin', 'researcher_origin', 'watchtower', 'fatal_fall']);
   assert.equal(story.passages[0]?.paragraphs.length, 2);
   assert.deepEqual(story.passages[0]?.choices, [
     { label: 'Speak to the messenger', destinationId: 'messenger' },
-    { label: 'Go straight to the council', destinationId: 'council' },
+    { label: 'Go straight to the center', destinationId: 'center' },
     { label: 'Choose a preferred name and background', destinationId: 'choose_name' },
     { label: 'Explore the abandoned watchtower', destinationId: 'watchtower' },
   ]);
-  assert.equal(story.passages[1]?.continueTo, 'council');
+  assert.equal(story.passages[1]?.continueTo, 'center');
   assert.deepEqual(story.passages[2]?.choices, []);
   assert.equal(story.passages[2]?.continueTo, undefined);
 });

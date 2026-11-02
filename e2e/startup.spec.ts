@@ -1,4 +1,4 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import {
   arrival, checkpointRecord, checkpointWrites, choose, confirmNewGame, crisisKey,
@@ -6,7 +6,7 @@ import {
   observeCheckpointWrites, reachBriefing, startGame,
 } from './helpers';
 
-test('first visit directly offers Provincial Crisis startup and captures its initial pre-entry checkpoint', async ({ page }) => {
+test('first visit directly offers Harbor Practice startup and captures its initial pre-entry checkpoint', async ({ page }) => {
   await page.goto('/');
   await expectStartup(page);
   await expect(page.getByRole('navigation', { name: 'Game startup' }).getByRole('button')).toHaveText([titlePage.newGameLabel]);
@@ -16,12 +16,12 @@ test('first visit directly offers Provincial Crisis startup and captures its ini
   await expectInitialState(page);
   const save = JSON.parse((await checkpointRecord(page))!);
   expect(save).toEqual({
-    formatVersion: 2, storyId: 'provincial-crisis', storyRevision: 1,
-    currentState: expect.objectContaining({ passageId: 'quayside', inventory: { coin: 4, sealed_writ: 1 } }),
+    formatVersion: 4, storyId: 'harbor-practice', storyRevision: 1,
+    currentState: expect.objectContaining({ passageId: 'quayside', party: [], inventory: { coin: 4, sealed_writ: 1 } }),
     checkpoint: { state: {
       passageId: 'quayside',
-      variables: { envoy_name: 'Mara Vale', authority: 2, trust: 0, plan: 'Undecided', workers_fed: false, river_warning: false, bonded: false },
-      journal: [], skills: [], inventory: {},
+      variables: { trainer_name: 'Mara Vale', authority: 2, trust: 0, plan: 'Undecided', workers_fed: false, river_warning: false, bonded: false },
+      journal: [], skills: [], party: [], inventory: {},
     } },
   });
 });
@@ -31,7 +31,7 @@ test('Continue Game resumes the latest ordinary passage without replaying its ef
   await startGame(page);
   let saved = await checkpointRecord(page);
   await choose(page, 'Keep the name Mara Vale and begin');
-  await choose(page, 'You mediated disputes at the provincial court');
+  await choose(page, 'You mediated disputes at the Pokémon care center');
   await expectPassage(page, "A Clerk's Reputation");
   await expectCharacter(page, ['Mara Vale', '3', '0', 'Undecided']);
   expect(await checkpointRecord(page)).not.toBe(saved);
@@ -62,7 +62,7 @@ test('a new page resumes the latest reward passage, accepted name, and complete 
     await expectPassage(reopened, 'Ink Paid For');
     await expectCharacter(reopened, ['Eleanor', '4', '1', 'Undecided']);
     await expectItems(reopened, 'Journal', [arrival, 'Eleanor returned as a former river surveyor.', 'Eleanor accepted six public grain sacks with authority 3.', 'Eleanor paid two coins for attested grain accounts.']);
-    await expectItems(reopened, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
+    await expectItems(reopened, 'Skills', ['Rescue Training', 'Channel Knowledge']);
     await expectItems(reopened, 'Inventory', ['Dispatch Coin × 2', 'Emergency Writ × 1', 'Grain Sack × 6', 'Attested Grain Accounts × 1']);
     await expect(reopened.getByRole('textbox')).toHaveCount(0);
     expect(await checkpointRecord(reopened)).toBe(saved);

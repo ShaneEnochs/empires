@@ -99,13 +99,13 @@ test('terminal endings resume without restarting or replaying inventory removal'
 
 test('legacy checkpoint records load unchanged then upgrade on next committed action', () => {
   const { session, storage } = setup(); session.submitText('Ada');
-  storage.raw = JSON.stringify({ formatVersion: 1, storyId: 'empires-example', storyRevision: 1, checkpoint: session.game!.checkpoint });
+  storage.raw = JSON.stringify({ formatVersion: 6, storyId: 'aurelian-league', storyRevision: 1, checkpoint: session.game!.checkpoint });
   const raw = storage.raw; const writes = storage.writes;
   const legacy = new GameSession(story, storage); const game = legacy.continueGame();
   assert.equal(game.passage.id, 'camp'); assert.equal(game.state.variables.score, 3);
   assert.equal(storage.raw, raw); assert.equal(storage.writes, writes);
   legacy.navigate('reward'); assert.equal(storage.writes, writes + 1);
-  assert.equal(JSON.parse(storage.raw!).formatVersion, 2);
+  assert.equal(JSON.parse(storage.raw!).formatVersion, 4);
   assert.deepEqual(new GameSession(story, storage).continueGame().state, game.state);
 });
 
@@ -124,7 +124,7 @@ for (const [label, mutate] of Object.entries({
   ordinaryCheckpoint: (d: any) => { d.checkpoint.state.passageId = 'reward'; },
   revision: (d: any) => { d.storyRevision = 2; },
   story: (d: any) => { d.storyId = 'another'; },
-  version: (d: any) => { d.formatVersion = 3; },
+  version: (d: any) => { d.formatVersion = 5; },
   extra: (d: any) => { d.extra = true; },
 })) test('invalid progress stays untouched: ' + label, () => {
   const { session, storage } = setup(); session.submitText('Ada');

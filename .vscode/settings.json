@@ -1,8 +1,8 @@
 {
   "files.associations": {
-    "*.story": "empires-story"
+    "*.story": "pokemon-story"
   },
-  "[empires-story]": {
+  "[pokemon-story]": {
     "editor.quickSuggestions": {
       "other": true,
       "comments": false,

@@ -1,4 +1,4 @@
-import type { Condition, ComparisonOperator, Variables, VariableValue, SkillDefinition, ItemDefinition } from './types';
+import type { Condition, ComparisonOperator, Variables, VariableValue, SkillDefinition, ItemDefinition, PokemonDefinition } from './types';
 export function syntaxError(message: string, line: number, passageId?: string): Error {
   return new Error(`Line ${line}${passageId ? `, passage "${passageId}"` : ''}: ${message}`);
 }
@@ -43,7 +43,13 @@ export function quantityLiteral(source: string, allowZero: boolean, line: number
   return quantity;
 }
 
-function parseAtom(source: string, variables: Variables, skills: readonly SkillDefinition[], items: readonly ItemDefinition[], line: number, passageId: string): Condition {
+export function knownPokemon(value: string, pokemon: readonly PokemonDefinition[], line: number, passageId?: string): string {
+  const pokemonId = id(value, 'Pokémon ID', line, passageId);
+  if (!pokemon.some(member => member.id === pokemonId)) throw syntaxError(`Unknown Pokémon "${pokemonId}".`, line, passageId);
+  return pokemonId;
+}
+
+function parseAtom(source: string, variables: Variables, skills: readonly SkillDefinition[], items: readonly ItemDefinition[], line: number, passageId: string, pokemon: readonly PokemonDefinition[] = []): Condition {
   const count = /^item_count\s+(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(source);
   if (count) {
     const itemId = knownItem(count[1]!, items, line, passageId);
@@ -52,6 +58,8 @@ function parseAtom(source: string, variables: Variables, skills: readonly SkillD
   }
   const parts = /^(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(source);
   if (!parts) {
+    const member = /^(has_pokemon|lacks_pokemon)\s+(\S+)$/.exec(source);
+    if (member) return Object.freeze({ operator: member[1] as 'has_pokemon' | 'lacks_pokemon', pokemonId: knownPokemon(member[2]!, pokemon, line, passageId) });
     const skill = /^(has_skill|lacks_skill)\s+(\S+)$/.exec(source);
     if (skill) {
       const skillId = knownSkill(skill[2]!, skills, line, passageId);
@@ -77,7 +85,7 @@ function parseAtom(source: string, variables: Variables, skills: readonly SkillD
 }
 
 
-export function parseCondition(source: string, variables: Variables, skills: readonly SkillDefinition[], items: readonly ItemDefinition[], line: number, passageId: string): Condition {
+export function parseCondition(source: string, variables: Variables, skills: readonly SkillDefinition[], items: readonly ItemDefinition[], line: number, passageId: string, pokemon: readonly PokemonDefinition[] = []): Condition {
   const tokens = source.match(/"(?:[^"\\]|\\.)*"|>=|<=|==|!=|[()]|[^\s()]+/g) ?? [];
   let position = 0;
   function expression(level: number): Condition {
@@ -97,7 +105,7 @@ export function parseCondition(source: string, variables: Variables, skills: rea
     while (position < tokens.length && !['and','or',')','('].includes(tokens[position]!)) position++;
     const atom = tokens.slice(start, position).join(' ');
     if (Object.hasOwn(variables, atom) && typeof variables[atom] === 'boolean') return Object.freeze({ variable: atom, operator: '==', value: true });
-    return parseAtom(atom, variables, skills, items, line, passageId);
+    return parseAtom(atom, variables, skills, items, line, passageId, pokemon);
   }
   const result = expression(0);
   if (position !== tokens.length) throw syntaxError('Unexpected condition token: ' + tokens[position], line, passageId);

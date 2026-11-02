@@ -34,8 +34,8 @@ The end.`;
 
 test('local upload uses the shared reader, index, restart and isolated checkpoints', async ({ page }) => {
   await page.addInitScript(() => {
-    localStorage.setItem('empires:checkpoint:provincial-crisis', 'existing public save');
-    localStorage.setItem('empires:checkpoint:empires-example', 'existing example save');
+    localStorage.setItem('pokemon:checkpoint:harbor-practice', 'existing public save');
+    localStorage.setItem('pokemon:checkpoint:aurelian-league', 'existing example save');
     const accesses: string[] = [];
     Object.defineProperty(window, '__storageCalls', { value: accesses });
     for (const method of ['getItem', 'setItem', 'removeItem'] as const) {
@@ -99,6 +99,6 @@ test('local upload uses the shared reader, index, restart and isolated checkpoin
   await expect(page.getByRole('button', { name: 'Restart preview', exact: true })).toBeDisabled();
   await expect(page.locator('#app')).toBeEmpty();
   expect(await page.evaluate(() => Reflect.get(window, '__storageCalls'))).toEqual([]);
-  expect(await page.evaluate(() => localStorage.getItem('empires:checkpoint:provincial-crisis'))).toBe('existing public save');
-  expect(await page.evaluate(() => localStorage.getItem('empires:checkpoint:empires-example'))).toBe('existing example save');
+  expect(await page.evaluate(() => localStorage.getItem('pokemon:checkpoint:harbor-practice'))).toBe('existing public save');
+  expect(await page.evaluate(() => localStorage.getItem('pokemon:checkpoint:aurelian-league'))).toBe('existing example save');
 });

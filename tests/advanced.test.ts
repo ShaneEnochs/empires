@@ -40,7 +40,7 @@ test('pages, temp values, journal and rewards resume exactly; disabled choices a
   const writes=storage.writes;const reopened=new GameSession(story,storage);assert.equal(storage.writes,writes);
   const game=reopened.continueGame();assert.deepEqual(game.state,state);assert.deepEqual(game.checkpoint,checkpoint);
   assert.equal(game.resumeContext!.page,1);assert.equal(game.variables.can_enter,true);
-  assert.equal(JSON.parse(storage.raw!).formatVersion,3);reopened.advancePage();
+  assert.equal(JSON.parse(storage.raw!).formatVersion,5);reopened.advancePage();
   assert.equal(game.visibleChoices.length,4);assert.equal(game.availableChoices.length,3);
   assert.throws(()=>reopened.navigate('purchase'));reopened.navigate('fatal');
   const dead=new GameSession(story,storage);dead.continueGame();dead.retryAfterDeath();

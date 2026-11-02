@@ -1,4 +1,4 @@
-# Empires in Notepad++ (Windows)
+# Aurelian League in Notepad++ (Windows)
 
 Install Node.js 22.12 or newer and Notepad++. Download/clone the repository to a
 writable folder, open a terminal there, and run `npm ci` once. VS Code is optional.
@@ -6,15 +6,15 @@ writable folder, open a terminal there, and run `npm ci` once. VS Code is option
 ## Highlighting and command completion
 
 1. In Notepad++, use **Language → User Defined Language → Define your language →
-   Import** and select `tools/notepadpp/Empires-udl.xml`. Restart Notepad++.
-2. Open or save a UTF-8 `.story` file; choose **Language → Empires** if needed.
+   Import** and select `tools/notepadpp/Pokemon-udl.xml`. Restart Notepad++.
+2. Open or save a UTF-8 `.story` file; choose **Language → Aurelian League** if needed.
    Directives, condition words, numbers, quoted strings, choice/arrow operators,
    and `[if ...]` regions use distinct neutral colors. Prose keeps a readable
    foreground. UDL has no parser or symbol table: it cannot distinguish arbitrary
    destination IDs from prose, check JSON escapes/types, validate placement, or
    offer diagnostics. Arrows mark destination references; preflight checks IDs.
    Quotation/condition highlighting is lexical, not a guarantee of validity.
-3. Optional: copy `Empires.xml` (keep that exact case/name) into Notepad++'s
+3. Optional: copy `Pokemon.xml` (keep that exact case/name) into Notepad++'s
    `autoCompletion` directory, usually `C:\Program Files\Notepad++\autoCompletion`.
    Writing there may require administrator approval; a portable installation uses
    its own `autoCompletion` folder and can be kept in a writable user directory.
@@ -30,10 +30,10 @@ Save with Ctrl+S first: validation reads disk, not unsaved editor text.
 Choose **Run → Run…** (F5) and enter, substituting your repository path:
 
 ```text
-cmd /k ""C:\My Projects\empires\tools\notepadpp\validate-story.cmd" "$(FULL_CURRENT_PATH)""
+cmd /k ""C:\My Projects\pokemon\tools\notepadpp\validate-story.cmd" "$(FULL_CURRENT_PATH)""
 ```
 
-Use **Save…**, name it “Empires: Validate current story”, and choose an available
+Use **Save…**, name it “Aurelian League: Validate current story”, and choose an available
 keyboard shortcut in the dialog. Later edit it through **Settings → Shortcut
 Mapper → Run commands**. `/k` keeps the console open so errors, warnings, and
 information remain visible. The launcher returns the CLI's exit code (0 for no
@@ -94,8 +94,8 @@ People JSON example:
 Use nonempty text and unique lowercase IDs; discoveryEvents must contain existing
 `*journal` IDs in the selected story. Any one recorded event reveals the person;
 recovery derives visibility from the restored journal. Descriptions render as plain
-text. Provincial Crisis's public People file is
-`content/provincial-crisis.people.json`; edit it without TypeScript, preserving IDs
+text. Harbor Practice's public People file is
+`content/harbor-practice.people.json` (private example); edit optional metadata without TypeScript, preserving IDs
 and discovery links unless intentionally changing presentation. People never enters
 GameState or save records.
 
@@ -111,12 +111,12 @@ and optional `*show_if` paragraphs. End with `*choice` and `#... -> id` lines,
 has no action. Conditions use comparisons or `has_skill`, `lacks_skill`,
 `has_item`, `lacks_item`, `item_count`. Always provide an unconditional choice.
 See [SCRIPTING.md](../../docs/SCRIPTING.md) for exact types, placement, operators,
-and checkpoint semantics. Do not add comments or invent commands.
+and checkpoint semantics. Use documented *comment notes; do not invent commands.
 
 Local drafts remain local until deliberately committed and integrated through a
 reviewed publishing change. Preview never changes the production catalog or story
-identity, writes source files, or deploys anything. Do not overwrite Provincial
-Crisis or reuse its save ID just to preview a draft. Public Pages excludes the
+identity, writes source files, or deploys anything. Do not overwrite The Aurelian League
+or reuse its save ID just to preview a draft. Public Pages excludes the
 author preview. Existing VS Code snippets, tasks, and optional extension continue
 to work; choose whichever editor you prefer.
 
@@ -137,7 +137,7 @@ still contains directives only; no new command was added.
 
 The [syntax guide](../../docs/SCRIPTING.md#advanced-authoring-stage-12c) and
 [playable example](../../examples/advanced-authoring.story) cover all new features.
-Reimport the UDL and replace the optional Empires.xml completion file after updates.
+Reimport the UDL and replace the optional Pokemon.xml completion file after updates.
 New directive completions are `*comment`, `*temp`, `*if`, `*elseif`, `*else`, and
 `*page_break`. Use spaces for indented conditional bodies; align alternate branches.
 Comments use a distinct line-comment style. UDL remains lexical: quoted strings
@@ -152,3 +152,13 @@ persistent character data. `$!{name}`/`$!!{name}` transform displayed text;
 `[if condition]` hides a choice; `[selectable_if condition]` disables it visibly.
 See the guide for strict grammar, safe player-input handling, and limitations.
 Windows interactive UDL import/completion verification remains unavailable here.
+
+## Pokémon companions
+
+The public opening is `content/aurelian-league.story`. Initial declarations support
+`*pokemon id "Species"`. Use `*add_pokemon id [nickname_variable]` and
+`*remove_pokemon id` as entry effects. The nickname operand must name a global string
+(empty means no nickname); it is copied once when joining. Party holds six, with
+idempotent duplicate adds/absent removes. Conditions support `has_pokemon id` and
+`lacks_pokemon id`. The Party view is read-only. See docs/SCRIPTING.md for validation,
+atomicity, saves and the complete syntax. No evolution or battle mechanics exist.

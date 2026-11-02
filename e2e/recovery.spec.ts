@@ -1,4 +1,4 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import {
   arrival, checkpointRecord, checkpointWrites, enterSluiceDeath, expectCharacter,
@@ -23,7 +23,7 @@ test('repeated death and retry restore the named checkpoint without reward accum
     await expectPassage(page, 'Six Sacks and a Day');
     await expectCharacter(page, ['Eleanor', '3', '1', 'Undecided']);
     await expectItems(page, 'Journal', journal);
-    await expectItems(page, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
+    await expectItems(page, 'Skills', ['Rescue Training', 'Channel Knowledge']);
     await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
     await expect(page.getByRole('button', { name: 'Try Again', exact: true })).toHaveCount(0);
     expect(await checkpointRecord(page)).toBe(saved);
@@ -45,7 +45,7 @@ test('reload after death resumes death; Try Again recovers the complete checkpoi
   await expectPassage(page, 'Six Sacks and a Day');
   await expectCharacter(page, ['Eleanor', '3', '1', 'Undecided']);
   await expectItems(page, 'Journal', [arrival, 'Eleanor returned as a former river surveyor.', 'Eleanor accepted six public grain sacks with authority 3.']);
-  await expectItems(page, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
+  await expectItems(page, 'Skills', ['Rescue Training', 'Channel Knowledge']);
   await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
   await expect(page.getByRole('textbox')).toHaveCount(0);
   expect(JSON.parse((await checkpointRecord(page))!).checkpoint).toEqual(JSON.parse(saved!).checkpoint);

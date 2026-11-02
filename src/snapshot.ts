@@ -1,4 +1,5 @@
-import type { GameSnapshot, GameState, JournalEntry, Story, VariableValue } from './types';
+import { validateTextInput } from './input';
+import type { PartyMember, GameSnapshot, GameState, JournalEntry, Story, VariableValue } from './types';
 
 function invalid(message: string): never {
   throw new Error('Invalid checkpoint: ' + message);
@@ -52,7 +53,7 @@ function validateStateSnapshot(value: unknown, story: Story, committed: boolean)
   const snapshot = record(value, 'Snapshot');
   fields(snapshot, ['state'], 'Snapshot');
   const state = record(snapshot.state, 'State');
-  fields(state, ['passageId', 'variables', 'journal', 'skills', 'inventory'], 'State');
+  fields(state, ['passageId', 'variables', 'journal', 'skills', 'inventory', 'party'], 'State');
   const passageId = state.passageId;
   const passage = story.passages.find(passage => passage.id === passageId);
   if (typeof passageId !== 'string' || !passage) invalid('Unknown passage ID.');
@@ -96,10 +97,22 @@ function validateStateSnapshot(value: unknown, story: Story, committed: boolean)
     inventory[id] = quantity;
   }
 
+  const party: PartyMember[] = [];
+  for (const raw of list(state.party, 'Party')) {
+    const member = record(raw, 'Party member');
+    fields(member, ['id', 'species', ...(Object.hasOwn(member, 'nickname') ? ['nickname'] : [])], 'Party member');
+    const definition = story.pokemon.find(pokemon => pokemon.id === member.id);
+    if (!definition || definition.species !== member.species) invalid('Unknown or incompatible Pokémon.');
+    if (party.some(pokemon => pokemon.id === member.id)) invalid('Duplicate Pokémon in party.');
+    if (party.length >= 6) invalid('Party exceeds six Pokémon.');
+    if (Object.hasOwn(member, 'nickname') && (typeof member.nickname !== 'string' || validateTextInput(member.nickname) !== member.nickname)) invalid('Invalid Pokémon nickname.');
+    party.push(Object.freeze({ id: definition.id, species: definition.species, ...(typeof member.nickname === 'string' ? { nickname: member.nickname } : {}) }));
+  }
+
   return Object.freeze({
     state: Object.freeze({
       passageId, variables: Object.freeze(variables), journal: Object.freeze(journal),
-      skills: Object.freeze(skills), inventory: Object.freeze(inventory),
+      party: Object.freeze(party), skills: Object.freeze(skills), inventory: Object.freeze(inventory),
     }),
   });
 }

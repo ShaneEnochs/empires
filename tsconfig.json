@@ -1,15 +1,32 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": ["node", "vite/client"],
+    "types": [
+      "node",
+      "vite/client"
+    ],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noEmit": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true
   },
-  "include": ["src", "tests", "e2e", "scripts", "playwright.config.ts", "playwright.author.config.ts", "author-e2e"]
+  "include": [
+    "src",
+    "tests",
+    "e2e",
+    "scripts",
+    "playwright.config.ts",
+    "playwright.author.config.ts",
+    "author-e2e",
+    "browser",
+    "vite.regression.config.ts"
+  ]
 }

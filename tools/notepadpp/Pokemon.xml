@@ -1,9 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
 <NotepadPlus>
-  <AutoComplete language="Empires">
+  <AutoComplete language="Aurelian League">
     <Environment ignoreCase="no" startFunc="(" stopFunc=")" paramSeparator="," terminal=";" additionalWordChar="*_" />
     <KeyWord name="*add" />
     <KeyWord name="*add_item" />
+    <KeyWord name="*add_pokemon" />
     <KeyWord name="*chapter" />
     <KeyWord name="*checkpoint" />
     <KeyWord name="*choice" />
@@ -19,7 +20,9 @@
     <KeyWord name="*journal" />
     <KeyWord name="*page_break" />
     <KeyWord name="*passage" />
+    <KeyWord name="*pokemon" />
     <KeyWord name="*remove_item" />
+    <KeyWord name="*remove_pokemon" />
     <KeyWord name="*revoke_skill" />
     <KeyWord name="*set" />
     <KeyWord name="*show_if" />

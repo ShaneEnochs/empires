@@ -1,18 +1,18 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import {
   checkpointRecord, confirmNewGame, expectCharacter as crisisCharacter,
   expectItems, expectPassage, openPanel, panelNames, expectStartup, startGame as startCrisis,
-  returnToStory, choose, crisisKey, cityKey, reachBriefing as nameAndBriefing, councilWithEvidence,
+  returnToStory, choose, crisisKey, cityKey, reachBriefing as nameAndBriefing, centerWithEvidence,
 } from './helpers';
 
-// An exact revision-1 City Gate initial save, retained as opaque legacy browser data.
+// An exact revision-1 Center Visit initial save, retained as opaque legacy browser data.
 const legacyCitySave = JSON.stringify({
-  formatVersion: 1, storyId: 'empires-example', storyRevision: 1,
+  formatVersion: 6, storyId: 'aurelian-league', storyRevision: 1,
   checkpoint: { state: {
     passageId: 'gate', variables: { influence: 0, honor: 5, loyal: false, character_name: 'Unknown' },
-    journal: [], skills: [], inventory: {},
+    journal: [], skills: [], party: [], inventory: {},
   } },
 });
 
@@ -39,7 +39,7 @@ async function records(page: Page) {
 async function observeStorage(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const accesses: { operation: string; key: string }[] = [];
-    Object.defineProperty(window, '__empiresStorageAccess', { value: accesses });
+    Object.defineProperty(window, '__pokemonStorageAccess', { value: accesses });
     const getItem = Storage.prototype.getItem;
     const setItem = Storage.prototype.setItem;
     const removeItem = Storage.prototype.removeItem;
@@ -59,10 +59,10 @@ async function observeStorage(page: Page): Promise<void> {
 }
 
 async function storageAccess(page: Page): Promise<{ operation: string; key: string }[]> {
-  return page.evaluate(() => Reflect.get(window, '__empiresStorageAccess'));
+  return page.evaluate(() => Reflect.get(window, '__pokemonStorageAccess'));
 }
 
-test('direct startup reads only Provincial Crisis and never reads a retired City Gate record', async ({ page }) => {
+test('direct startup reads only Harbor Practice and never reads a retired Center Visit record', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key: cityKey, raw: legacyCitySave });
   await observeStorage(page);
@@ -80,7 +80,7 @@ test('direct startup reads only Provincial Crisis and never reads a retired City
 test('reload and Continue preserve both saved records without writing or replaying checkpoint rewards', async ({ page }) => {
   await seedBoth(page);
   const saved = await records(page);
-  expect(JSON.parse(saved.crisis!).storyId).toBe('provincial-crisis');
+  expect(JSON.parse(saved.crisis!).storyId).toBe('harbor-practice');
   expect(JSON.parse(saved.crisis!).checkpoint.state.passageId).toBe('briefing');
   await observeStorage(page);
   for (let reload = 0; reload < 2; reload++) {
@@ -88,7 +88,7 @@ test('reload and Continue preserve both saved records without writing or replayi
     await expectStartup(page);
     await action(page, titlePage.continueGameLabel, 'Six Sacks and a Day');
     await crisisCharacter(page, ['Rowan 周', '3', '1', 'Undecided']);
-    await expectItems(page, 'Skills', ['Provincial Commission', 'Channel Knowledge']);
+    await expectItems(page, 'Skills', ['Rescue Training', 'Channel Knowledge']);
     await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
     expect(await storageAccess(page)).toEqual([{ operation: 'read', key: crisisKey }]);
     expect(await records(page)).toEqual(saved);
@@ -96,7 +96,7 @@ test('reload and Continue preserve both saved records without writing or replayi
 });
 
 for (const legacy of [legacyCitySave, '{broken legacy save']) {
-  test('startup replacement preserves legacy City Gate bytes: ' + (legacy === legacyCitySave ? 'valid' : 'corrupt'), async ({ page }) => {
+  test('startup replacement preserves legacy Center Visit bytes: ' + (legacy === legacyCitySave ? 'valid' : 'corrupt'), async ({ page }) => {
     await seedBoth(page);
     await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key: cityKey, raw: legacy });
     const saved = await records(page);
@@ -108,14 +108,14 @@ for (const legacy of [legacyCitySave, '{broken legacy save']) {
     await expectPassage(page, 'The Last Ferry');
     expect(await checkpointRecord(page, cityKey)).toBe(legacy);
     const envelope = JSON.parse((await checkpointRecord(page))!);
-    expect(envelope.storyId).toBe('provincial-crisis');
+    expect(envelope.storyId).toBe('harbor-practice');
     expect(envelope.storyRevision).toBe(1);
-    expect(envelope.formatVersion).toBe(2);
+    expect(envelope.formatVersion).toBe(4);
     expect(envelope.checkpoint.state.passageId).toBe('quayside');
   });
 }
 
-test('corrupt Provincial Crisis data stays isolated and requires explicit replacement', async ({ page }) => {
+test('corrupt Harbor Practice data stays isolated and requires explicit replacement', async ({ page }) => {
   await seedBoth(page);
   await page.evaluate(key => localStorage.setItem(key, '{broken'), crisisKey);
   await page.reload();
@@ -130,16 +130,16 @@ test('corrupt Provincial Crisis data stays isolated and requires explicit replac
   expect(await checkpointRecord(page, cityKey)).toBe(legacyCitySave);
 });
 
-test('Provincial Crisis naming, selected metadata, conditional choices, and spending reach a complete ending', async ({ page }) => {
+test('Harbor Practice naming, selected metadata, conditional choices, and spending reach a complete ending', async ({ page }) => {
   await startCrisis(page);
   await crisisCharacter(page, ['Mara Vale', '2', '0', 'Undecided']);
-  await expectItems(page, 'Skills', ['Provincial Commission']);
+  await expectItems(page, 'Skills', ['Rescue Training']);
   await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1']);
-  const name = 'Éléonore 王 <b>Envoy</b>';
+  const name = 'Éléonore 王 <b>Trainer</b>';
   await nameAndBriefing(page, name);
   await crisisCharacter(page, [name, '3', '1', 'Undecided']);
   await expect(page.getByText('The keeper will honor a requisition while your commission lasts.', { exact: true })).toBeVisible();
-  await councilWithEvidence(page);
+  await centerWithEvidence(page);
   const saved = await checkpointRecord(page, crisisKey);
   await expectItems(page, 'Skills', ['Channel Knowledge']);
   await expectItems(page, 'Inventory', ['Dispatch Coin × 2', 'Grain Sack × 8', 'Attested Grain Accounts × 1']);
@@ -151,7 +151,7 @@ test('Provincial Crisis naming, selected metadata, conditional choices, and spen
   await expectItems(page, 'Inventory', ['Dispatch Coin × 2', 'Grain Sack × 2', 'Attested Grain Accounts × 1']);
   await expect(page.getByText('The board writes ' + name + ' into the agreement as its guarantor. Its next argument will happen across a table, with the accounts open.', { exact: true })).toBeVisible();
   const journal = await openPanel(page, 'Journal');
-  await expect(journal.getByRole('heading', { level: 3 })).toHaveText(['The Writ', 'The River', 'Night Council']);
+  await expect(journal.getByRole('heading', { level: 3 })).toHaveText(['The Writ', 'The River', 'Night Center']);
   await expect(journal.getByRole('listitem')).toHaveCount(8);
   await expect(journal.getByRole('listitem').last()).toHaveText(name + ' secured a civic compact and committed six sacks to public kitchens.');
   await returnToStory(page);
@@ -162,15 +162,15 @@ test('Provincial Crisis naming, selected metadata, conditional choices, and spen
   expect(await checkpointRecord(page, cityKey)).toBeNull();
 });
 
-for (const checkpoint of ['briefing', 'night_council']) {
-  test('Provincial Crisis death and retry restore the complete ' + checkpoint + ' checkpoint and save recovered progress', async ({ page }) => {
+for (const checkpoint of ['briefing', 'night_center']) {
+  test('Harbor Practice death and retry restore the complete ' + checkpoint + ' checkpoint and save recovered progress', async ({ page }) => {
     await observeStorage(page);
     await seedBoth(page);
-    if (checkpoint === 'night_council') await councilWithEvidence(page);
+    if (checkpoint === 'night_center') await centerWithEvidence(page);
     const saved = await records(page);
     const writes = (await storageAccess(page)).filter(access => access.operation !== 'read');
     const name = 'Rowan 周';
-    const expectedSkills = checkpoint === 'briefing' ? ['Provincial Commission', 'Channel Knowledge'] : ['Channel Knowledge'];
+    const expectedSkills = checkpoint === 'briefing' ? ['Rescue Training', 'Channel Knowledge'] : ['Channel Knowledge'];
     const expectedItems = checkpoint === 'briefing'
       ? ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']
       : ['Dispatch Coin × 2', 'Grain Sack × 8', 'Attested Grain Accounts × 1'];
@@ -184,7 +184,7 @@ for (const checkpoint of ['briefing', 'night_council']) {
         await action(page, 'Pay two coins for attested accounts', 'Ink Paid For');
         await action(page, 'Continue', 'The Unshored Gate');
         await action(page, 'Enter the unshored sluice chamber despite the warning', 'Beneath the Shore Timbers');
-        await expect(page.getByText("The river takes the commission's bearer before the council can meet.", { exact: true })).toBeVisible();
+        await expect(page.getByText("The river takes the commission's bearer before the center can meet.", { exact: true })).toBeVisible();
       } else {
         await action(page, 'Plan an evacuation of the lower town', 'Boats Before Possessions');
         await expect(page.getByRole('radio', { name: 'Hire the ferry hands for three coins', exact: true })).toHaveCount(0);
@@ -217,7 +217,7 @@ for (const checkpoint of ['briefing', 'night_council']) {
   });
 }
 
-test('failed Provincial Crisis automatic save keeps its in-memory recovery and warning without changing either persisted story', async ({ page }) => {
+test('failed Harbor Practice automatic save keeps its in-memory recovery and warning without changing either persisted story', async ({ page }) => {
   await seedBoth(page);
   const saved = await records(page);
   await page.evaluate(key => {
@@ -227,7 +227,7 @@ test('failed Provincial Crisis automatic save keeps its in-memory recovery and w
       return setItem.call(this, name, value);
     };
   }, crisisKey);
-  await councilWithEvidence(page);
+  await centerWithEvidence(page);
   const warning = 'Recent progress could not be saved. Closing this page may lose progress since the last successful save.';
   await expect(page.getByRole('alert')).toHaveText(warning);
   for (const name of panelNames) {

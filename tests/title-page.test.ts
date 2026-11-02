@@ -17,7 +17,7 @@ test('title page validates all required text and preserves plain text', () => {
 test('display metadata is independent of stable save identity', () => {
   const changed = validateTitlePage({ ...titlePage, title: 'Another display title' });
   assert.notEqual(changed.title, titlePage.title);
-  assert.match(readFileSync('src/catalog.ts', 'utf8'), /identity: \{ storyId: 'provincial-crisis', storyRevision: 1 \}/);
+  assert.match(readFileSync('src/catalog.ts', 'utf8'), /identity: \{ storyId: 'aurelian-league', storyRevision: 1 \}/);
 });
 
 test('bundled font is one small WOFF2 with its redistribution license', () => {

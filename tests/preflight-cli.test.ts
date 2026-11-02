@@ -14,19 +14,19 @@ function run(...files: string[]) {
   return result;
 }
 
-test('CLI checks both bundled stories by default and prints their diagnostic counts', () => {
+test('CLI checks public and bundled stories by default and prints their diagnostic counts', () => {
   const result = run();
   assert.equal(result.status, 0);
   assert.match(result.stdout, /src\/example.story/);
-  assert.match(result.stdout, /examples\/provincial-crisis.story/);
+  assert.match(result.stdout, /examples\/harbor-practice.story/);
   assert.match(result.stdout, /0 errors, 0 warnings, 2 information; 14 route prefixes/);
   assert.match(result.stdout, /0 errors, 0 warnings, 4 information; 1098 route prefixes/);
   assert.match(result.stdout, /4 re-entry probes \(4 returns succeeded\)/);
-  assert.match(result.stdout, /Total: 0 errors, 0 warnings, 6 information/);
+  assert.match(result.stdout, /Total: 0 errors, 0 warnings, 12 information/);
 });
 
 test('CLI supports an explicit filename with spaces and leaves advisory warnings nonfatal', t => {
-  const directory = mkdtempSync(join(tmpdir(), 'empires-preflight-'));
+  const directory = mkdtempSync(join(tmpdir(), 'pokemon-preflight-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const file = join(directory, 'unreachable scene.story');
   const source = '*passage start\n*title Start\nEnd.\n*passage orphan\n*title Orphan\nUnused.';
@@ -40,7 +40,7 @@ test('CLI supports an explicit filename with spaces and leaves advisory warnings
 });
 
 test('CLI reports parser line errors and confirmed runtime failures, continues checking files, and exits nonzero', t => {
-  const directory = mkdtempSync(join(tmpdir(), 'empires-preflight-'));
+  const directory = mkdtempSync(join(tmpdir(), 'pokemon-preflight-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const invalid = join(directory, 'syntax.story');
   const runtime = join(directory, 'runtime.story');
@@ -64,7 +64,7 @@ test('CLI rejects missing/non-story files with useful errors instead of crashing
 });
 
 test('CLI includes a repeated passage in a confirmed failure route and exits nonzero', t => {
-  const directory = mkdtempSync(join(tmpdir(), 'empires-preflight-'));
+  const directory = mkdtempSync(join(tmpdir(), 'pokemon-preflight-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const file = join(directory, 'reentry.story');
   writeFileSync(file, [
@@ -80,7 +80,7 @@ test('CLI includes a repeated passage in a confirmed failure route and exits non
 });
 
 test('CLI aggregates successful journal-only returns as information without failing', t => {
-  const directory = mkdtempSync(join(tmpdir(), 'empires-preflight-'));
+  const directory = mkdtempSync(join(tmpdir(), 'pokemon-preflight-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const file = join(directory, 'journal-cycle.story');
   writeFileSync(file, [

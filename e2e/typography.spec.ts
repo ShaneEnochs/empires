@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { startGame } from './helpers';
 
 for (const width of [320, 375, 768, 1280]) {
@@ -15,7 +15,7 @@ for (const width of [320, 375, 768, 1280]) {
     await page.evaluate(() => document.fonts.ready);
     expect(await page.evaluate(() => document.fonts.check('500 20px "Source Serif 4"'))).toBe(true);
     expect(fontRequests.length).toBeGreaterThan(0);
-    expect(fontRequests.every(url => url.startsWith('http://127.0.0.1:4175/assets/') && url.endsWith('.woff2'))).toBe(true);
+    expect(fontRequests.every(url => url.startsWith('http://127.0.0.1:4176/assets/') && url.endsWith('.woff2'))).toBe(true);
     await expect(page.locator('.chapter-label')).toHaveCSS('font-weight', '500');
     await expect(page.locator('.chapter-label')).toHaveCSS('font-size', '20px');
     expect(await page.locator('.chapter-label').evaluate(e => getComputedStyle(e).fontFamily)).toContain('Source Serif 4');

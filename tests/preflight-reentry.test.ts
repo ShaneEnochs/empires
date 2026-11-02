@@ -346,7 +346,7 @@ test('re-entry analysis leaves active gameplay, both saved records, and story de
     '*var influence 0', '*passage camp', '*title Camp', '*checkpoint', '*add influence 2', 'Camp.', '*continue road',
     '*passage road', '*title Road', 'Return.', '*continue camp',
   );
-  const records = new Map<string, string>([['empires:checkpoint:provincial-crisis', 'Other saved progress']]);
+  const records = new Map<string, string>([['pokemon:checkpoint:harbor-practice', 'Other saved progress']]);
   let accesses = 0;
   const session = new GameSession(story, {
     getItem(key) { accesses++; return records.get(key) ?? null; },
@@ -368,9 +368,9 @@ test('re-entry analysis leaves active gameplay, both saved records, and story de
   assert.equal(JSON.stringify({ story, state: game.state, checkpoint: game.checkpoint, records: [...records] }), before);
 });
 
-test('the real Provincial Crisis queue returns remain playable and keep one original journal event', t => {
+test('the real Harbor Practice queue returns remain playable and keep one original journal event', t => {
   const trace = traceNavigation(t);
-  const story = parseStory(readFileSync(new URL('../examples/provincial-crisis.story', import.meta.url), 'utf8'));
+  const story = parseStory(readFileSync(new URL('../examples/harbor-practice.story', import.meta.url), 'utf8'));
   const report = analyzeStory(story);
   const returns = trace.entries.filter(entry => entry.before.passageId === 'bonded_offer' && entry.destination === 'depot_queue');
   assert.equal(report.reentryProbes, 4);

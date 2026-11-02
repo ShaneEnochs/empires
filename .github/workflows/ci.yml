@@ -38,9 +38,12 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  editor-tools:
+    uses: ./.github/workflows/extension.yml
+
   deploy-pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: test-and-build
+    needs: [test-and-build, editor-tools]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

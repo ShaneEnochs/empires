@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Empires: Check Current Story",
+      "label": "Aurelian League: Check Current Story",
       "type": "process",
       "command": "node",
       "args": [
@@ -16,7 +16,7 @@
       },
       "problemMatcher": [
         {
-          "owner": "empires",
+          "owner": "pokemon",
           "severity": "error",
           "fileLocation": "absolute",
           "pattern": [
@@ -34,7 +34,7 @@
       ]
     },
     {
-      "label": "Empires: Check Bundled Stories",
+      "label": "Aurelian League: Check Bundled Stories",
       "type": "process",
       "command": "node",
       "args": [
@@ -47,7 +47,7 @@
       },
       "problemMatcher": [
         {
-          "owner": "empires",
+          "owner": "pokemon",
           "severity": "error",
           "fileLocation": [
             "relative",
@@ -68,7 +68,7 @@
       ]
     },
     {
-      "label": "Empires: Start Local Preview",
+      "label": "Aurelian League: Start Local Preview",
       "type": "process",
       "command": "node",
       "args": [
