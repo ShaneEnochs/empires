@@ -2,7 +2,9 @@ import { titlePage } from './title-page';
 import aurelianLeagueSource from '../content/aurelian-league.story?raw';
 import { validateSaveIdentity } from './storage';
 import type { StorySaveIdentity } from './storage';
+import { parsePeople } from './people';
 import type { PersonReference } from './people';
+import aurelianPeople from '../content/aurelian-league.people.json' with { type: 'json' };
 
 export interface CatalogStory {
   readonly id: string;
@@ -20,8 +22,8 @@ export const storyCatalog: readonly CatalogStory[] = Object.freeze([
     title: titlePage.title,
     description: titlePage.description,
     source: aurelianLeagueSource,
-    identity: { storyId: 'aurelian-league', storyRevision: 1 },
-    people: Object.freeze([]),
+    identity: { storyId: 'aurelian-league', storyRevision: 2 },
+    people: parsePeople(aurelianPeople),
   },
 ].map(entry => Object.freeze({ ...entry, identity: validateSaveIdentity(entry.identity) })));
 
