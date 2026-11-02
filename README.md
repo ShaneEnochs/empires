@@ -5,14 +5,16 @@ by Roman architecture and civic institutions. Contestants earn eight Laurels thr
 many kinds of accomplishment; battling is not required. The three highest-ranked
 contestants with eight Laurels qualify for the Triumvirate championship.
 
-The playable opening begins aboard a crowded ferry to Lezano. Meet Lucia, give
-your first name and pronouns in conversation, then learn more about the League,
-speak to other contestants, listen in, or enjoy a quiet moment on deck. After
-arriving, examine three starters and partner with Charmander, Chikorita, or Piplup.
-All three are equally available.
-Keep the species name or enter a nickname. The story ends after the partnership.
-No battles, evolution, levels, storage boxes, rankings, or external Pokémon services
-are implemented. The rest of the narrative will be written separately.
+The playable opening takes place aboard a crowded ferry bound for Lezano.
+An early choice introduces the crew's working Pokémon. Meet Lucia, enter your
+first name, decide whether to exchange contact details, and choose your pronouns
+in conversation. You can learn about the League, speak with other contestants,
+listen in, or spend time on the observation deck. The current story ends when
+the ferry enters port, before disembarkation or starter selection. Charmander,
+Chikorita, and Piplup remain the planned starter options for a future chapter.
+The engine's party system is implemented, but players cannot acquire Pokémon
+in this chapter. Battles, evolution, levels, storage boxes, rankings, and external
+Pokémon services are not implemented.
 
 ## Install, run, and play
 
@@ -100,7 +102,7 @@ published build. No editor uploads, accounts, APIs, or new runtime dependencies 
 
 ## Saves and recovery
 
-The sole public story has `storyId: aurelian-league`, `storyRevision: 3`, and key
+The sole public story has `storyId: aurelian-league`, `storyRevision: 4`, and key
 `pokemon:checkpoint:aurelian-league`. This fresh namespace never reads, migrates,
 or deletes the former game's browser records.
 
