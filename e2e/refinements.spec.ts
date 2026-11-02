@@ -38,12 +38,15 @@ for (const width of [320, 375, 768, 1280]) {
     for (const [index, rect] of dimensions.entries()) {
       expect(rect.width).toBeGreaterThanOrEqual(44);
       expect(rect.height).toBe(44);
-      const rowStart = width <= 420 && index >= 3 ? 3 : 0;
-      expect(rect.y).toBe(dimensions[rowStart]!.y);
-      expect(Math.abs(rect.width - dimensions[rowStart]!.width)).toBeLessThanOrEqual(1);
-      if (width <= 420 && index >= 3) expect(rect.y).toBeGreaterThan(dimensions[0]!.y);
-      expect(rect.font).toBeGreaterThanOrEqual(13.5);
-      expect(rect.font).toBeLessThanOrEqual(14.5);
+      expect(rect.y).toBe(dimensions[0]!.y);
+      expect(Math.abs(rect.width - dimensions[0]!.width)).toBeLessThanOrEqual(1);
+      if (width <= 420) {
+        expect(rect.font).toBeGreaterThanOrEqual(11);
+        expect(rect.font).toBeLessThanOrEqual(13.5);
+      } else {
+        expect(rect.font).toBeGreaterThanOrEqual(13.5);
+        expect(rect.font).toBeLessThanOrEqual(14.5);
+      }
       expect(rect.textHeight).toBeLessThanOrEqual(rect.lineHeight);
       expect(rect.textWidth).toBeLessThanOrEqual(rect.width);
     }
