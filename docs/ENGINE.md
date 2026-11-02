@@ -2,7 +2,7 @@
 
 The sole public story is content/aurelian-league.story, identity aurelian-league,
 revision 1. Pokémon-themed private examples exercise historical engine features;
-they are not public stories or additional Torvesca lore. See README for the current
+they are not public stories or additional Aurelia lore. See README for the current
 workflow and SCRIPTING.md for all syntax.
 
 ## Party and save schema
