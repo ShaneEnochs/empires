@@ -324,8 +324,11 @@ export function parseStory(source: string): Story {
         const parts = /^(\S+)\s+("(?:[^"\\]|\\.)*")\s*->\s*(\S+)$/.exec(argument);
         if (!parts) throw syntaxError('Expected *input_text variable "Label" -> destination_id.', line, current.id);
         const variable = id(parts[1]!, 'Input variable', line, current.id);
-        if (!Object.hasOwn(variables(), variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, current.id);
-        if (typeof variables()[variable] !== 'string') throw syntaxError('*input_text requires a declared string variable.', line, current.id);
+        if (Object.hasOwn(current.temps, variable)) {
+          throw syntaxError(`*input_text cannot target temporary variable "${variable}"; declare a global string with *var.`, line, current.id);
+        }
+        if (!Object.hasOwn(initialVariables, variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, current.id);
+        if (typeof initialVariables[variable] !== 'string') throw syntaxError('*input_text requires a declared string variable.', line, current.id);
         const label = literal(parts[2]!, line, current.id);
         if (typeof label !== 'string' || label.trim() === '') throw syntaxError('*input_text requires a nonempty double-quoted label.', line, current.id);
         const destinationId = id(parts[3]!, 'Input destination', line, current.id);

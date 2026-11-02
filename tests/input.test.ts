@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { Game } from '../src/game';
+import { GameSession } from '../src/session';
 import { validateTextInput } from '../src/input';
 import { interpolate } from '../src/interpolate';
 import { parseStory } from '../src/story';
@@ -375,4 +376,47 @@ test('the optional example creates names/backgrounds using existing variables an
     assert.deepEqual(game.state.journal.map(e => e.id), ['arrived_city', 'chose_name', background, 'met_council']);
     assert.equal(game.state.journal[0]?.text, 'Alexander reached the city with influence 1.');
   }
+});
+
+
+test('text input rejects passage-local string destinations with a source-line error', () => {
+  const draft = '*passage form\n*title Form\n*temp local_name "Draft"\nName?\n'
+    + '*input_text local_name "Name" -> end\n*passage end\n*title End\nFinished.';
+  assert.throws(() => parseStory(draft),
+    /Line 5, passage "form": \*input_text cannot target temporary variable "local_name"; declare a global string with \*var\./);
+});
+
+test('global text input saves and resumes exactly while passage temps stay local', () => {
+  const parsed = parseStory('*var name "Unknown"\n*var count 0\n'
+    + '*passage form\n*title Form\n*temp draft "Scratch"\n*temp attempts 0\n'
+    + '*set draft "Local"\n*add attempts 2\nName?\n*input_text name "Name" -> result\n'
+    + '*passage result\n*title Result\n*temp receipt "Ready"\n*add count 1\n'
+    + '*journal submitted "' + nameTemplate + ': ${receipt}"\nWelcome.');
+  let raw: string | null = null;
+  let writes = 0;
+  const storage = { getItem: () => raw, setItem: (_key: string, value: string) => { raw = value; writes++; } };
+  const original = new GameSession(parsed, storage);
+  assert.equal(original.newGame(() => true), 'started');
+  assert.deepEqual(original.game!.state.variables, { name: 'Unknown', count: 0 });
+  assert.deepEqual(original.game!.resumeContext!.temps, { draft: 'Local', attempts: 2 });
+  const resumed = new GameSession(parsed, storage);
+  assert.deepEqual(resumed.continueGame().state, original.game!.state);
+  assert.deepEqual(resumed.game!.resumeContext, original.game!.resumeContext);
+  assert.equal(writes, 1);
+  resumed.submitText('  Éléonore 王  ');
+  assert.equal(resumed.notice, undefined);
+  assert.equal(writes, 2);
+  assert.deepEqual(resumed.game!.state.variables, { name: 'Éléonore 王', count: 1 });
+  assert.deepEqual(resumed.game!.resumeContext!.temps, { receipt: 'Ready' });
+  assert.equal(resumed.game!.state.journal[0]!.text, 'Éléonore 王: Ready');
+  const saved = JSON.parse(raw!);
+  assert.deepEqual(saved.currentState.variables, { name: 'Éléonore 王', count: 1 });
+  assert.deepEqual(saved.checkpoint.state.variables, { name: 'Unknown', count: 0 });
+  assert.deepEqual(saved.context.temps, { receipt: 'Ready' });
+  const bytes = raw;
+  const reopened = new GameSession(parsed, storage);
+  assert.deepEqual(reopened.continueGame().state, resumed.game!.state);
+  assert.deepEqual(reopened.game!.resumeContext, resumed.game!.resumeContext);
+  assert.equal(writes, 2);
+  assert.equal(raw, bytes);
 });
