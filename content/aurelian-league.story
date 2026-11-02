@@ -29,7 +29,7 @@ The strangest thing is how few Pokémon there are. On an ordinary voyage, someon
 
 *page_break
 
-A screen above the café counter plays the same advertisement for the third time. Eight golden Laurels appear beneath a sweeping view of Torvesca. A presenter promises challenges across the region, with three finalists competing for the title of Aurelian Champion. The advertisement ends before anyone explains what those challenges will actually involve.
+A screen above the café counter plays the same advertisement for the third time. Eight golden Laurels appear beneath a sweeping view of Aurelia. A presenter promises challenges across the region, with three finalists competing for the title of Aurelian Champion. The advertisement ends before anyone explains what those challenges will actually involve.
 
 "Still think they should've given us a proper list," someone says behind you. His friend tells him that discovering things is supposed to be the point. They start arguing about whether a person can win without ever battling, and the argument draws in two strangers before you can hear the end of it.
 
@@ -40,7 +40,7 @@ You move toward a window for a better look at the coast. A paper cup slides acro
 *passage name
 *title A Fellow Contestant
 
-"First time in Torvesca?" she asks. "Me too. I've been on this boat for hours and I still can't decide whether I want it to hurry up or turn around so I can have another day to prepare." She shifts the strap of her bag higher onto her shoulder. A little Wingull charm dangles from its zipper.
+"First time in Aurelia?" she asks. "Me too. I've been on this boat for hours and I still can't decide whether I want it to hurry up or turn around so I can have another day to prepare." She shifts the strap of her bag higher onto her shoulder. A little Wingull charm dangles from its zipper.
 
 "I'm Lucia, by the way. I was going to introduce myself to people when we got there, but I don't see the point in waiting. What should I call you? Just your first name is fine. We'll have enough official introductions once we're off this thing."
 
@@ -108,7 +108,7 @@ She glances toward the land beyond the windows, then turns back to you. "So, ${t
 
 *passage lucia_chat
 *title No Pokémon Allowed
-*journal met_lucia "You met Lucia on the ferry to Lezano. She is excited about exploring Torvesca and meeting Pokémon."
+*journal met_lucia "You met Lucia on the ferry to Lezano. She is excited about exploring Aurelia and meeting Pokémon."
 
 "Isn't it strange being here without a Pokémon?" Lucia asks. "The rules make sense, I suppose. Everyone has to start with a new partner. But I keep looking down to check whether I've left someone behind." She laughs at herself and nudges her empty coat pocket.
 
@@ -337,6 +337,6 @@ What would you like to call ${starter_species}?
   *add_pokemon starter_piplup starter_nickname
 *journal partnered "${trainer_name} partnered with ${starter_species}."
 
-With ${starter_species} at your side, you leave the harbor ready to begin your journey in Torvesca.
+With ${starter_species} at your side, you leave the harbor ready to begin your journey in Aurelia.
 
 Your Pokémon is listed in Party. This is the end of the current playable foundation.

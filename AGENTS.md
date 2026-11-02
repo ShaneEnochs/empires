@@ -7,9 +7,9 @@ never merge automatically or commit directly to main.
 
 ## Product and scope
 
-Torvesca is a modern Pokémon region influenced by Roman architecture and civic
+Aurelia is a modern Pokémon region influenced by Roman architecture and civic
 institutions. The public game is `content/aurelian-league.story`, the sole catalog
-entry. Its identity is `aurelian-league`, revision 1. It begins aboard a ferry to
+entry. Its identity is `aurelian-league`, revision 2. It begins aboard a ferry to
 Lezano. The player is a young adult, starts without Pokémon, enters a name and
 chooses pronouns, then examines and selects Charmander, Chikorita, or Piplup with
 an optional nickname. All three starters must remain equally available.
