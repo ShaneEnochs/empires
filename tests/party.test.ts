@@ -148,18 +148,23 @@ test('preflight reports a full-party transition failure through the real engine'
 test('obsolete schema versions are rejected without changing saved bytes',()=>{
  for(const version of [1,2,3]){const memory=new Memory();memory.raw=JSON.stringify({formatVersion:version,storyId:'aurelian-league',storyRevision:1,checkpoint:new Game(story).checkpoint});const raw=memory.raw;assert.equal(loadCheckpoint(memory,story).status,'invalid');assert.equal(memory.raw,raw);assert.equal(memory.writes,0);}
 });
-test('all starter and pronoun paths commit one partner, keep trainer identity and restore without duplication',()=>{
+test('public ferry story starts with an empty party and preserves character choices across reload',()=>{
  const publicStory=parseStory(readFileSync('content/aurelian-league.story','utf8'));
- for(const pronoun of ['he','she','they'])for(const species of ['charmander','chikorita','piplup'])for(const nickname of [undefined,'  Pip 周  ']){
+ for(const pronoun of ['he','she','they'])for(const contact of ['contact_yes','contact_no']){
   const storage=new Memory(),session=new GameSession(publicStory,storage);session.newGame(()=>true);
-  session.advancePage();session.advancePage();session.navigate('name');session.submitText('  Ari  ');session.navigate(pronoun);
-  session.navigate('lucia_chat');session.navigate('open_deck');session.navigate('rail');session.navigate('dock_approach');
-  session.navigate('arrival');session.navigate('starters');
-  for(const examine of ['charmander','chikorita','piplup']){session.navigate('examine_'+examine);session.navigate('starters');assert.deepEqual(session.game!.state.party,[]);}
-  session.navigate('examine_'+species);session.navigate('choose_'+species);
-  if(nickname){session.navigate('nickname');session.submitText(nickname);}else session.navigate('join');
-  const state=session.game!.state;assert.equal(state.party.length,1);assert.equal(state.party[0]!.id,'starter_'+species);assert.equal(state.party[0]!.nickname,nickname?.trim());assert.equal(state.variables.trainer_name,'Ari');assert.equal(state.variables.pronouns_subject,pronoun);assert.equal(state.variables.use_plural_verbs,pronoun==='they');
-  const reopen=new GameSession(publicStory,storage);assert.deepEqual(reopen.continueGame().state,state);reopen.game!.restoreCheckpoint();assert.deepEqual(reopen.game!.state,state);
+  session.navigate('ferry_windows');session.navigate('ferry_context');session.navigate('ferry_ad');
+  session.advancePage();session.navigate('name');session.submitText('  Ari  ');
+  session.navigate(contact);session.navigate('pronouns');session.navigate(pronoun);session.navigate('lucia_chat');
+  session.navigate('open_deck');session.navigate('rail');session.navigate('dock_approach');
+  const state=session.game!.state;
+  assert.deepEqual(state.party,[]);
+  assert.equal(state.variables.trainer_name,'Ari');
+  assert.equal(state.variables.pronouns_subject,pronoun);
+  assert.equal(state.variables.use_plural_verbs,pronoun==='they');
+  assert.equal(state.variables.lucia_contact,contact==='contact_yes');
+  const reopen=new GameSession(publicStory,storage);
+  assert.deepEqual(reopen.continueGame().state,state);
+  assert.equal(reopen.game!.passage.id,'dock_approach');
  }
 });
 test('page saves and a checkpoint already containing Pokémon preserve order/nicknames through reload and recovery',()=>{

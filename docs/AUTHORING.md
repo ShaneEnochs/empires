@@ -52,7 +52,7 @@ A seventh companion fails atomically. Party never uses inventory items.
 
 Edit `content/title-page.json` for plain-text brand/title/description/button labels.
 Keep all five fields nonempty strings. The catalog contains only The Aurelian League,
-identity `aurelian-league`, revision 1, key `pokemon:checkpoint:aurelian-league`.
+identity `aurelian-league`, revision 4, key `pokemon:checkpoint:aurelian-league`.
 Display text is not a save identity. The old game's keys are never read or deleted.
 Party-aware saves use format 4, or 5 with reading context; schemas 1–3 are incompatible.
 Continue resumes committed state/page without re-entering. Checkpoints preserve the

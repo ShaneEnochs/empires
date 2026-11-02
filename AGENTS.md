@@ -9,10 +9,14 @@ never merge automatically or commit directly to main.
 
 Aurelia is a modern Pokémon region influenced by Roman architecture and civic
 institutions. The public game is `content/aurelian-league.story`, the sole catalog
-entry. Its identity is `aurelian-league`, revision 3. It begins aboard a ferry to
-Lezano. The player is a young adult, starts without Pokémon, enters a name and
-chooses pronouns, then examines and selects Charmander, Chikorita, or Piplup with
-an optional nickname. All three starters must remain equally available.
+entry. Its identity is `aurelian-league`, revision 4. The current playable
+chapter begins on a ferry to Lezano and ends when the vessel comes into port.
+The player starts without Pokémon, makes an early flavor choice, enters a first
+name, optionally exchanges contact details with Lucia, and chooses pronouns.
+Only contestants, crew, and League press are aboard; Minccino and Machoke
+assist the crew. Lucia wears a Lapras necklace. Do not write disembarkation or
+starter selection into the public story until requested. The planned choices
+for the next chapter are Charmander, Chikorita, and Piplup, all equally valid.
 
 Eight Laurels can be earned without battling; the three highest-ranked contestants
 with all eight qualify for the Triumvirate. Do not invent major characters,
