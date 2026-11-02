@@ -9,10 +9,10 @@ function problem(text, lineCount) {
   }
 }
 function register(api, context) {
-  const collection = api.languages.createDiagnosticCollection('empires-story');
-  const output = api.window.createOutputChannel('Empires Story');
+  const collection = api.languages.createDiagnosticCollection('pokemon-story');
+  const output = api.window.createOutputChannel('Pokémon Story');
   function validate(document) {
-    if (document.languageId !== 'empires-story') return;
+    if (document.languageId !== 'pokemon-story') return;
     const error = problem(document.getText(), document.lineCount);
     if (!error) { collection.delete(document.uri); return; }
     if (error.line === undefined) {
@@ -21,7 +21,7 @@ function register(api, context) {
     const line = document.lineAt(error.line);
     const range = new api.Range(error.line, line.firstNonWhitespaceCharacterIndex, error.line, line.text.length);
     const diagnostic = new api.Diagnostic(range, error.message, api.DiagnosticSeverity.Error);
-    diagnostic.source = 'Empires parser'; collection.set(document.uri, [diagnostic]);
+    diagnostic.source = 'Aurelian League parser'; collection.set(document.uri, [diagnostic]);
   }
   context.subscriptions.push(collection, output, api.workspace.onDidOpenTextDocument(validate),
     api.workspace.onDidSaveTextDocument(validate), api.workspace.onDidCloseTextDocument(document => collection.delete(document.uri)));

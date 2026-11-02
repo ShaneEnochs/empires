@@ -7,10 +7,10 @@ const valid = '*passage start\n*title Start\nHello.';
 test('language, snippets and tasks retain their registration', () => {
   const manifest = require('../package.json');
   assert.deepEqual(manifest.contributes.languages[0].extensions, ['.story']);
-  assert.equal(manifest.contributes.languages[0].id, 'empires-story');
-  const snippets = JSON.parse(fs.readFileSync(path.join(__dirname,'../../../.vscode/empires.code-snippets'),'utf8'));
-  assert.equal(Object.keys(snippets).length, 33);
-  for (const entry of Object.values(snippets)) { assert.equal(entry.scope, 'empires-story,plaintext'); assert.ok(entry.prefix.startsWith('emp-')); }
+  assert.equal(manifest.contributes.languages[0].id, 'pokemon-story');
+  const snippets = JSON.parse(fs.readFileSync(path.join(__dirname,'../../../.vscode/pokemon.code-snippets'),'utf8'));
+  assert.equal(Object.keys(snippets).length, 38);
+  for (const entry of Object.values(snippets)) { assert.equal(entry.scope, 'pokemon-story,plaintext'); assert.ok(entry.prefix.startsWith('pkmn-')); }
   assert.equal(require('../../../.vscode/tasks.json').tasks.length, 3);
 });
 test('parser errors preserve their message, passage and zero-based source line', () => {
@@ -28,7 +28,7 @@ test('parser errors preserve their message, passage and zero-based source line',
 });
 test('open/save validation isolates files and correction/close clear diagnostics', () => {
   const values = new Map(), handlers = {};
-  const doc = (uri,text) => ({ uri, languageId:'empires-story', getText:()=>text, lineCount:text.split('\n').length,
+  const doc = (uri,text) => ({ uri, languageId:'pokemon-story', getText:()=>text, lineCount:text.split('\n').length,
     lineAt:n=>({text:text.split('\n')[n],firstNonWhitespaceCharacterIndex:0}) });
   const a=doc('a',valid+'\n*unknown'), b=doc('b',valid+'\n*unknown');
   const collection={set:(key,value)=>values.set(key,value),delete:key=>values.delete(key),dispose(){}};
@@ -46,17 +46,17 @@ test('real TextMate tokenization covers directives, choices, conditions, strings
   const onig=require('vscode-oniguruma');
   const wasm=fs.readFileSync(require.resolve('vscode-oniguruma/release/onig.wasm'));
   await onig.loadWASM(wasm.buffer.slice(wasm.byteOffset,wasm.byteOffset+wasm.byteLength));
-  const grammarSource=fs.readFileSync(path.join(__dirname,'../syntaxes/empires.tmLanguage.json'),'utf8');
+  const grammarSource=fs.readFileSync(path.join(__dirname,'../syntaxes/pokemon.tmLanguage.json'),'utf8');
   const registry=new Registry({onigLib:Promise.resolve({createOnigScanner:p=>new onig.OnigScanner(p),createOnigString:s=>new onig.OnigString(s)}),loadGrammar:async()=>parseRawGrammar(grammarSource,'grammar.json')});
-  const grammar=await registry.loadGrammar('source.empires-story');
+  const grammar=await registry.loadGrammar('source.pokemon-story');
   const tokens=text=>grammar.tokenizeLine(text).tokens;
-  for(const directive of 'var stat skill item chapter passage title choice continue input_text checkpoint journal set add grant_skill revoke_skill add_item remove_item death show_if'.split(' ')) {
-    assert.ok(tokens('*'+directive+' value').some(token=>token.scopes.includes('keyword.control.directive.empires')),directive);
+  for(const directive of 'var stat skill item chapter passage title choice continue input_text checkpoint journal set add pokemon add_pokemon remove_pokemon grant_skill revoke_skill add_item remove_item death show_if'.split(' ')) {
+    assert.ok(tokens('*'+directive+' value').some(token=>token.scopes.includes('keyword.control.directive.pokemon')),directive);
   }
-  assert.ok(!tokens('*unknown value').some(token=>token.scopes.includes('keyword.control.directive.empires')));
-  for(const scope of ['string.unquoted.choice.empires','entity.name.label.empires','keyword.control.condition.empires','keyword.operator.comparison.empires','constant.numeric.empires'])
+  assert.ok(!tokens('*unknown value').some(token=>token.scopes.includes('keyword.control.directive.pokemon')));
+  for(const scope of ['string.unquoted.choice.pokemon','entity.name.label.pokemon','keyword.control.condition.pokemon','keyword.operator.comparison.pokemon','constant.numeric.pokemon'])
     assert.ok(tokens('#Go -> destination [if score >= 2]').some(token=>token.scopes.includes(scope)),scope);
-  for(const scope of ['string.quoted.double.empires','variable.other.interpolated.empires'])
+  for(const scope of ['string.quoted.double.pokemon','variable.other.interpolated.pokemon'])
     assert.ok(tokens('*journal event "Hello ${name}"').some(token=>token.scopes.includes(scope)),scope);
-  assert.deepEqual(tokens('Ordinary narrative.')[0].scopes,['source.empires-story']);
+  assert.deepEqual(tokens('Ordinary narrative.')[0].scopes,['source.pokemon-story']);
 });

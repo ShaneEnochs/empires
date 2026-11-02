@@ -20,7 +20,7 @@ export function showError(root: HTMLElement, error: unknown): void {
   (root.querySelector('#story-content') ?? root).append(message);
 }
 
-export function appHeader(branding = 'Empires'): HTMLElement {
+export function appHeader(branding = 'Aurelian League'): HTMLElement {
   const header = document.createElement('header');
   header.className = 'app-header';
   const brand = document.createElement('p');

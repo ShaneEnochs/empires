@@ -1,4 +1,4 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import {
   choose, expectPassage, expectStartup, openPanel, panelNames, reachBriefing,
@@ -25,7 +25,7 @@ for (const width of [320, 375, 768, 1280]) {
     }
     const navigation = page.getByRole('navigation', { name: 'Reading views' });
     const buttons = navigation.getByRole('button');
-    await expect(buttons).toHaveText(['Story', 'Character', 'Journal', 'People']);
+    await expect(buttons).toHaveText(['Story', 'Character', 'Party', 'Journal', 'People']);
     const dimensions = await buttons.evaluateAll(elements => elements.map(element => {
       const rect = element.getBoundingClientRect();
       const style = getComputedStyle(element);
@@ -35,10 +35,13 @@ for (const width of [320, 375, 768, 1280]) {
       return { width: rect.width, height: rect.height, y: rect.y, font: parseFloat(style.fontSize),
         textHeight: text.height, lineHeight: parseFloat(style.lineHeight), textWidth: text.width };
     }));
-    for (const rect of dimensions) {
-      expect(Math.abs(rect.width - dimensions[0]!.width)).toBeLessThanOrEqual(1);
+    for (const [index, rect] of dimensions.entries()) {
+      expect(rect.width).toBeGreaterThanOrEqual(44);
       expect(rect.height).toBe(44);
-      expect(rect.y).toBe(dimensions[0]!.y);
+      const rowStart = width <= 420 && index >= 3 ? 3 : 0;
+      expect(rect.y).toBe(dimensions[rowStart]!.y);
+      expect(Math.abs(rect.width - dimensions[rowStart]!.width)).toBeLessThanOrEqual(1);
+      if (width <= 420 && index >= 3) expect(rect.y).toBeGreaterThan(dimensions[0]!.y);
       expect(rect.font).toBeGreaterThanOrEqual(13.5);
       expect(rect.font).toBeLessThanOrEqual(14.5);
       expect(rect.textHeight).toBeLessThanOrEqual(rect.lineHeight);
@@ -97,7 +100,7 @@ for (const width of [320, 375, 768, 1280]) {
     });
     expect(geometry.gap).toBe(0);
     expect(geometry.chapterHeight).toBeLessThan(37);
-    expect(geometry.headerHeight).toBeLessThan(81);
+    expect(geometry.headerHeight).toBeLessThan(width <= 420 ? 125 : 81);
     expect(Math.abs(geometry.scrollPadding - geometry.headerHeight)).toBeLessThanOrEqual(1);
     await expect(page.locator('#story-content > p').first()).toHaveCSS('text-align', 'start');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
@@ -107,7 +110,7 @@ for (const width of [320, 375, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     await startGame(page);
     await reachBriefing(page);
-    await choose(page, 'Bypass fieldwork and convene the council');
+    await choose(page, 'Bypass fieldwork and convene the center');
     await choose(page, 'Plan an evacuation of the lower town');
     await choose(page, 'Hire the ferry hands for three coins');
     await expectPassage(page, "Hands Who Know Tonight's Water");
@@ -115,7 +118,7 @@ for (const width of [320, 375, 768, 1280]) {
     const metrics = await heading.evaluate(element => ({ height: element.getBoundingClientRect().height, line: parseFloat(getComputedStyle(element).lineHeight) }));
     if (width <= 375) expect(metrics.height).toBeGreaterThan(metrics.line * 1.5);
     await page.locator('.chapter-label').evaluate(element => {
-      element.textContent = 'A Council Beyond the Flooded Provincial Border';
+      element.textContent = 'A Center Beyond the Flooded Provincial Border';
     });
     await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
     await expect(page.locator('.chapter-label')).toHaveCSS('font-size', '40px');

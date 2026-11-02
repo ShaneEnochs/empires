@@ -1,8 +1,7 @@
 import { titlePage } from './title-page';
-import provincialCrisisSource from '../examples/provincial-crisis.story?raw';
+import aurelianLeagueSource from '../content/aurelian-league.story?raw';
 import { validateSaveIdentity } from './storage';
 import type { StorySaveIdentity } from './storage';
-import { provincialCrisisPeople } from './people';
 import type { PersonReference } from './people';
 
 export interface CatalogStory {
@@ -17,12 +16,12 @@ export interface CatalogStory {
 /** Static application configuration; importing the catalog never reads saves or enters passages. */
 export const storyCatalog: readonly CatalogStory[] = Object.freeze([
   {
-    id: 'provincial-crisis',
+    id: 'aurelian-league',
     title: titlePage.title,
     description: titlePage.description,
-    source: provincialCrisisSource,
-    identity: { storyId: 'provincial-crisis', storyRevision: 1 },
-    people: provincialCrisisPeople,
+    source: aurelianLeagueSource,
+    identity: { storyId: 'aurelian-league', storyRevision: 1 },
+    people: Object.freeze([]),
   },
 ].map(entry => Object.freeze({ ...entry, identity: validateSaveIdentity(entry.identity) })));
 

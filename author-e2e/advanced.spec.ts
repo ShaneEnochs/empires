@@ -11,8 +11,8 @@ for(const width of [320,375,768,1280])test('advanced example pages, keyboard cho
  await page.getByRole('button',{name:'Continue',exact:true}).click();await expect(page.locator('#story-content')).toContainText('They are waiting.');
  await page.getByRole('button',{name:'Character',exact:true}).click();await page.getByRole('button',{name:'Story',exact:true}).click();
  await expect(page.locator('#story-content')).toContainText('They are waiting.');await page.getByRole('button',{name:'Continue',exact:true}).click();
- await expect(page.getByRole('radio',{name:'Buy a sword (10 gold)',exact:true})).toBeDisabled();
- await page.getByRole('radio',{name:'Risk an insult',exact:true}).check();await page.getByRole('button',{name:'Continue',exact:true}).click();
+ await expect(page.getByRole('radio',{name:'Take the advanced route (10 tokens)',exact:true})).toBeDisabled();
+ await page.getByRole('radio',{name:'Risk the crossing',exact:true}).check();await page.getByRole('button',{name:'Continue',exact:true}).click();
  await page.getByRole('button',{name:'Try Again',exact:true}).click();await expect(page.locator('#story-content strong em')).toHaveText('Alexander');
 
  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);

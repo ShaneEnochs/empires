@@ -1,12 +1,12 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { checkpointKey, STORAGE_KEY } from '../src/storage';
 
-export const crisisKey = checkpointKey({ storyId: 'provincial-crisis', storyRevision: 1 });
+export const crisisKey = checkpointKey({ storyId: 'harbor-practice', storyRevision: 1 });
 export const cityKey = STORAGE_KEY;
 export const arrival = 'The last ferry reached Bellwether before the river closed.';
-export const panelNames = ['Character', 'Journal', 'People'] as const;
+export const panelNames = ['Character', 'Party', 'Journal', 'People'] as const;
 type PanelName = typeof panelNames[number];
 type CharacterSection = 'Skills' | 'Inventory';
 
@@ -24,7 +24,7 @@ export async function expectStartup(page: Page): Promise<void> {
   await expectPassage(page, titlePage.title);
   await expect(page.getByRole('navigation', { name: 'Game startup' })).toBeVisible();
   await expect(page.getByRole('button', { name: /Select |Back to Stories/ })).toHaveCount(0);
-  await expect(page.getByText('The City Gate', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('The Pokémon Center', { exact: true })).toHaveCount(0);
   await expect(page.locator('.chapter-label')).toHaveCount(0);
 }
 
@@ -55,7 +55,7 @@ export async function returnToStory(page: Page): Promise<void> {
 
 export async function expectCharacter(page: Page, values: string[]): Promise<void> {
   const panel = await openPanel(page, 'Character');
-  await expect(panel.locator('dt')).toHaveText(['Envoy', 'Authority', 'Public trust', 'Settlement']);
+  await expect(panel.locator('dt')).toHaveText(['Trainer', 'Authority', 'Public trust', 'Settlement']);
   await expect(panel.locator('dd')).toHaveText(values);
   await returnToStory(page);
 }
@@ -77,7 +77,7 @@ export async function choose(page: Page, label: string): Promise<void> {
 export async function expectInitialState(page: Page): Promise<void> {
   await expectCharacter(page, ['Mara Vale', '2', '0', 'Undecided']);
   await expectItems(page, 'Journal', [arrival]);
-  await expectItems(page, 'Skills', ['Provincial Commission']);
+  await expectItems(page, 'Skills', ['Rescue Training']);
   await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1']);
 }
 
@@ -97,7 +97,7 @@ export async function reachBriefing(page: Page, name = 'Rowan 周'): Promise<voi
   await expectPassage(page, 'Six Sacks and a Day');
 }
 
-export async function councilWithEvidence(page: Page): Promise<void> {
+export async function centerWithEvidence(page: Page): Promise<void> {
   await choose(page, 'Investigate the mill accounts');
   await expect(page.getByRole('radio', { name: 'Negotiate a protected statement', exact: true })).toHaveCount(0);
   await choose(page, 'Pay two coins for attested accounts');
@@ -113,7 +113,7 @@ export async function enterSluiceDeath(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await choose(page, 'Enter the unshored sluice chamber despite the warning');
   await expectPassage(page, 'Beneath the Shore Timbers');
-  await expect(page.getByText("The river takes the commission's bearer before the council can meet.", { exact: true })).toBeVisible();
+  await expect(page.getByText("The river takes the commission's bearer before the center can meet.", { exact: true })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveText(['Try Again']);
 }
 
@@ -134,7 +134,7 @@ export async function confirmNewGame(page: Page, accept: boolean): Promise<void>
 export async function observeCheckpointWrites(page: Page): Promise<void> {
   await page.addInitScript(key => {
     let writes = 0;
-    Object.defineProperty(window, '__empiresCheckpointWrites', { get: () => writes });
+    Object.defineProperty(window, '__pokemonCheckpointWrites', { get: () => writes });
     const setItem = Storage.prototype.setItem;
     Storage.prototype.setItem = function (name: string, value: string): void {
       setItem.call(this, name, value);
@@ -144,5 +144,5 @@ export async function observeCheckpointWrites(page: Page): Promise<void> {
 }
 
 export async function checkpointWrites(page: Page): Promise<number> {
-  return page.evaluate(() => Reflect.get(window, '__empiresCheckpointWrites') as number);
+  return page.evaluate(() => Reflect.get(window, '__pokemonCheckpointWrites') as number);
 }

@@ -152,10 +152,10 @@ test('the example keeps both routes while demonstrating different variable resul
   const story = parseStory(readFileSync(new URL('../src/example.story', import.meta.url), 'utf8'));
   const messenger = new Game(story);
   messenger.navigate('messenger');
-  messenger.navigate('council');
+  messenger.navigate('center');
   assert.deepEqual(messenger.state.variables, { influence: 2.5, honor: 4, loyal: true, character_name: 'Alexander' });
   const direct = new Game(story);
-  direct.navigate('council');
+  direct.navigate('center');
   assert.deepEqual(direct.state.variables, { influence: 0.5, honor: 5, loyal: false, character_name: 'Alexander' });
   assert.equal(JSON.stringify(story).includes('${influence}'), true);
   assert.deepEqual(JSON.parse(JSON.stringify(messenger.state)), messenger.state);

@@ -1,0 +1,325 @@
+{
+  "var": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-var",
+    "body": [
+      "*var ${1:name} ${2:0}"
+    ],
+    "description": "Aurelian League var"
+  },
+  "stat": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-stat",
+    "body": [
+      "*stat ${1:name} \"${2:Label}\""
+    ],
+    "description": "Aurelian League stat"
+  },
+  "skill": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-skill",
+    "body": [
+      "*skill ${1:skill_id} \"${2:Skill name}\""
+    ],
+    "description": "Aurelian League skill"
+  },
+  "item": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-item",
+    "body": [
+      "*item ${1:item_id} \"${2:Item name}\""
+    ],
+    "description": "Aurelian League item"
+  },
+  "chapter": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-chapter",
+    "body": [
+      "*chapter ${1:Chapter name}"
+    ],
+    "description": "Aurelian League chapter"
+  },
+  "passage": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-passage",
+    "body": [
+      "*passage ${1:passage_id}",
+      "*title ${2:Title}",
+      "",
+      "${3:Narrative.}",
+      "",
+      "$0"
+    ],
+    "description": "Aurelian League passage"
+  },
+  "choice": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-choice",
+    "body": [
+      "*choice",
+      "  #${1:Choice label} -> ${2:destination}",
+      "$0"
+    ],
+    "description": "Aurelian League choice"
+  },
+  "conditional-choice": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-conditional-choice",
+    "body": [
+      "*choice",
+      "  #${1:Conditional choice} -> ${2:destination} [if ${3:variable} >= ${4:1}]",
+      "  #${5:Fallback} -> ${6:destination}",
+      "$0"
+    ],
+    "description": "Aurelian League conditional-choice"
+  },
+  "show-if": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-show-if",
+    "body": [
+      "*show_if ${1:variable} == ${2:true}",
+      "${3:Conditional paragraph.}",
+      "",
+      "$0"
+    ],
+    "description": "Aurelian League show-if"
+  },
+  "continue": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-continue",
+    "body": [
+      "*continue ${1:destination}"
+    ],
+    "description": "Aurelian League continue"
+  },
+  "input-text": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-input-text",
+    "body": [
+      "*input_text ${1:variable} \"${2:Label}\" -> ${3:destination}"
+    ],
+    "description": "Aurelian League input-text"
+  },
+  "checkpoint": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-checkpoint",
+    "body": [
+      "*checkpoint"
+    ],
+    "description": "Aurelian League checkpoint"
+  },
+  "journal": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-journal",
+    "body": [
+      "*journal ${1:event_id} \"${2:Recorded text}\""
+    ],
+    "description": "Aurelian League journal"
+  },
+  "set": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-set",
+    "body": [
+      "*set ${1:variable} ${2:0}"
+    ],
+    "description": "Aurelian League set"
+  },
+  "add": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-add",
+    "body": [
+      "*add ${1:variable} ${2:1}"
+    ],
+    "description": "Aurelian League add"
+  },
+  "grant-skill": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-grant-skill",
+    "body": [
+      "*grant_skill ${1:skill_id}"
+    ],
+    "description": "Aurelian League grant-skill"
+  },
+  "revoke-skill": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-revoke-skill",
+    "body": [
+      "*revoke_skill ${1:skill_id}"
+    ],
+    "description": "Aurelian League revoke-skill"
+  },
+  "add-item": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-add-item",
+    "body": [
+      "*add_item ${1:item_id} ${2:1}"
+    ],
+    "description": "Aurelian League add-item"
+  },
+  "remove-item": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-remove-item",
+    "body": [
+      "*remove_item ${1:item_id} ${2:1}"
+    ],
+    "description": "Aurelian League remove-item"
+  },
+  "death": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-death",
+    "body": [
+      "*death"
+    ],
+    "description": "Aurelian League death"
+  },
+  "comment": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-comment",
+    "body": [
+      "*comment ${1:Author note}"
+    ],
+    "description": "Aurelian League comment"
+  },
+  "if": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-if",
+    "body": [
+      "*if ${1:condition}",
+      "  ${2:Text}"
+    ],
+    "description": "Aurelian League if"
+  },
+  "elseif": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-elseif",
+    "body": [
+      "*elseif ${1:condition}",
+      "  ${2:Text}"
+    ],
+    "description": "Aurelian League elseif"
+  },
+  "else": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-else",
+    "body": [
+      "*else",
+      "  ${1:Text}"
+    ],
+    "description": "Aurelian League else"
+  },
+  "page_break": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-page_break",
+    "body": [
+      "*page_break"
+    ],
+    "description": "Aurelian League page_break"
+  },
+  "temp": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-temp",
+    "body": [
+      "*temp ${1:local_name} ${2:false}"
+    ],
+    "description": "Aurelian League temp"
+  },
+  "capitalize": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-capitalize",
+    "body": [
+      "\\$!{${1:name}}"
+    ],
+    "description": "Aurelian League capitalize"
+  },
+  "uppercase": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-uppercase",
+    "body": [
+      "\\$!!{${1:name}}"
+    ],
+    "description": "Aurelian League uppercase"
+  },
+  "inline": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-inline",
+    "body": [
+      "@{${1:plural_verbs} ${2:are}|${3:is}}"
+    ],
+    "description": "Aurelian League inline"
+  },
+  "bold": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-bold",
+    "body": [
+      "[b]${1:text}[/b]"
+    ],
+    "description": "Aurelian League bold"
+  },
+  "italic": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-italic",
+    "body": [
+      "[i]${1:text}[/i]"
+    ],
+    "description": "Aurelian League italic"
+  },
+  "selectable_choice": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-selectable_choice",
+    "body": [
+      "#${1:Choice} -> ${2:destination} [selectable_if ${3:gold} >= ${4:10}]"
+    ],
+    "description": "Aurelian League selectable_choice"
+  },
+  "compound_condition": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-compound_condition",
+    "body": [
+      "*if (${1:ready}) and not (${2:blocked})",
+      "  ${3:Text}"
+    ],
+    "description": "Aurelian League compound_condition"
+  },
+  "pokemon": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-pokemon",
+    "body": [
+      "*pokemon ${1:starter_piplup} \"${2:Piplup}\""
+    ],
+    "description": "Pok\u00e9mon party: pokemon"
+  },
+  "add_pokemon": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-add_pokemon",
+    "body": [
+      "*add_pokemon ${1:starter_piplup} ${2:starter_nickname}"
+    ],
+    "description": "Pok\u00e9mon party: add_pokemon"
+  },
+  "remove_pokemon": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-remove_pokemon",
+    "body": [
+      "*remove_pokemon ${1:starter_piplup}"
+    ],
+    "description": "Pok\u00e9mon party: remove_pokemon"
+  },
+  "has_pokemon": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-has_pokemon",
+    "body": [
+      "*show_if has_pokemon ${1:starter_piplup}",
+      "${2:Your partner is with you.}"
+    ],
+    "description": "Pok\u00e9mon party: has_pokemon"
+  },
+  "lacks_pokemon": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-lacks_pokemon",
+    "body": [
+      "*show_if lacks_pokemon ${1:starter_piplup}",
+      "${2:Your partner is away.}"
+    ],
+    "description": "Pok\u00e9mon party: lacks_pokemon"
+  }
+}

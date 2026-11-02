@@ -1,4 +1,4 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import { choose, crisisKey, expectPassage, openPanel, returnToStory, expectStartup, startGame } from './helpers';
 
@@ -42,7 +42,7 @@ test('Provincial references wait for recording and checkpoint recovery removes l
   await page.evaluate(key => {
     const saved = JSON.parse(localStorage.getItem(key)!);
     if (saved.currentState.passageId !== 'hired_pilot') throw Error('Expected committed pilot progress');
-    delete saved.currentState; saved.formatVersion = 1;
+    delete saved.currentState; saved.formatVersion = 6;
     localStorage.setItem(key, JSON.stringify(saved));
   }, crisisKey);
   await page.reload();

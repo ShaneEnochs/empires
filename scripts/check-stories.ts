@@ -5,7 +5,7 @@ import { parseStory } from '../src/story';
 import type { Story } from '../src/types';
 
 const files = process.argv.slice(2);
-if (files.length === 0) files.push('src/example.story', 'examples/provincial-crisis.story');
+if (files.length === 0) files.push('content/aurelian-league.story', 'src/example.story', 'examples/harbor-practice.story', 'examples/advanced-authoring.story');
 const totals = { error: 0, warning: 0, information: 0 };
 for (const file of files) {
   console.log('\n' + file);

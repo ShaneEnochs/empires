@@ -101,12 +101,12 @@ test('a journal-only cycle is tested without accumulation warnings and reports f
 for (const [effect, expected] of [
   ['*add influence 5', 'adds 5 to variable influence'],
   ['*add influence -2', 'adds -2 to variable influence'],
-  ['*add_item coin 10', 'adds 10 "Gold Coin" (coin)'],
-  ['*remove_item coin 2', 'removes 2 "Gold Coin" (coin)'],
+  ['*add_item coin 10', 'adds 10 "Supply Token" (coin)'],
+  ['*remove_item coin 2', 'removes 2 "Supply Token" (coin)'],
 ] as const) {
   test('warns about an effect in a self-cycle: ' + effect, () => {
     const story = parsed(
-      '*var influence 0', '*item coin "Gold Coin"',
+      '*var influence 0', '*item coin "Supply Token"',
       '*passage start', '*title Start', '*add_item coin 4', 'A road.', '*continue market',
       '*passage market', '*title Market', effect, 'Trade.', '*choice', '#Again -> market', '#Leave -> end',
       '*passage end', '*title End', 'Done.',
@@ -342,7 +342,7 @@ test('preflight never modifies Story or another Game state/checkpoint; exposed d
 });
 
 for (const [file, expectedRoutes, probes, skipped] of [
-  ['src/example.story', 14, 0, 0], ['examples/provincial-crisis.story', 1098, 4, 4],
+  ['src/example.story', 14, 0, 0], ['examples/harbor-practice.story', 1098, 4, 4],
 ] as const) {
   test('preflights the unchanged included story: ' + file, () => {
     const story = parseStory(readFileSync(new URL('../' + file, import.meta.url), 'utf8'));

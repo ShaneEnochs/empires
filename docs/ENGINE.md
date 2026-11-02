@@ -1,9 +1,38 @@
-# Passage engine
+# The Aurelian League engine
+
+The sole public story is content/aurelian-league.story, identity aurelian-league,
+revision 1. Pokémon-themed private examples exercise historical engine features;
+they are not public stories or additional Torvesca lore. See README for the current
+workflow and SCRIPTING.md for all syntax.
+
+## Party and save schema
+
+Story.pokemon declares frozen individual ID/species records. GameState.party starts
+empty and stores at most six frozen ID/species/optional-nickname records in joining
+order. Addition/removal run on the same private entry candidate as other effects.
+Duplicate additions and absent removals are no-ops. Rejoining appends. An absent
+seventh member, invalid nickname or later unrelated effect failure rejects the
+whole entry, including a proposed checkpoint. Nicknames resolve global string
+variables once; they never track later variable changes. Conditions reuse the
+shared typed AST/evaluator. The Party view derives directly from committed state.
+
+The current schema explicitly writes format 4 (plain) or 5 (page/temp context).
+Checkpoint-only engine APIs use format 6, retaining checkpoint-entry semantics.
+Formats 1–3 are rejected as incompatible. Both current progress and recovery
+snapshots require party, including empty party; validators never guess defaults.
+Validation rejects unknown IDs/species, duplicates, overflow, malformed nicknames,
+extra fields, inherited data and accessors. Continue skips entry effects, while
+Try Again replays complete pre-entry state exactly once. The independent key
+pokemon:checkpoint:aurelian-league never reads/migrates/deletes old game keys.
+The detailed historical API descriptions below use these current boundaries;
+any reference to checkpoint-only restoration means the explicit format-6 helper,
+not a public-app migration path.
+
 
 ## Validated story data
 
 `parseStory` reads one `.story` authoring format into a complete immutable `Story`
-before `new Game` can run. The story contains `initialVariables`, `skills`, `items`,
+before `new Game` can run. The story contains `initialVariables`, `pokemon`, `skills`, `items`,
 `stats`, `startId`, and `passages`. Variable, skill, item, and stat declarations may
 be interleaved before all chapters and passages. Each stat references a variable
 already declared with `*var`. Primitive variable initial values establish
@@ -441,36 +470,34 @@ before entering the latest `*checkpoint` passage (or the automatic initial
 boundary). Try Again re-enters that checkpoint once, discards later changes, and
 saves the recovered current state without moving the checkpoint boundary.
 
-Storage is local to this browser and device; it does not synchronize. Provincial
-Crisis keeps story ID `provincial-crisis`, revision 1, and the exact key
-`empires:checkpoint:provincial-crisis`. The internal City Gate default identity and
-`empires:checkpoint:empires-example` key remain separate.
+Storage is local to this browser and device; it does not synchronize. The public
+story uses identity `aurelian-league`, revision 1, and key
+`pokemon:checkpoint:aurelian-league`. Private fixture identities are separate.
 
-Format 2 stores one atomic JSON record:
+Format 4 stores one atomic JSON record:
 
 ```text
-{ formatVersion: 2, storyId, storyRevision, checkpoint: { state }, currentState }
+{ formatVersion: 4, storyId, storyRevision, checkpoint: { state }, currentState }
 ```
 
 `checkpoint.state` is pre-entry; `currentState` is post-entry. Both use the same
 strict field/type, passage, journal-event/chapter, skill, and inventory validation;
-only committed current state may target death. Format-2 recovery targets must be
+only committed current state may target death. Format-4/5 recovery targets must be
 the start or an authored checkpoint. Validation produces independent frozen data.
 The restoration constructor uses `committedState` to restore validated current
 state directly, bypassing passage entry. Normal construction and checkpoint
 recovery still apply entry effects once.
 
-Format-1 checkpoint-only saves remain readable and resume their checkpoint using
-the previous behavior. Opening startup and choosing Continue never rewrite them.
-The next successful committed action writes format 2. Invalid or revision-mismatched
-records are reported and left untouched. Story display text never controls identity.
+Checkpoint-only restoration is an explicit format-6 engine API. Public saves
+use party-aware format 4/5 and Continue restores committed state without effects.
+Unsupported schemas are never rewritten on startup; see the schema contract above.
 
 GameSession saves once after each successful navigation, valid text submission,
 and Try Again. New Game must initialize and save successfully before activation;
 replacement still requires consent and a fresh save-presence check. Cancel preserves
 old progress. `saveProgress` validates and writes the whole record with one `setItem`,
-never deleting first. `loadCheckpoint` reads both formats; `saveCheckpoint` remains
-an explicit legacy-format writer for existing callers and regression fixtures.
+never deleting first. `loadCheckpoint` reads the supported formats; `saveCheckpoint` remains
+an explicit checkpoint-only format-6 writer for existing callers and regression fixtures.
 
 Failed gameplay actions do not save. Failed automatic writes retain committed
 in-memory gameplay and the prior stored bytes, and warn that recent progress may
@@ -487,16 +514,18 @@ preview clears temporary progress. It never reads or writes public localStorage.
 
 `src/catalog.ts` is a frozen list of explicit application IDs, titles, descriptions,
 Vite `?raw` source, People definitions, and validated StorySaveIdentity records.
-Initialization checks distinct catalog/save IDs. Stage 10C publishes only Provincial
-Crisis (`provincial-crisis`, revision 1), so opening the app parses that entry and
-constructs its session directly, then presents startup. It reads only that save,
-never initializes a new Game for empty startup, and retains all existing validation,
-Continue Game, confirmed replacement, and explicit unsaved-play semantics.
+Initialization checks distinct catalog/save IDs. Only The Aurelian League
+(`aurelian-league`, revision 1) is published. Opening the app parses that entry,
+constructs its session and presents startup. It reads only that identity's save;
+empty startup never constructs a Game. Continue and confirmed replacement keep
+the existing validation and explicit unsaved-play semantics.
 
-The City Gate source remains `src/example.story`, with its isolated Node tests,
-legacy `empires-example` default identity/exports, and existing saved records intact.
-The public app neither imports that source nor reads, deletes, or rewrites its save.
-Neither story's authored source, revision, save format, or checkpoint semantics changes.
+Center Visit (`src/example.story`) and Harbor Practice are private Pokémon-themed
+regression fixtures. Node and browser regression tests retain their branching,
+resource, recovery and discovery coverage. A separate Vite regression build selects
+the fixture catalog at compile time into ignored regression-dist; the normal public
+build imports neither fixture story nor its metadata. There is no runtime story
+switch or test-only route in the app.
 
 `selectStory` keeps the parsed Story, validated People metadata, session, active
 Game, and handlers in one closure. There is one renderer. New Game exists only on
@@ -536,14 +565,9 @@ leaves death and checkpoint untouched and exposes an error without falling back
 to New Game. The browser retains the death passage and Try Again button and focuses
 the restored heading only after success.
 
-`GameSession.retryAfterDeath()` uses the committed-action persistence wrapper.
-Successful retry writes current recovered state once, retaining the pre-entry
-checkpoint. Failed retry never writes or changes death state. After a failed save,
-retry uses the newest in-memory checkpoint; reload uses the last successful
-stored progress. Later successful saves clear warnings. Explicit unsaved play
-recovers wholly in memory. Checkpoint validation rejects death targets; committed
-progress validation permits them. Format 2 stores both boundaries atomically and
-format 1 remains readable.
+Checkpoint-only restoration is an explicit format-6 engine API. Public saves
+use party-aware format 4/5 and Continue restores committed state without effects.
+Unsupported schemas are never rewritten on startup; see the schema contract above.
 
 The example adds only optional watchtower choices/passages; original IDs,
 declarations, chapters, effects, and route outcomes stay intact. Revision 1 remains
@@ -637,8 +661,8 @@ information exit 0. No browser bundle imports the analyzer or CLI. CI runs the
 command as well as the existing Node/build/Chromium checks.
 
 The bundled-story review found no confirmed defects or structural warnings:
-The City Gate has 14 prefixes, no return candidates, and two information diagnostics.
-Provincial Crisis has 1,098 prefixes and four information diagnostics. Its four
+The Pokémon Center has 14 prefixes, no return candidates, and two information diagnostics.
+Harbor Practice has 1,098 prefixes and four information diagnostics. Its four
 first-return probes succeed; eight immediate exits are checked. The intentional
 queue/offer cycle keeps one original journal event on return. Four further
 returns to the already visited offer are skipped by the one-repeat bound.
@@ -650,7 +674,7 @@ necessary; authored sources, identity/revision, and browser gameplay are unchang
 
 Stage 8A adds read-only selected statistics and limited panel organization.
 Stage 8B adds responsive reading styles. Stage 8C adds permanent browser integration
-tests. Stage 8D adds the separate Provincial Crisis story and API playtests without
+tests. Stage 8D adds the separate Harbor Practice story and API playtests without
 engine changes. Its playtest notes document current language/deployment limits;
 Stage 9A adds explicit story identity configuration and shared-storage isolation
 tests. Stage 9B adds the static two-story browser library with independent startup
@@ -722,8 +746,8 @@ or merge anything.
 
 ## Compact reading views and deliberate choices (Stages 10B–10C)
 
-Gameplay starts with four equal-width grid controls in one row: Story, Character,
-Journal, People. Flat tabs have at least 44px targets, approximately 0.9rem labels,
+Gameplay starts with five responsive controls: Story, Character, Party, Journal,
+People. At narrow widths the grid uses two rows. Flat tabs have at least 44px targets, approximately 0.9rem labels,
 and exactly one active bottom-border indicator. No tab interaction underlines text.
 An opaque CSS sticky wrapper holds the tabs and a separate compact chapter bar,
 derived from `game.passage.chapter` after each successful action. The passage
@@ -757,7 +781,8 @@ same-ID entries and recovery. Failure retains the DOM, choice, and existing erro
 behavior. Reload never persists the uncommitted selection. Continue, text-input
 submission, Try Again, terminal endings, and New Game keep their distinct behaviors.
 
-`people.ts` defines small frozen per-story arrays associated through `catalog.ts`.
+`people.ts` validates optional per-story arrays associated through `catalog.ts`.
+Private regression definitions live under examples, outside the public bundle.
 Each PersonReference has `id`, `name`, `description`, and `discoveryEvents`.
 `validatePeople` checks stable/unique IDs, nonempty text, and one or more real
 journal event IDs in the selected parsed Story before session construction.
@@ -827,13 +852,12 @@ conditional effects, local variables, formatting, pages, and unavailable choices
   work in interpolation, inline booleans, conditions, and journal templates, then
   disappear on leaving. Re-entry and checkpoint recovery initialize them afresh.
 
-Format 3 is used when progress needs page/temp context; it adds validated `context`
+Format 5 is used when progress needs page/temp context; it adds validated `context`
 with `page` and `temps` alongside the existing currentState and checkpoint. Plain
-passages continue writing format 2. Formats 1 and 2 remain readable for their
-compatible stories, never rewritten during startup. Missing context for a passage
+passages continue writing format 4. Formats 1–3 are incompatible with party state and are rejected. Missing context for a passage
 whose declarations changed is incompatible rather than guessed. Page targets must
 be authored visible pages and temp fields/types must exactly match declarations.
-The global GameState and pre-entry checkpoint schema remain unchanged. Authored
+Both global GameState and pre-entry checkpoints include the frozen party. Authored
 story changes still require intentional revision management. Save keys, warnings,
 atomic writes, memory-only author preview, and death recovery retain their meaning.
 

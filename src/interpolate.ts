@@ -50,7 +50,7 @@ export function selectInline(text: string, variables: Variables, validate = fals
     const condition = parseCondition(match[1]!, variables, [], [], 1, 'inline');
     if (typeof variables[match[1]!] !== 'boolean') throw new Error('Inline condition requires a boolean variable.');
     if (validate) { substitute(match[2]!, variables); substitute(match[3]!, variables); validateBranch?.(match[2]!); validateBranch?.(match[3]!); }
-    result += evaluateCondition(condition, { passageId: '', variables, skills: [], inventory: {}, journal: [] }) ? match[2]! : match[3]!;
+    result += evaluateCondition(condition, { passageId: '', variables, skills: [], party: [], inventory: {}, journal: [] }) ? match[2]! : match[3]!;
     cursor = end;
   }
   return result;

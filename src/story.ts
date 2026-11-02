@@ -1,8 +1,8 @@
 import { formattedParts } from './format';
 import { interpolate, selectInline } from './interpolate';
-import type { Choice, ComparisonOperator, Condition, ItemDefinition, NarrativeParagraph, Passage, PassageEffect, SkillDefinition, StatDisplay, Story, TextInputAction, EffectGuard, Variables, VariableValue } from './types';
+import type { Choice, ComparisonOperator, Condition, ItemDefinition, NarrativeParagraph, Passage, PassageEffect, PokemonDefinition, SkillDefinition, StatDisplay, Story, TextInputAction, EffectGuard, Variables, VariableValue } from './types';
 
-import { syntaxError, id, literal, knownSkill, knownItem, quantityLiteral, parseCondition } from './expressions';
+import { syntaxError, id, literal, knownPokemon, knownSkill, knownItem, quantityLiteral, parseCondition } from './expressions';
 /** Parse and validate the entire story before any passage can be entered. */
 export function parseStory(source: string): Story {
   const passages: Passage[] = [];
@@ -12,6 +12,7 @@ export function parseStory(source: string): Story {
   let pendingChapterLine: number | undefined;
   const initialVariables: Record<string, VariableValue> = {};
   const skills: SkillDefinition[] = [];
+  const pokemon: PokemonDefinition[] = [];
   const items: ItemDefinition[] = [];
   const stats: StatDisplay[] = [];
   const references: { destinationId: string; passageId: string; line: number }[] = [];
@@ -143,7 +144,7 @@ export function parseStory(source: string): Story {
         if (branch[1] === 'else') {
           if (branch[2]) throw syntaxError('*else takes no arguments.', line, current.id);
           block.otherwise = true; block.conditions.push(Object.freeze({ operator: 'literal', value: true }));
-        } else block.conditions.push(parseCondition(branch[2] ?? '', variables(), skills, items, line, current.id));
+        } else block.conditions.push(parseCondition(branch[2] ?? '', variables(), skills, items, line, current.id, pokemon));
         continue;
       }
       if (blocks.length) blocks.at(-1)!.pending = false;
@@ -200,8 +201,18 @@ export function parseStory(source: string): Story {
           throw syntaxError('*show_if must be at a paragraph boundary after the title and effects, before navigation.', line, current?.id);
         }
         explicitShowIf = true;
-        paragraphCondition = conjunction(guard(), parseCondition(argument, variables(), skills, items, line, current.id));
+        paragraphCondition = conjunction(guard(), parseCondition(argument, variables(), skills, items, line, current.id, pokemon));
         showIfLine = line;
+        continue;
+      }
+      if (directive === '*add_pokemon' || directive === '*remove_pokemon') {
+        if (!current?.title || current.paragraphs.length || paragraph.length || action) throw syntaxError('Effects must appear after *title and before the first narrative paragraph.', line, current?.id);
+        const parts = /^(\S+)(?:\s+(\S+))?$/.exec(argument);
+        if (!parts || (directive === '*remove_pokemon' && parts[2])) throw syntaxError(`${directive} requires a Pokémon ID${directive === '*add_pokemon' ? ' and optional global nickname variable' : ''}.`, line, current.id);
+        const pokemonId = knownPokemon(parts[1]!, pokemon, line, current.id);
+        const nicknameVariable = parts[2];
+        if (nicknameVariable && (!Object.hasOwn(initialVariables, nicknameVariable) || typeof initialVariables[nicknameVariable] !== 'string')) throw syntaxError('Nickname must reference a declared global string variable.', line, current.id);
+        addEffect(directive === '*add_pokemon' ? { kind: 'add_pokemon', pokemonId, ...(nicknameVariable ? { nicknameVariable } : {}) } : { kind: 'remove_pokemon', pokemonId });
         continue;
       }
       if (directive === '*grant_skill' || directive === '*revoke_skill') {
@@ -223,8 +234,8 @@ export function parseStory(source: string): Story {
         addEffect(Object.freeze({ kind: directive === '*add_item' ? 'add_item' : 'remove_item', itemId, quantity }));
         continue;
       }
-      if (directive === '*var' || directive === '*skill' || directive === '*item' || directive === '*stat' || directive === '*set' || directive === '*add' || directive === '*journal') {
-        const declaration = directive === '*var' || directive === '*skill' || directive === '*item' || directive === '*stat';
+      if (directive === '*var' || directive === '*skill' || directive === '*item' || directive === '*pokemon' || directive === '*stat' || directive === '*set' || directive === '*add' || directive === '*journal') {
+        const declaration = directive === '*var' || directive === '*skill' || directive === '*item' || directive === '*pokemon' || directive === '*stat';
         if (declaration && (current || passages.length > 0 || pendingChapterLine !== undefined)) {
           throw syntaxError(`${directive} declarations must precede the first passage and all chapter declarations.`, line, current?.id);
         }
@@ -241,6 +252,10 @@ export function parseStory(source: string): Story {
           if (typeof value !== 'string' || value.trim() === '') throw syntaxError('*stat requires a nonempty double-quoted display label.', line);
           if (stats.some(stat => stat.variable === variable)) throw syntaxError(`Duplicate stat display for "${variable}".`, line);
           stats.push(Object.freeze({ variable, label: value }));
+        } else if (directive === '*pokemon') {
+          if (typeof value !== 'string' || value.trim() === '') throw syntaxError('*pokemon requires a nonempty double-quoted species.', line);
+          if (pokemon.some(member => member.id === variable)) throw syntaxError(`Duplicate Pokémon ID "${variable}".`, line);
+          pokemon.push(Object.freeze({ id: variable, species: value }));
         } else if (directive === '*item') {
           if (typeof value !== 'string' || value.trim() === '') throw syntaxError('*item requires a nonempty double-quoted display name.', line);
           if (items.some(item => item.id === variable)) throw syntaxError(`Duplicate item ID "${variable}".`, line);
@@ -360,7 +375,7 @@ export function parseStory(source: string): Story {
       if (bracket !== -1) {
         const wrapper = /^\[(if|selectable_if)\s+(.+)\]$/.exec(destination.slice(bracket));
         if (!wrapper) throw syntaxError('Expected a single [if condition] suffix.', line, current.id);
-        const parsed = parseCondition(wrapper[2]!, variables(), skills, items, line, current.id);
+        const parsed = parseCondition(wrapper[2]!, variables(), skills, items, line, current.id, pokemon);
         if (wrapper[1] === 'selectable_if') selectable = parsed; else condition = conjunction(condition, parsed);
       }
       current.choices.push(Object.freeze({ label, destinationId, ...(selectable ? { selectable } : {}), ...(condition === undefined ? {} : { condition }) }));
@@ -391,5 +406,5 @@ export function parseStory(source: string): Story {
       throw syntaxError(`Missing destination "${reference.destinationId}".`, reference.line, reference.passageId);
     }
   }
-  return Object.freeze({ startId: first.id, initialVariables: Object.freeze(initialVariables), skills: Object.freeze(skills), items: Object.freeze(items), stats: Object.freeze(stats), passages: Object.freeze(passages) });
+  return Object.freeze({ pokemon: Object.freeze(pokemon), startId: first.id, initialVariables: Object.freeze(initialVariables), skills: Object.freeze(skills), items: Object.freeze(items), stats: Object.freeze(stats), passages: Object.freeze(passages) });
 }

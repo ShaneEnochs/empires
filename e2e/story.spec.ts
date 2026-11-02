@@ -1,4 +1,4 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import {
   choose, checkpointRecord, chooseName, expectCharacter, expectItems, expectPassage,
@@ -9,9 +9,9 @@ for (const ending of ['guard', 'refuge'] as const) {
   test('the public story retains the complete ' + ending + ' route and terminal action behavior', async ({ page }) => {
     await startGame(page);
     await choose(page, 'Keep the name Mara Vale and begin');
-    await choose(page, ending === 'guard' ? 'You mediated disputes at the provincial court' : 'You surveyed these river channels');
+    await choose(page, ending === 'guard' ? 'You mediated disputes at the Pokémon care center' : 'You surveyed these river channels');
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
-    await choose(page, 'Bypass fieldwork and convene the council');
+    await choose(page, 'Bypass fieldwork and convene the center');
     const saved = await checkpointRecord(page);
     await expect(page.getByText('Your seal can no longer turn an instruction into law. Every promise now needs willing hands or armed enforcement.', { exact: true })).toBeVisible();
     if (ending === 'guard') {
@@ -61,7 +61,7 @@ test('name drafts survive inspection; Enter accepts trimmed Unicode and HTML-lik
   await expectCharacter(page, ['Mara Vale', '2', '0', 'Undecided']);
   await expectPassage(page, 'The Public Record');
   expect(await checkpointRecord(page)).toBe(saved);
-  const name = 'Éléonore 王 <b>Envoy</b>';
+  const name = 'Éléonore 王 <b>Trainer</b>';
   await field.fill('  ' + name + '  ');
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toHaveCount(1);
   await field.press('Enter');
@@ -69,14 +69,14 @@ test('name drafts survive inspection; Enter accepts trimmed Unicode and HTML-lik
   await expect(page.getByText('Your writ says ' + name + '. It does not say why anyone here should trust you. Before the commission, you made a living in one of two worlds.', { exact: true })).toBeVisible();
   await expectCharacter(page, [name, '2', '0', 'Undecided']);
   await expect(page.locator('main b, main img, main script')).toHaveCount(0);
-  await choose(page, 'You mediated disputes at the provincial court');
+  await choose(page, 'You mediated disputes at the Pokémon care center');
   await expectPassage(page, "A Clerk's Reputation");
   await expectCharacter(page, [name, '3', '0', 'Undecided']);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expectPassage(page, 'Six Sacks and a Day');
   await expectCharacter(page, [name, '4', '0', 'Undecided']);
   const journal = await openPanel(page, 'Journal');
-  await expect(journal.getByRole('listitem').nth(1)).toHaveText(name + ' brought the negotiating habits of the provincial court.');
+  await expect(journal.getByRole('listitem').nth(1)).toHaveText(name + ' brought the negotiating habits of the Pokémon care center.');
 });
 
 test('invalid text retains the field, focus, and error without navigation or saving', async ({ page }) => {

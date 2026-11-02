@@ -32,7 +32,7 @@ const influenceText = '$' + '{influence}';
 const story = parseStory([
   '*var influence 9', '*var honor 5', '*var loyal false', '*var character_name "Unknown"', '*var huge 1e308',
   '*skill composure "Composure"', '*skill herbalism "Herbalism"', '*skill diplomacy "Diplomacy"',
-  '*item gold_coin "Gold Coin"', '*item potion "Potion"', '*item token "Token"',
+  '*item gold_coin "Supply Token"', '*item potion "Potion"', '*item token "Token"',
   '*passage gate', '*title Gate', '*add influence 1', '*set character_name "Alexander"',
   '*grant_skill composure', '*grant_skill herbalism', '*add_item token 1', '*add_item gold_coin 50', '*add_item potion 2',
   '*journal arrived "Arrival ' + nameText + '."', 'Gate.',
@@ -59,7 +59,7 @@ const story = parseStory([
 function atCamp(): Game { const game = new Game(story); game.navigate('camp'); return game; }
 const checkpoint = atCamp().checkpoint;
 function encode(snapshot: GameSnapshot = checkpoint): string {
-  return JSON.stringify({ formatVersion: 1, storyId: STORY_ID, storyRevision: STORY_REVISION, checkpoint: snapshot });
+  return JSON.stringify({ formatVersion: 6, storyId: STORY_ID, storyRevision: STORY_REVISION, checkpoint: snapshot });
 }
 function withSave(record = encode()): FakeStorage {
   const storage = new FakeStorage(); storage.record = record; return storage;
@@ -76,10 +76,10 @@ test('save writes exactly one versioned story-specific pre-entry record', () => 
   assert.equal(storage.writes, 1);
   const data = JSON.parse(storage.record!);
   assert.deepEqual(Object.keys(data), ['formatVersion', 'storyId', 'storyRevision', 'checkpoint']);
-  assert.equal(data.formatVersion, 1);
-  assert.equal(data.storyId, 'empires-example');
+  assert.equal(data.formatVersion, 6);
+  assert.equal(data.storyId, 'aurelian-league');
   assert.equal(data.storyRevision, 1);
-  assert.equal(STORAGE_KEY, 'empires:checkpoint:empires-example');
+  assert.equal(STORAGE_KEY, 'pokemon:checkpoint:aurelian-league');
   assert.deepEqual(data.checkpoint, checkpoint);
   assert.equal(data.checkpoint.state.variables.influence, 10);
   assert.equal(data.checkpoint.state.inventory.gold_coin, 50);
@@ -147,7 +147,7 @@ for (const field of ['extra', 'currentState', 'versionHistory', '__proto__']) {
 }
 
 for (const [field, value, reason] of [
-  ['formatVersion', 0, /save format/], ['formatVersion', 4, /save format/], ['formatVersion', '1', /save format/],
+  ['formatVersion', 0, /save format/], ['formatVersion', 1, /save format/], ['formatVersion', '1', /save format/],
   ['formatVersion', null, /save format/], ['storyId', 'another-story', /another story/],
   ['storyId', 1, /another story/], ['storyRevision', 0, /story revision/],
   ['storyRevision', 2, /story revision/], ['storyRevision', '1', /story revision/],
@@ -374,7 +374,7 @@ test('read failure during New Game preserves the active game and does not risk a
 test('New Game construction failure preserves the save and an active restored game', () => {
   const parsed = parseStory('*var count 0\n*item token "Token"\n*passage start\n*title Start\n*remove_item token 1\nBad.\n'
     + '*passage saved\n*title Saved\n*checkpoint\n*add count 1\nGood.');
-  const snapshot = { state: { passageId: 'saved', variables: { count: 3 }, journal: [], skills: [], inventory: {} } };
+  const snapshot = { state: { passageId: 'saved', variables: { count: 3 }, journal: [], skills: [], party: [], inventory: {} } };
   const storage = new FakeStorage();
   assert.equal(saveCheckpoint(storage, parsed, snapshot).ok, true);
   const session = new GameSession(parsed, storage);

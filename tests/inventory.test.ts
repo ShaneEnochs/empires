@@ -5,7 +5,7 @@ import { evaluateCondition } from '../src/condition';
 import { Game } from '../src/game';
 import { parseStory } from '../src/story';
 
-const definitions = '*item gold_coin "Gold Coin"\n*item potion "Potion"\n*item constructor "Constructor"\n';
+const definitions = '*item gold_coin "Supply Token"\n*item potion "Potion"\n*item constructor "Constructor"\n';
 const passage = '*passage start\n*title Start\nText.';
 const withEffects = (effects: string) => definitions + '*passage start\n*title Start\n' + effects + '\nText.';
 const conditional = (condition: string, effects = '') => definitions + '*passage start\n*title Start\n' + effects
@@ -15,9 +15,9 @@ const conditional = (condition: string, effects = '') => definitions + '*passage
 const max = Number.MAX_SAFE_INTEGER;
 
 test('item definitions interleave with variables/skills in separate namespaces and are frozen', () => {
-  const story = parseStory('*var gold_coin 99\n*skill gold_coin "Coin Lore"\n*item gold_coin "Gold Coin"\n'
+  const story = parseStory('*var gold_coin 99\n*skill gold_coin "Coin Lore"\n*item gold_coin "Supply Token"\n'
     + '*var honor 5\n*item potion "Potion"\n*chapter First\n' + passage);
-  assert.deepEqual(story.items, [{ id: 'gold_coin', name: 'Gold Coin' }, { id: 'potion', name: 'Potion' }]);
+  assert.deepEqual(story.items, [{ id: 'gold_coin', name: 'Supply Token' }, { id: 'potion', name: 'Potion' }]);
   assert.deepEqual(story.skills, [{ id: 'gold_coin', name: 'Coin Lore' }]);
   assert.equal(story.initialVariables.gold_coin, 99);
   assert.ok(Object.isFrozen(story.items));
@@ -210,7 +210,7 @@ for (const [condition, effects, eligible] of [
 test('same-ID variables, skills, and items remain independent', () => {
   const source = [
     '*var gold_coin 99', '*var loyal true', '*var faction "guild"',
-    '*skill gold_coin "Coin Lore"', '*item gold_coin "Gold Coin"',
+    '*skill gold_coin "Coin Lore"', '*item gold_coin "Supply Token"',
     '*passage start', '*title Start', '*grant_skill gold_coin', '*add_item gold_coin 2', 'Always.',
     '', '*show_if gold_coin == 99', 'Variable.', '', '*show_if loyal == true', 'Boolean.',
     '', '*show_if faction == "guild"', 'String.', '', '*show_if has_skill gold_coin', 'Skill.',
@@ -238,7 +238,7 @@ test('constructor and other inherited properties never count as owned items', ()
     assert.equal(evaluateCondition({ operator: 'lacks_item', itemId }, empty.state), true);
     assert.equal(evaluateCondition({ operator: '==', itemId, value: 0 }, empty.state), true);
   }
-  const inherited = { ...empty.state, inventory: Object.create({ gold_coin: 100 }) };
+  const inherited = { ...empty.state, party: [], inventory: Object.create({ gold_coin: 100 }) };
   assert.equal(evaluateCondition({ operator: 'has_item', itemId: 'gold_coin' }, inherited), false);
   assert.equal(evaluateCondition({ operator: '==', itemId: 'gold_coin', value: 0 }, inherited), true);
   assert.deepEqual(new Game(parseStory(withEffects('*add_item constructor 2\n*remove_item constructor 1'))).state.inventory,
@@ -390,7 +390,7 @@ test('both original routes preserve skills/journal/chapters and demonstrate remo
     const game = new Game(story);
     assert.deepEqual(game.state.inventory, { gold_coin: 10, gate_token: 1 });
     if (viaMessenger) game.navigate('messenger');
-    game.navigate('council');
+    game.navigate('center');
     assert.deepEqual(game.state.inventory, { gold_coin: viaMessenger ? 7 : 5 });
     assert.equal(Object.hasOwn(game.state.inventory, 'gate_token'), false);
     assert.deepEqual(game.state.skills, viaMessenger ? ['diplomacy'] : []);

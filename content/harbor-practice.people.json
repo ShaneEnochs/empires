@@ -2,7 +2,7 @@
   {
     "id": "town_clerk",
     "name": "The town clerk",
-    "description": "A clerk who recognizes your handwriting from a past arbitration at the provincial court.",
+    "description": "A clerk who recognizes your handwriting from a past arbitration at the Pokémon care center.",
     "discoveryEvents": [
       "clerk_background"
     ]
@@ -33,8 +33,8 @@
     ]
   },
   {
-    "id": "governors_secretary",
-    "name": "The governor's secretary",
+    "id": "coordinators_secretary",
+    "name": "The coordinator's secretary",
     "description": "The secretary who records the early release of grain to the relief kitchen as unauthorized.",
     "discoveryEvents": [
       "relief_kitchen"

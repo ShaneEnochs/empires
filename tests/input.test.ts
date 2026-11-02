@@ -357,7 +357,7 @@ test('retry after a transient entry failure commits effects exactly once', t => 
 
 test('the optional example creates names/backgrounds using existing variables and effects', () => {
   const story = parseStory(readFileSync(new URL('../src/example.story', import.meta.url), 'utf8'));
-  for (const background of ['noble_origin', 'soldier_origin']) {
+  for (const background of ['carer_origin', 'researcher_origin']) {
     const game = new Game(story);
     game.navigate('choose_name');
     assert.equal(game.state.variables.character_name, 'Alexander');
@@ -366,14 +366,14 @@ test('the optional example creates names/backgrounds using existing variables an
     assert.equal(game.state.variables.character_name, 'Eleanor');
     assert.equal(game.state.journal[1]?.text, 'You introduced yourself as Eleanor.');
     game.navigate(background);
-    game.navigate('council');
+    game.navigate('center');
     assert.equal(game.state.variables.character_name, 'Eleanor');
-    assert.equal(game.state.variables.influence, background === 'noble_origin' ? 2.5 : 0.5);
-    assert.equal(game.state.variables.honor, background === 'soldier_origin' ? 7 : 5);
-    assert.equal(game.state.variables.loyal, background === 'soldier_origin');
-    assert.deepEqual(game.state.skills, background === 'noble_origin' ? ['diplomacy'] : []);
+    assert.equal(game.state.variables.influence, background === 'carer_origin' ? 2.5 : 0.5);
+    assert.equal(game.state.variables.honor, background === 'researcher_origin' ? 7 : 5);
+    assert.equal(game.state.variables.loyal, background === 'researcher_origin');
+    assert.deepEqual(game.state.skills, background === 'carer_origin' ? ['diplomacy'] : []);
     assert.deepEqual(game.state.inventory, { gold_coin: 5 });
-    assert.deepEqual(game.state.journal.map(e => e.id), ['arrived_city', 'chose_name', background, 'met_council']);
+    assert.deepEqual(game.state.journal.map(e => e.id), ['arrived_city', 'chose_name', background, 'met_center']);
     assert.equal(game.state.journal[0]?.text, 'Alexander reached the city with influence 1.');
   }
 });

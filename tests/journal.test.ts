@@ -280,13 +280,13 @@ test('the example retains both routes with different chapter-organized event his
   const story = parseStory(readFileSync(new URL('../src/example.story', import.meta.url), 'utf8'));
   const messenger = new Game(story);
   messenger.navigate('messenger');
-  messenger.navigate('council');
+  messenger.navigate('center');
   assert.deepEqual(messenger.state.journal.map(e => [e.id, e.chapter]), [
-    ['arrived_city', 'Prologue'], ['met_messenger', 'Prologue'], ['met_council', 'Chapter One'],
+    ['arrived_city', 'Prologue'], ['met_messenger', 'Prologue'], ['met_center', 'Chapter One'],
   ]);
-  assert.equal(messenger.state.journal[2]?.text, 'You reached the council with influence 2.5.');
+  assert.equal(messenger.state.journal[2]?.text, 'You reached the center with influence 2.5.');
   const direct = new Game(story);
-  direct.navigate('council');
-  assert.deepEqual(direct.state.journal.map(e => e.id), ['arrived_city', 'met_council']);
-  assert.equal(direct.state.journal[1]?.text, 'You reached the council with influence 0.5.');
+  direct.navigate('center');
+  assert.deepEqual(direct.state.journal.map(e => e.id), ['arrived_city', 'met_center']);
+  assert.equal(direct.state.journal[1]?.text, 'You reached the center with influence 0.5.');
 });

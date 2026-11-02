@@ -1,125 +1,67 @@
-# Local story authoring
+# Local Pokémon story authoring
 
-Open the repository folder in VS Code, then run `npm ci` in its terminal.
-Place drafts in a folder of your choice, for example `drafts/my adventure.story`.
-They are ordinary UTF-8 text files. The project associates `.story` with the optional Empires Story language (see below).
-Use Ctrl+Space and type `emp-` to discover snippets; Tab moves through placeholders.
-Declarations belong before chapters, checkpoint metadata directly after the title,
-and effects before prose. See [SCRIPTING.md](SCRIPTING.md) for placement and syntax.
+Use UTF-8 `.story` files. Read the full [language reference](SCRIPTING.md) and
+[engine boundaries](ENGINE.md). Declarations come first; effects follow a passage's
+title/checkpoint and precede prose. The public story is
+[content/aurelian-league.story](../content/aurelian-league.story). The examples are
+private regression fixtures, not extra canon or public stories.
 
-Save your file, then use Terminal → Run Task → **Empires: Check Current Story**.
-Select a `.story` editor first. The process task passes the complete active path
-as one argument, including spaces on Windows. **Empires: Check Bundled Stories**
-checks both regression examples. Parser errors link their actual source line in the Problems panel. Gameplay diagnostics do not invent line
-numbers. Errors fail the command; warnings and informational scope limits remain
-advisory. Bounded preflight is not proof that every route is safe.
+## Editing and validation
 
-Run **Empires: Start Local Preview** (or `npm run dev`) and open
-`http://127.0.0.1:5173/author.html` (use the port Vite prints).
-Select your `.story` file, then New Game. The shared Empires reader supports
-choices followed by Continue, input forms, Character with Skills/Inventory,
-Journal, checkpoints, and Try Again. Restart preview returns to a fresh startup.
-Optionally select a `.people.json` file for the People tab; see the
-[Notepad++ toolkit](../tools/notepadpp/README.md) for its format and file workflow.
+Run `npm ci` and `npm run dev` from the repository root. Notepad++ users can import
+[Pokemon-udl.xml](../tools/notepadpp/Pokemon-udl.xml) and optionally
+[Pokemon.xml](../tools/notepadpp/Pokemon.xml); the toolkit README documents saved-file
+validation and optional People JSON. VS Code users can build and locally install
+[Pokémon Story](../tools/vscode-pokemon/README.md). `.story` uses language ID
+`pokemon-story`; Ctrl+Space and `pkmn-` discover 38 workspace snippets. The extension
+uses the same parser for open/save diagnostics; highlighting alone is not validation.
 
-The passage index searches IDs and titles. Selecting an entry shows its chapter
-and all authored outgoing destinations, including conditional choices and input
-or Continue destinations. It never moves the active game or changes checkpoints.
+VS Code tasks **Aurelian League: Check Current Story**, **Check Bundled Stories**,
+and **Start Local Preview** use process arguments, preserving filenames with spaces.
+Alternatively run `npm run check:stories -- "path/to/my story.story"`. Without an
+argument, it checks the public opening and three regression examples. Parser and
+reproduced runtime errors fail; warnings/scope limits remain advisory. Preflight
+is bounded and never proves every possible route safe.
 
-Edit and save in VS Code, then select the updated file again, even when its name
-is unchanged. There is no file watcher or browser source editing. Selecting another
-file discards the previous preview; malformed files clear the old preview and show
-an error. Files stay in the browser, and progress uses memory only, disappearing
-on restart, file replacement, or page close. No upload, production save access,
-publication, or automatic catalog registration occurs.
+## Private browser preview
 
-To publish later, review preflight findings, add authored route/browser tests,
-assign an explicit unique catalog/save identity and intentional revision, author
-People definitions if needed, and submit a reviewed catalog/source change.
-Draft preview does none of those steps. The normal builds include only the player
-entry; `author.html` is absent from `dist/` and the Pages build checks that boundary.
-Run `npm run test:author` for the separate development-server browser suite.
+Use the local Vite server's `/author.html` page. Select your saved `.story`, optionally
+a `.people.json`, then New Game. The shared reader supports all five views, party,
+input, choices, pages and recovery. Files remain in the browser and saves use private
+memory, never public localStorage. Restart preview resets progress. Re-select files
+after edits, even with the same name. The passage index searches IDs/titles and
+shows authored destinations without navigating the game. No upload, source editing,
+automatic registration or publishing occurs. Normal builds exclude author.html.
 
-## Optional VS Code language extension
+## Trainer creation and companions
 
-Build and locally install the [Empires Story extension](../tools/vscode-empires/README.md)
-for syntax highlighting and parser-backed open/save errors in the Problems panel.
-Cloning does not install it. `.story` files and all 20 workspace snippets now use
-`empires-story`; after installation the language mode reads **Empires Story**.
-Without installation, select Plain Text manually to edit. Automatic diagnostics
-stop at the first parser error; the existing preflight tasks remain the deeper
-analysis workflow. The local browser preview and public game are unchanged.
+Use a global `trainer_name` string with `*input_text`; use choices and ordinary sets
+for the five pronoun strings plus a plural-verb boolean. The public opening shows
+all three presets. Character displays values selected with `*stat`; there is no
+independent gender/background/class subsystem.
 
-## Editing the public title page
+Declare individuals with `*pokemon starter_piplup "Piplup"`. Join with
+`*add_pokemon starter_piplup starter_nickname`, where starter_nickname is a declared
+global string populated by `*input_text`. Empty means species-name display. The
+nickname is copied when joining and does not track later variable changes. Party
+holds six; duplicate adds/absent removals are no-ops. `*remove_pokemon id`,
+`has_pokemon id` and `lacks_pokemon id` support authored membership changes/guards.
+A seventh companion fails atomically. Party never uses inventory items.
 
-Edit `content/title-page.json` as UTF-8 in Notepad++, VS Code, or another text
-editor. This is the single source for the public startup text:
+## Public configuration and saves
 
-```json
-{
-  "brand": "Empires",
-  "title": "Provincial Crisis",
-  "description": "An envoy must respond to a flood, disputed grain supplies, and competing political interests.",
-  "continueGameLabel": "Continue Game",
-  "newGameLabel": "New Game"
-}
-```
+Edit `content/title-page.json` for plain-text brand/title/description/button labels.
+Keep all five fields nonempty strings. The catalog contains only The Aurelian League,
+identity `aurelian-league`, revision 1, key `pokemon:checkpoint:aurelian-league`.
+Display text is not a save identity. The old game's keys are never read or deleted.
+Party-aware saves use format 4, or 5 with reading context; schemas 1–3 are incompatible.
+Continue resumes committed state/page without re-entering. Checkpoints preserve the
+pre-entry boundary for Try Again. Unsubmitted drafts/choices never save. Progress
+is browser-local; it does not synchronize across devices. Preview remains temporary.
 
-Change `brand` for the small branding, `title` for the displayed story title,
-`description` for the introduction, and the last two fields for startup button
-labels. Keep all five fields as nonempty strings, quoted with double quotes;
-escape embedded quotes as `\"` and do not add trailing commas. Values render as
-plain text, never HTML. Invalid fields produce errors during initialization and
-validation tests; malformed JSON fails the build.
-
-Run `npm run dev` and save the JSON to see Vite update the local page. To publish,
-commit the JSON edit on a feature branch in GitHub, open a pull request, and merge
-after checks pass. The existing main-branch Pages workflow publishes the build.
-Display names are not save identities: Provincial Crisis remains story ID
-`provincial-crisis`, revision 1, with its existing checkpoint key. No migration is
-needed. Local author preview retains the uploaded story's own title and isolated
-memory storage.
-
-Narrative text and headings use the locally bundled Source Serif 4 Latin variable
-WOFF2 (Fontsource distribution 5.2.8, SIL Open Font License in `src/fonts/OFL.txt`).
-Only one normal-style asset is shipped; declared weights are 400–600. System UI
-fonts remain on controls and statistics. `font-display: swap` keeps text visible
-while loading; Georgia and generic serif cover loading failures and characters
-outside the Latin subset. No external font service is contacted.
-
-## Notepad++ as the primary editor
-
-See the [Notepad++ toolkit](../tools/notepadpp/README.md) for UDL highlighting,
-optional command completion, saved-file validation with a keyboard shortcut,
-a playable starter, the command cheat sheet, and local preview without VS Code.
-Provincial Crisis People descriptions live in `content/provincial-crisis.people.json`.
-Draft People references live in optional `.people.json` files; journal, skills, and
-inventory remain in `.story`. Public title-page text stays in `content/title-page.json`.
-
-## Progress and checkpoint recovery
-
-Continue Game resumes the last committed passage and exact state, including an
-ending or death, without repeating rewards. Authored `*checkpoint` remains the
-pre-entry boundary for Try Again, independent of automatic last-passage saves.
-Unsubmitted input drafts and unconfirmed choices are not saved. Public progress
-is local to the current browser, never synchronized across devices. Storage
-failures may lose recent progress; warnings remain visible until a later save
-succeeds. Existing format-1 saves remain compatible and upgrade on a later committed
-action, never on startup inspection. Browser Back is not a gameplay undo feature.
-Local preview uses temporary memory storage; Restart preview discards it.
-
-## Advanced authoring (Stage 12C)
-
-Open `examples/advanced-authoring.story` in your editor and local preview to try
-all new features together. The [syntax guide](SCRIPTING.md#advanced-authoring-stage-12c)
-explains capitalization, inline plural verbs, indented conditions/effects,
-comments, formatting, pages, disabled choices, and local temps. Use spaces for
-block indentation. Global character values use `*var`; scratch values use `*temp`
-after each passage title/checkpoint and reset on entry. Only globals can appear
-in stats or receive text input.
-
-Save files before validation. Notepad++ and VS Code tooling include the new
-commands; highlighting is lexical, so always run the existing validator. Advance
-pages normally in preview, inspect Character/Journal, then test death recovery.
-Public progress restores page/temp context; local preview remains memory-only.
-Revised published declarations still need intentional story revision management.
+Run Node, story, build and both browser suites before a publishing PR. Include
+intentional revision changes for incompatible declarations/effects. The advanced
+example exercises safe formatting, capitalization, pronouns, nested conditions,
+temps, disabled choices, pages and recovery. Test longer loops and input variations
+separately. Pages deploys only main after checks with `/pokemon/`; neither editor
+preview nor the private browser-regression catalog is published.

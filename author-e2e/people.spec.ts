@@ -44,7 +44,7 @@ test('optional People files validate, replace, discover and recover without publ
 });
 
 test('Notepad++ XML files are well-formed and expose language and completions', async ({ page }) => {
-  for (const file of ['Empires-udl.xml', 'Empires.xml']) {
+  for (const file of ['Pokemon-udl.xml', 'Pokemon.xml']) {
     const source = readFileSync('tools/notepadpp/' + file, 'utf8');
     const result = await page.evaluate(source => {
       const xml = new DOMParser().parseFromString(source, 'application/xml');

@@ -10,7 +10,7 @@ data; it does not execute JavaScript or the reference engine's language.
 ```text
 *var influence 0
 *skill diplomacy "Diplomacy"
-*item gold_coin "Gold Coin"
+*item gold_coin "Supply Token"
 *var honor 5
 *var loyal false
 *var character_name "Unknown"
@@ -20,7 +20,7 @@ data; it does not execute JavaScript or the reference engine's language.
 *chapter Prologue
 
 *passage city_gate
-*title The City Gate
+*title The Pokémon Center
 *set character_name "Alexander"
 *add influence 1
 *grant_skill composure
@@ -36,7 +36,7 @@ Your name is ${character_name}. Your influence is ${influence}.
 
 *choice
   #Speak to the messenger -> messenger
-  #Enter the city -> council
+  #Enter the city -> center
 
 *passage messenger
 *title A Quiet Warning
@@ -49,22 +49,22 @@ Your name is ${character_name}. Your influence is ${influence}.
 
 The messenger lowers their voice.
 
-"The council has been waiting for you."
+"The center has been waiting for you."
 Your loyalty is ${loyal}.
 
-*continue council
+*continue center
 
 *chapter Chapter One
 
-*passage council
-*title The Council Chamber
+*passage center
+*title The Care Center
 *add influence -0.5
 *revoke_skill composure
 *remove_item gold_coin 5
 *remove_item gate_token 1
-*journal met_council "You entered the council with influence ${influence}."
+*journal met_center "You entered the center with influence ${influence}."
 
-The council members turn toward you as you enter.
+The center members turn toward you as you enter.
 
 Influence: ${influence}. Honor: ${honor}. Loyal: ${loyal}.
 
@@ -72,7 +72,7 @@ Influence: ${influence}. Honor: ${honor}. Loyal: ${loyal}.
 Your exchange with the messenger helps you choose your words.
 
 *show_if lacks_skill diplomacy
-Without diplomatic training, you face the council unaided.
+Without diplomatic training, you face the center unaided.
 
 *show_if has_item gold_coin
 Your remaining coins offer a small reassurance.
@@ -81,9 +81,9 @@ Your remaining coins offer a small reassurance.
 The messenger's extra coins remain after the entry fee.
 ```
 
-The first passage starts the story. The player can go directly to `council`
+The first passage starts the story. The player can go directly to `center`
 (influence `0.5`, honor `5`, loyal `false`) or via `messenger` and Continue
-(influence `2.5`, honor `4`, loyal `true`). The council is terminal: there are no
+(influence `2.5`, honor `4`, loyal `true`). The center is terminal: there are no
 further actions or automatic fall-through. Variables, recorded journal events,
 acquired skills, and inventory persist between passages.
 Browser startup offers New Game and, when valid saved progress exists, Continue
@@ -91,17 +91,17 @@ Game. Continue resumes the last successfully saved committed passage and exact s
 without replaying effects. Authored checkpoints remain dedicated to death recovery.
 The Journal button groups events in first-recorded chapter order; the messenger
 route has an extra event. Stored text keeps its original resolved values.
-Both routes acquire Composure at the gate and lose it at the council. Only the
-messenger route acquires Diplomacy, changing the council's visible prose. The
+Both routes acquire Composure at the gate and lose it at the center. Only the
+messenger route acquires Diplomacy, changing the center's visible prose. The
 Skills section in Character lists current acquisitions by display name, in acquisition order.
 The shipped `src/example.story` also offers a third gate choice for a preferred
-name and noble/soldier background. It keeps the original start ID and both routes
+name and carer/researcher background. It keeps the original start ID and both routes
 above; see the text-input section below for a complete independent example.
 The shipped example also offers an optional watchtower route from the gate and
-background selection, ending in death and Try Again without changing either
+practice-route selection, ending in death and Try Again without changing either
 original route's outcome.
 Both routes start with ten coins and a gate token. The messenger grants two more
-coins; council entry removes five coins and the token, leaving seven coins on the
+coins; center entry removes five coins and the token, leaving seven coins on the
 messenger route and five on the direct route. Neither route can underflow.
 
 ## Supported syntax
@@ -112,6 +112,9 @@ messenger route and five on the direct route. Neither route can underflow.
 | `*stat variable "Display Label"` | Selects a previously declared variable for Character. Initial metadata only; nonempty JSON-string label, one display per variable, in authored order. |
 | `*skill id "Display Name"` | Defines immutable skill metadata in the same initial section as variables. Skill IDs must be unique; names must be nonempty JSON strings. |
 | `*item id "Display Name"` | Defines immutable item metadata interleaved with variables/skills before all chapters/passages. Unique item ID; nonempty JSON-string name. |
+| `*pokemon id "Species"` | Declares an individual Pokémon in initial metadata; unique ID, nonempty JSON string species. |
+| `*add_pokemon id [nickname_variable]` | Joins a declared individual; optional global string nickname resolved once. Duplicate additions are no-ops; a seventh member rejects entry. |
+| `*remove_pokemon id` | Removes a declared individual if present; absent removal is a no-op. |
 | `*chapter Label` | Top-level nonempty literal label for subsequent passages; each declaration needs a following passage. Default: `Prologue`. |
 | `*passage id` | Begins a passage with a unique stable ID matching `[a-z][a-z0-9_-]*`. The first passage is the start. |
 | `*title text` | Exactly one nonempty literal title per passage, before navigation. Place it immediately after the header. |
@@ -148,6 +151,60 @@ A passage ends at the next `*passage`, a `*chapter` after a valid passage, or EO
 choices, Continue, input, or death action. After a concluding action, only blank lines, choices inside the
 current `*choice` block, or a new chapter/passage are allowed. Additional prose, titles,
 effects, duplicate action blocks, or nested choices are errors.
+
+## Pokémon party
+
+Use stable individual IDs, not species IDs. Two definitions may have the same species:
+
+```text
+*var starter_nickname ""
+*pokemon starter_piplup "Piplup"
+*pokemon another_piplup "Piplup"
+
+*passage join
+*title A New Partner
+*add_pokemon starter_piplup starter_nickname
+Piplup joins your party.
+
+*if has_pokemon starter_piplup
+  Your new partner is here.
+
+*choice
+#Travel together -> next [if has_pokemon starter_piplup]
+#Wait -> join
+
+*passage next
+*title Onward
+*remove_pokemon starter_piplup
+Your partner stays behind for this example.
+```
+
+Definitions precede all chapters/passages, can interleave with other metadata, and
+are frozen `{id,species}` records in `Story.pokemon`. IDs use the standard identifier
+grammar; species are nonempty literal JSON strings. No Pokédex or evolution data exists.
+
+Addition/removal share other entry effects' placement, source order and atomicity.
+The party starts empty, holds at most six unique individuals, and preserves joining
+order. Repeated additions and absent removals do nothing. Removing then rejoining
+appends at the end. Adding an absent seventh member fails the whole transition;
+earlier candidate effects and a proposed checkpoint are discarded.
+
+The optional nickname operand names an already declared **global string variable**,
+never a temp, literal, or expression. Empty string stores no nickname. Other values
+pass the existing text-input rules (trimmed 1–80 Unicode code points, no controls or
+line breaks). The value is copied on joining; changing the variable or adding a
+present ID again cannot rename a member. Use `*input_text` for a player nickname.
+
+`has_pokemon id` / `lacks_pokemon id` work in block guards, paragraph guards, and choice
+conditions with the shared evaluator. Unknown IDs fail parsing even in hidden paths.
+Preflight replays actual Game transitions, including capacity failures.
+
+`GameState.party` is a frozen array of frozen `{id,species,nickname?}` records. It is
+included in current saves and pre-entry checkpoints, restored by Continue without
+entry and by Try Again with exactly one entry. Validation rejects unknown/mismatched
+species, duplicate IDs, extra/missing fields, inherited/accessor entries, malformed
+nicknames and parties over six. Party is a read-only view separate from Inventory.
+All five views preserve drafts and never execute effects or save on inspection.
 
 ## Character statistics
 
@@ -257,7 +314,7 @@ Whole-story parsing rejects invalid usage with source-line/passage context.
 
 ```text
 *var influence 0
-*item gold_coin "Gold Coin"
+*item gold_coin "Supply Token"
 
 *passage camp
 *title The Camp
@@ -327,7 +384,7 @@ This complete short route shows recovery from a marked camp:
 
 ```text
 *var influence 0
-*item gold_coin "Gold Coin"
+*item gold_coin "Supply Token"
 
 *passage camp
 *title The Camp
@@ -392,40 +449,30 @@ because existing gate/background snapshots remain compatible.
 
 ## Browser saving and startup
 
-The application persists one atomic record per story using localStorage, separate
-from Game. Format 2 contains the current committed post-entry state plus the
-independent pre-entry checkpoint. New Game saves initialized progress before
-activation. Successful navigation, text submission, and Try Again each save once.
-Rejected actions, reads, unconfirmed choices, and input drafts never save.
+The application stores one atomic record at `pokemon:checkpoint:aurelian-league`
+for the sole public story (`aurelian-league`, revision 1). Other authored applications
+must configure distinct explicit identities. Previous-game keys are never read,
+migrated, or deleted. Unsupported saves stay untouched until confirmed replacement.
 
-Continue restores validated current state directly without replaying entry effects;
-death remains recoverable and terminal endings remain terminal. Format-1 saves
-still resume their checkpoint with its effects applied once, and upgrade only
-on a later successful committed action. Startup and Continue do not write.
+Format 4 contains `formatVersion`, `storyId`, `storyRevision`, `checkpoint`, and
+`currentState`. Format 5 adds `context` for reading pages and passage-local temps.
+Both states include the complete party. Formats 1–3 lack the new party contract
+and are rejected rather than guessed. The engine's explicit checkpoint-only helper
+uses format 6 and re-enters the checkpoint; the public application always writes
+committed progress (4/5). New Game saves initialized progress before activation.
+Navigation, text submission, page advance and Try Again each save once. Reads,
+Continue, rejected actions, input drafts, and unconfirmed choices never write.
 
-Save identity is explicit application configuration in `src/storage.ts`, never
-`.story` declarations or GameState. `StorySaveIdentity` supplies a stable `storyId`
-matching `^[a-z][a-z0-9_-]*$` and a positive safe integer `storyRevision`.
-Developers pass it to GameSession/storage APIs; see README for setup. Independent
-stories require distinct IDs and use `empires:checkpoint:<storyId>`. Revision is
-not part of the key, so incompatible old progress remains detectable.
-The internal City Gate fixture retains `DEFAULT_SAVE_IDENTITY`, with legacy
-`STORY_ID = 'empires-example'`, `STORY_REVISION = 1`, and exact key
-`empires:checkpoint:empires-example`. `SAVE_FORMAT_VERSION = 2` is independent; format 1 remains readable.
-Provincial Crisis keeps its own revision-1 identity/key and is the sole public story.
-The app opens its startup directly; City Gate remains an internal regression fixture.
-New Game is confined to startup after reload. These are application decisions,
-not story commands. Progress and character data do not transfer.
-The JSON envelope has exactly `formatVersion`, `storyId`, `storyRevision`, and
-`checkpoint` (the complete `{ state: GameState }` representation), plus
-`currentState` in format 2. See README for the two state boundaries.
+Continue restores the last committed passage/state/context without replaying entry
+effects. Death remains recoverable and terminal endings remain terminal. The separate
+checkpoint stores complete pre-entry state for Try Again. All variables, acquired
+skills, inventory, journal and party are validated, copied and frozen at both
+boundaries. There is no partial recovery or automatic old-schema migration.
 
-**Keep passage, item, skill, journal, and variable IDs stable.** Maintainers must
-bump the configured story revision for incompatible declaration/type, journal-chapter,
-or entry-effect changes. Matching versions do not bypass snapshot validation.
-Change `SAVE_FORMAT_VERSION` intentionally for incompatible envelope changes.
-There are no version histories. Legacy format 1 upgrades on committed saves;
-saves from another story, revision, or unsupported format remain untouched.
+Keep authored IDs stable and bump story revision intentionally for incompatible
+state declarations, effects, or journal chapter changes. Display-only stat/title
+changes do not alter save identity. Envelope/schema changes need an explicit format
+version decision; matching versions never bypass full validation.
 
 Startup with unusable saved data explains the problem and offers New Game without
 a working Continue option. New Game asks before replacing any existing record,
@@ -464,7 +511,7 @@ Acquire and remove skills with `*grant_skill id` and `*revoke_skill id`. Both
 require declared IDs and appear after the title, before the first narrative
 paragraph. They may interleave with `*set`, `*add`, and `*journal`. They cannot
 appear inside prose, conditional paragraphs, choice blocks, or after navigation,
-and cannot be conditional. Effects execute in source order on each legitimate
+and may be guarded by an indented *if block. Effects execute in source order on each legitimate
 entry, including initial entry and later returns.
 
 New games start with no acquired skills before initial effects. A grant appends
@@ -477,28 +524,28 @@ experience, purchasing, rarity, categories, cooldowns, bonuses, or trees exist.
 Use `has_skill id` or `lacks_skill id` wherever a condition is supported:
 
 ```text
-*skill swordsmanship "Swordsmanship"
+*skill first_aid "First Aid"
 
 *passage training
 *title Training
-*grant_skill swordsmanship
+*grant_skill first_aid
 
 Your training is complete.
 
-*show_if has_skill swordsmanship
+*show_if has_skill first_aid
 You recognize the instructor's fighting stance.
 
 *choice
-  #Demonstrate your swordsmanship -> rest [if has_skill swordsmanship]
+  #Demonstrate your first_aid -> rest [if has_skill first_aid]
   #Leave -> rest
 
 *passage rest
 *title Rest
-*revoke_skill swordsmanship
+*revoke_skill first_aid
 
 This short exercise ends your temporary training.
 
-*show_if lacks_skill swordsmanship
+*show_if lacks_skill first_aid
 You can return to acquire the skill again.
 
 *continue training
@@ -506,8 +553,8 @@ You can return to acquire the skill again.
 
 The shared condition parser/evaluator checks committed skills **after all entry
 effects**. A grant or revocation immediately changes visible paragraphs and
-available choices. No comparison values, levels, logical operators, parentheses,
-compound conditions, or nested blocks are supported. Unknown skills are errors
+available choices. Presence checks have no comparison value or level. Compound conditions and
+indented guards are documented in Advanced authoring below. Unknown skills are errors
 even in unreachable passages or hidden conditions. Conditional choices still
 need an unconditional fallback; navigation enforces the same eligibility, and
 any eligible choice permits its shared destination. Continue remains ordinary
@@ -548,7 +595,7 @@ For example, `*add_item gold_coin 10` works; `*add_item gold_coin influence`,
 Item effects must be after the title and before the first narrative line, just
 like other entry effects. They may interleave with variables, skills, and journal
 commands. They cannot appear in prose, conditional paragraphs, choices, or after
-navigation, and cannot be conditional. They run once on initial entry and each
+navigation, and may be guarded by an indented *if block. They run once on initial entry and each
 legitimate return; reads, rendering, and inventory inspection never rerun them.
 
 New games begin with empty inventory before initial effects. Only owned item IDs
@@ -574,7 +621,7 @@ means at least one; absence means zero. Item counts never read ordinary variable
 Unknown items are errors, including in hidden or unreachable content.
 
 ```text
-*item gold_coin "Gold Coin"
+*item gold_coin "Supply Token"
 *item gate_token "Gate Token"
 
 *passage gate
@@ -588,11 +635,11 @@ The guard gives you a token.
 The token identifies you as a visitor.
 
 *choice
-  #Enter the council -> council [if item_count gold_coin >= 5]
+  #Enter the center -> center [if item_count gold_coin >= 5]
   #Wait outside -> gate
 
-*passage council
-*title The Council
+*passage center
+*title The Center
 *remove_item gold_coin 5
 *remove_item gate_token 1
 
@@ -605,9 +652,8 @@ Your token has been handed in.
 The shared evaluator reads committed state after all entry effects. Acquiring or
 removing items immediately changes available choices and visible paragraphs.
 Conditional choices still require an unconditional fallback, and navigation uses
-the same eligibility rules, including shared destinations. No compounds, logical
-operators, parentheses, variable operands, expressions, or conditional effects
-are added. Existing variable/skill conditions and Continue remain unchanged.
+the same eligibility rules, including shared destinations. Compound boolean conditions and conditional entry effects are supported;
+variable-to-variable comparisons and arithmetic expressions remain unsupported. Existing variable/skill conditions and Continue remain unchanged.
 
 The Inventory section is read-only within Character, below Skills. It derives names from
 `Story.items` and quantities/order from `GameState.inventory`, listing only owned
@@ -705,33 +751,33 @@ What name will you use on your journey?
 *input_text character_name "Character name" -> choose_background
 
 *passage choose_background
-*title Your Background
+*title Your Practice Route
 *checkpoint
 *journal introduced "The hero is named ${character_name}."
 
-Welcome, ${character_name}. Choose your background.
+Welcome, ${character_name}. Choose your practice route.
 
 *choice
-  #Raised among nobility -> noble_origin
-  #Trained with soldiers -> soldier_origin
+  #Raised among Pokémon carers -> carer_origin
+  #Trained with field researchers -> researcher_origin
 
-*passage noble_origin
-*title A Noble Upbringing
-*set background "Noble"
+*passage carer_origin
+*title A Care Workshop
+*set background "Carer"
 *add influence 2
 *grant_skill diplomacy
 
-${character_name}, your ${background} upbringing taught you the customs of court.
+${character_name}, your ${background} upbringing taught you the routines of Pokémon care.
 
-*passage soldier_origin
-*title A Soldier's Training
-*set background "Soldier"
+*passage researcher_origin
+*title Field Research
+*set background "Researcher"
 *add honor 2
 
 ${character_name}, your ${background} training taught you discipline.
 ```
 
-The shipped optional route returns either background to the council. Names and
+The shipped optional route returns either background to the center. Names and
 attributes stay in `GameState.variables`; acquired skills, inventory, and journal
 retain their existing state fields, and definitions remain static story metadata.
 There is no CharacterState, attribute-allocation subsystem, or second variable
@@ -768,7 +814,7 @@ A choice can have one condition **after its destination**:
 *title Audience
 *add influence 1
 
-The king awaits your answer.
+The instructor awaits your answer.
 
 *choice
   #Request a title -> receive_title [if influence >= 5]
@@ -810,8 +856,8 @@ A later legitimate re-entry applies its effects once and recomputes eligibility.
 The runtime also enforces conditions when navigating; bypassing a hidden option
 cannot change state. If choices share a destination, any eligible one permits it.
 
-Unsupported: variable-to-variable comparisons, arithmetic, parentheses, logical
-operators, multiple conditions, nested `*if`, and `*else`.
+Unsupported: variable-to-variable comparisons and arithmetic.
+Boolean and/or/not, parentheses and indented if/elseif/else are supported.
 For example, `[if influence >= other]`, `[if influence + 1 >= 5]`, and
 `[if influence >= 5 && loyal == true]` are errors. Type mismatches such as
 `[if loyal == 0]`, ordered strings such as `[if faction > "guild"]`, non-finite
@@ -828,15 +874,15 @@ paragraph:
 *var influence 4
 *var loyal false
 
-*passage court
-*title The Court
+*passage care_center
+*title The Care Center
 *add influence 1
 
-The king studies your arrival.
+The instructor studies your arrival.
 
 *show_if influence >= 5
-The king recognizes your achievements.
-He welcomes you into his court.
+The instructor recognizes your achievements.
+The instructor welcomes you into the Pokémon care team.
 
 Everyone awaits your answer.
 
@@ -844,7 +890,7 @@ Everyone awaits your answer.
 The guards recognize your oath.
 ```
 
-Entry raises influence to 5, so both lines in the king's welcome form one visible
+Entry raises influence to 5, so both lines in the instructor's welcome form one visible
 paragraph. The guards' paragraph is hidden. The surrounding ordinary paragraphs
 are unconditional. Strings work too, for example `*show_if faction == "merchant"`
 when `faction` has been declared. All six operators use the same typed rules,
@@ -887,8 +933,8 @@ a false condition cannot conceal an invalid variable reference.
 
 Malformed conditions, undeclared variables, incompatible types, misplaced
 directives, empty conditional paragraphs, and passages with no unconditional
-prose produce source-line/passage errors. There are no logical operators,
-arithmetic expressions, variable-to-variable comparisons, or conditional effects.
+prose produce source-line/passage errors. Boolean combinations and conditional effects are supported; arithmetic and
+variable-to-variable comparisons remain unsupported.
 
 ## Entry effects
 
@@ -935,7 +981,7 @@ execute HTML or recursively interpolate `other`. Titles, choice labels,
 chapter labels, input labels, skill/item display names, and variable/condition literals never interpolate; `${unknown}`
 there remains literal text. Journal templates resolve once when first recorded.
 All display content uses `textContent`, so HTML and JavaScript are never executed.
-Markdown and other inline syntax stay literal as well.
+Markdown stays literal; the documented [b]/[i] formatting uses safe DOM nodes.
 
 ## Whitespace and stable IDs
 
@@ -948,8 +994,7 @@ LF, CRLF, CR, and a leading UTF-8 BOM are accepted.
 
 Directives are case-sensitive. Lines beginning with `*` are reserved for supported
 directives; unknown ones are errors. Outside choice blocks, `#` is literal prose,
-so Markdown headings appear as text. There is no comment syntax: `*comment` is
-unsupported and `#` never hides narrative. Inline directive-looking text is not
+so Markdown headings appear as text. `*comment text` is an author-only comment; `#` never hides narrative. Inline directive-looking text is not
 executed.
 
 Keep stable passage IDs when editing prose, changing titles, or moving passages.
@@ -964,7 +1009,7 @@ passage references are valid, and all destinations are checked before play.
 | Invalid input | Fix |
 | --- | --- |
 | Duplicate `*passage city_gate` | Give each passage a unique stable ID. |
-| `*passage City Gate` | Use `city_gate`, matching the identifier grammar. |
+| `*passage Center Visit` | Use `city_gate`, matching the identifier grammar. |
 | Missing `*title` or two titles | Supply exactly one nonempty title. |
 | `*checkpoint` with arguments, twice, or after effects/prose | Place one no-argument marker immediately after the title. |
 | `*death` before prose, with another action, or with `*checkpoint` | End a non-start, non-checkpoint passage with one no-argument death action after narrative. |
@@ -987,8 +1032,8 @@ passage references are valid, and all destinations are checked before play.
 | `*set count "two"` for a number | Keep the declared type. |
 | `*add loyal 1` for a boolean | Only add numeric literals to numeric variables. |
 | Effects after narrative or navigation | Move them between the title and first paragraph. |
-| `#Go to council` inside a choice block | Use `#Go to council -> council`. |
-| `# -> council` or an empty `*choice` | Provide at least one nonempty label with an explicit destination. |
+| `#Go to center` inside a choice block | Use `#Go to center -> center`. |
+| `# -> center` or an empty `*choice` | Provide at least one nonempty label with an explicit destination. |
 | An action to `unknown_hall` | Define that passage or correct the destination. |
 | Continue after choices | Use either choices or Continue in that passage. |
 | `*input_text count "Name" -> end` for a number | Target an already declared string variable. |
@@ -1000,7 +1045,7 @@ passage references are valid, and all destinations are checked before play.
 | A blank line or command immediately after `*show_if` | Start prose on the very next source line. |
 | `*show_if` between prose lines | End the previous paragraph with a blank line first. |
 | A passage containing only conditional prose | Add at least one unconditional narrative paragraph. |
-| `*if`, `*comment`, or nested `*choice` | These commands are unsupported. |
+| Nested `*choice` | Keep choices flat; *if and *comment are supported. |
 
 Errors include one-based source lines and passage IDs when available. Missing
 titles point to their passage headers; missing destinations point to their
@@ -1070,7 +1115,7 @@ inventory; definitions stay in static `Story` metadata.
 Stage 8A's selected-stat panel and Stage 8B's responsive reading styles are
 implemented. Stage 8C adds permanent browser tests without changing authoring
 syntax or gameplay. Stage 8D adds the independent
-[Provincial Crisis story/playtest](../examples/provincial-crisis.md) using this
+[Harbor Practice story/playtest](../examples/harbor-practice.md) using this
 syntax. Stage 9A adds application-level save identity configuration without new
 syntax. Stage 9B adds the static browser story library without altering either
 story or this language. Stages 9C–9D add authoring preflight and bounded return probes without new syntax.
@@ -1092,14 +1137,14 @@ unless a future task explicitly changes the requirements.
 
 ## Compact reading views and deliberate choices (Stages 10B–10C)
 
-The browser presents four compact equal-width tabs in one row: Story, Character,
-Journal, People. An opaque CSS sticky wrapper holds the tabs and a compact bar
+The browser presents five tabs: Story, Character, Party, Journal, People.
+At narrow widths they use two rows; each target remains at least 44px tall. An opaque CSS sticky wrapper holds the tabs and a compact bar
 showing the current passage's authored chapter, in every view. Passage titles
 remain in scrollable content, centered and approximately 10% larger. Chapter text
 is centered with compact padding; prose stays left-aligned. Tabs have slightly
 larger labels and one bottom-border indicator, with no text underline in any state.
 Focus clears the sticky header. Library/startup
-screens keep the Empires identity and show no invented chapter. One active content
+screens keep the Aurelian League identity and show no invented chapter. One active content
 view uses the same centered column at every viewport width. Native
 buttons expose aria-pressed; hidden subtrees are removed from keyboard and
 assistive navigation. Information headings receive focus on selection; Story
@@ -1117,7 +1162,7 @@ there are no animations, overlays, sidebars, or separate mobile navigation.
 
 Character contains Character Statistics, Skills, and Inventory, preserving author
 order for stats and acquisition order for skills/items. Journal stays independent.
-People uses validated immutable definitions from `content/provincial-crisis.people.json` associated through each
+People uses optional validated immutable definitions associated through each
 `src/catalog.ts` entry. Each has a stable ID, name/role, short description supported
 by the story, and `discoveryEvents` listing one or more existing journal event IDs.
 Selection validates event IDs against the applicable parsed story. Only a recorded
@@ -1283,15 +1328,11 @@ conditional effects, local variables, formatting, pages, and unavailable choices
   work in interpolation, inline booleans, conditions, and journal templates, then
   disappear on leaving. Re-entry and checkpoint recovery initialize them afresh.
 
-Format 3 is used when progress needs page/temp context; it adds validated `context`
-with `page` and `temps` alongside the existing currentState and checkpoint. Plain
-passages continue writing format 2. Formats 1 and 2 remain readable for their
-compatible stories, never rewritten during startup. Missing context for a passage
-whose declarations changed is incompatible rather than guessed. Page targets must
-be authored visible pages and temp fields/types must exactly match declarations.
-The global GameState and pre-entry checkpoint schema remain unchanged. Authored
-story changes still require intentional revision management. Save keys, warnings,
-atomic writes, memory-only author preview, and death recovery retain their meaning.
+Format 5 stores validated page/temp `context` together with current state and the
+independent checkpoint. Plain passages use format 4. Formats 1–3 are incompatible
+with party state. Missing context for an authored paged/temp passage is rejected,
+not guessed. Page targets must be visible authored pages, and temp fields/types
+must exactly match declarations. Page advancement never repeats party entry effects.
 
 Preflight advances through visible pages without replaying effects, then explores
 only enabled routes. Analysis is bounded; it does not prove all loops/resources or

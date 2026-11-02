@@ -3,12 +3,14 @@ import type { ResumeContext } from './types';
 import { validateCommittedState, validateSnapshot } from './snapshot';
 import type { GameSnapshot, GameState, Story } from './types';
 
-/** Base records remain format 2; feature context uses the extended format 3. */
-export const SAVE_FORMAT_VERSION = 2;
-export const CONTEXT_SAVE_FORMAT_VERSION = 3;
-export const STORY_ID = 'empires-example';
+/** Party-aware committed saves use format 4; page/temp context uses format 5.
+ * Checkpoint-only engine fixtures use format 6. Old schemas 1–3 are incompatible. */
+export const SAVE_FORMAT_VERSION = 4;
+export const CONTEXT_SAVE_FORMAT_VERSION = 5;
+export const CHECKPOINT_SAVE_FORMAT_VERSION = 6;
+export const STORY_ID = 'aurelian-league';
 export const STORY_REVISION = 1;
-export const STORAGE_KEY = 'empires:checkpoint:' + STORY_ID;
+export const STORAGE_KEY = 'pokemon:checkpoint:' + STORY_ID;
 
 /** Application configuration, separate from authored Story and mutable GameState. */
 export interface StorySaveIdentity {
@@ -46,7 +48,7 @@ export function validateSaveIdentity(value: unknown): StorySaveIdentity {
 
 function keyFor(identity: StorySaveIdentity): string {
   // Revisions share a key so incompatible saved progress is reported, not hidden.
-  return 'empires:checkpoint:' + identity.storyId;
+  return 'pokemon:checkpoint:' + identity.storyId;
 }
 
 export function checkpointKey(identity: StorySaveIdentity = DEFAULT_SAVE_IDENTITY): string {
@@ -84,16 +86,16 @@ export function loadCheckpoint(storage: CheckpointStorage, story: Story, identit
   if (data === null || typeof data !== 'object' || Array.isArray(data)) return invalid('The saved data has an invalid format.');
   const envelope = data as Record<string, unknown>;
   const fields = ['formatVersion', 'storyId', 'storyRevision', 'checkpoint',
-    ...((envelope.formatVersion === 2 || envelope.formatVersion === CONTEXT_SAVE_FORMAT_VERSION) ? ['currentState'] : []), ...(envelope.formatVersion === CONTEXT_SAVE_FORMAT_VERSION ? ['context'] : [])];
+    ...((envelope.formatVersion === SAVE_FORMAT_VERSION || envelope.formatVersion === CONTEXT_SAVE_FORMAT_VERSION) ? ['currentState'] : []), ...(envelope.formatVersion === CONTEXT_SAVE_FORMAT_VERSION ? ['context'] : [])];
   if (Object.keys(envelope).length !== fields.length || fields.some(key => !Object.hasOwn(envelope, key))) {
     return invalid('The saved data has an invalid format.');
   }
-  if (envelope.formatVersion !== 1 && envelope.formatVersion !== SAVE_FORMAT_VERSION && envelope.formatVersion !== CONTEXT_SAVE_FORMAT_VERSION) return invalid('This save uses a different save format.');
+  if (envelope.formatVersion !== CHECKPOINT_SAVE_FORMAT_VERSION && envelope.formatVersion !== SAVE_FORMAT_VERSION && envelope.formatVersion !== CONTEXT_SAVE_FORMAT_VERSION) return invalid('This save uses a different save format.');
   if (envelope.storyId !== configured.storyId) return invalid('This save belongs to another story.');
   if (envelope.storyRevision !== configured.storyRevision) return invalid('This save is from an incompatible story revision.');
   try {
     const checkpoint = validateSnapshot(envelope.checkpoint, story);
-    if (envelope.formatVersion === 1) return { status: 'loaded', checkpoint };
+    if (envelope.formatVersion === CHECKPOINT_SAVE_FORMAT_VERSION) return { status: 'loaded', checkpoint };
     const target = story.passages.find(passage => passage.id === checkpoint.state.passageId)!;
     if (target.id !== story.startId && !target.checkpoint) throw new Error('Recovery target must be the start or an authored checkpoint.');
     const currentState = validateCommittedState(envelope.currentState, story);
@@ -105,12 +107,12 @@ export function loadCheckpoint(storage: CheckpointStorage, story: Story, identit
   }
 }
 
-/** Explicit legacy-format writer retained for existing callers and fixtures. */
+/** Explicit checkpoint-only writer for engine callers and recovery fixtures. */
 export function saveCheckpoint(storage: CheckpointStorage, story: Story, checkpoint: GameSnapshot, identity: StorySaveIdentity = DEFAULT_SAVE_IDENTITY): SaveResult {
   const configured = validateSaveIdentity(identity);
   try {
     const envelope = {
-      formatVersion: 1, storyId: configured.storyId, storyRevision: configured.storyRevision,
+      formatVersion: CHECKPOINT_SAVE_FORMAT_VERSION, storyId: configured.storyId, storyRevision: configured.storyRevision,
       checkpoint: validateSnapshot(checkpoint, story),
     };
     storage.setItem(keyFor(configured), JSON.stringify(envelope));

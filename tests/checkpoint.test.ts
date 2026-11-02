@@ -12,7 +12,7 @@ const nameText = '$' + '{name}';
 const story = parseStory([
   '*var count 0', '*var loyal false', '*var name "Unknown"', '*var faction "none"', '*var huge 1e308',
   '*skill composure "Composure"', '*skill herbalism "Herbalism"', '*skill diplomacy "Diplomacy"',
-  '*item gold_coin "Gold Coin"', '*item potion "Potion"',
+  '*item gold_coin "Supply Token"', '*item potion "Potion"',
   '*chapter Prologue', '*passage gate', '*title Gate', '*add count 1', '*set name "Alexander"',
   '*grant_skill composure', '*grant_skill herbalism', '*add_item gold_coin 10', '*add_item potion 2',
   '*journal arrived "Arrival ' + countText + '."', 'Gate.',
@@ -46,7 +46,7 @@ const valid = atCamp().checkpoint;
 type RawSnapshot = {
   state: {
     passageId: unknown; variables: Record<string, unknown>; journal: unknown[];
-    skills: unknown[]; inventory: Record<string, unknown>;
+    skills: unknown[]; party: [], inventory: Record<string, unknown>;
   };
 };
 function raw(): RawSnapshot { return JSON.parse(JSON.stringify(valid)) as RawSnapshot; }
@@ -107,7 +107,7 @@ test('new game establishes a complete checkpoint before starting effects', () =>
   const game = new Game(story);
   assert.deepEqual(game.checkpoint, {
     state: { passageId: 'gate', variables: { count: 0, loyal: false, name: 'Unknown', faction: 'none', huge: 1e308 },
-      journal: [], skills: [], inventory: {} },
+      journal: [], skills: [], party: [], inventory: {} },
   });
   assert.equal(game.state.variables.count, 1);
   assert.equal(game.state.variables.name, 'Alexander');
@@ -298,7 +298,7 @@ test('fresh restoration does not run an unrelated failing start passage', () => 
   const parsed = parseStory('*var count 0\n*item token "Token"\n*passage start\n*title Start\n*remove_item token 1\nStart.\n'
     + '*passage saved\n*title Saved\n*checkpoint\n*add count 2\n*add_item token 1\nSaved.');
   assert.throws(() => new Game(parsed), /insufficient inventory/);
-  const snapshot = { state: { passageId: 'saved', variables: { count: 3 }, journal: [], skills: [], inventory: {} } };
+  const snapshot = { state: { passageId: 'saved', variables: { count: 3 }, journal: [], skills: [], party: [], inventory: {} } };
   const game = new Game(parsed, { checkpoint: snapshot });
   assert.equal(game.state.passageId, 'saved');
   assert.equal(game.state.variables.count, 5);
@@ -479,7 +479,7 @@ test('constructor IDs work as own variables, skills, items, and journal events',
   const parsed = parseStory('*var constructor 1\n*skill constructor "Skill"\n*item constructor "Item"\n'
     + '*passage start\n*title Start\n*checkpoint\n*grant_skill constructor\n*add_item constructor 1\n*journal constructor ""\nText.');
   const data = { state: { passageId: 'start', variables: { constructor: 7 },
-    journal: [{ id: 'constructor', chapter: 'Prologue', text: '' }], skills: ['constructor'], inventory: { constructor: 2 } } };
+    journal: [{ id: 'constructor', chapter: 'Prologue', text: '' }], skills: ['constructor'], party: [], inventory: { constructor: 2 } } };
   const game = new Game(parsed, { checkpoint: data });
   assert.equal(game.state.variables.constructor, 7);
   assert.deepEqual(game.state.inventory, { constructor: 3 });
@@ -558,7 +558,7 @@ test('the example captures a submitted name at the optional background passage',
   const parsed = parseStory(readFileSync(new URL('../src/example.story', import.meta.url), 'utf8'));
   const game = new Game(parsed);
   const initial = game.checkpoint;
-  game.navigate('messenger'); game.navigate('council');
+  game.navigate('messenger'); game.navigate('center');
   assert.equal(game.checkpoint, initial);
   game.restoreCheckpoint();
   game.navigate('choose_name'); game.submitText('Eleanor');
@@ -566,7 +566,7 @@ test('the example captures a submitted name at the optional background passage',
   assert.equal(checkpoint.state.passageId, 'choose_background');
   assert.equal(checkpoint.state.variables.character_name, 'Eleanor');
   assert.deepEqual(checkpoint.state.journal.map(e => e.id), ['arrived_city']);
-  game.navigate('noble_origin'); game.navigate('council');
+  game.navigate('carer_origin'); game.navigate('center');
   game.restoreCheckpoint();
   assert.equal(game.passage.id, 'choose_background');
   assert.equal(game.state.variables.character_name, 'Eleanor');

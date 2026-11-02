@@ -1,4 +1,4 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import {

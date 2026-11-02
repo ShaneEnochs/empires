@@ -1,4 +1,4 @@
-import { titlePage } from '../src/title-page';
+import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import { expectPassage, expectStartup, openPanel, panelNames } from './helpers';
 

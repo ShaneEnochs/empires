@@ -4,6 +4,7 @@
 *stat trust "Trust"
 *skill listening "Listening"
 *item token "Ferry Token"
+*pokemon companion "Eevee"
 
 *chapter The Crossing
 *passage arrival
@@ -29,9 +30,10 @@ The ferryman describes a safe route between the rocks.
 
 *passage crossing
 *title Across the River
+*add_pokemon companion
 *remove_item token 1
 
-The ferry reaches the far bank.
+The ferry reaches the far bank, where Eevee joins you for this private Pokémon example.
 
 *show_if has_skill listening
 You recognize the safe channel from the ferryman's advice.

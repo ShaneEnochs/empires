@@ -1,10 +1,10 @@
-# Provincial Crisis playtest
+# Harbor Practice playtest
 
-[Story](provincial-crisis.story) · [Integration tests](../tests/provincial-crisis.test.ts)
+[Story](harbor-practice.story) · [Integration tests](../tests/harbor-practice.test.ts)
 
 ## Premise and scope
 
-You are the provincial envoy at Bellwether as a rising river closes the roads.
+You are the regional trainer at Bellwether as a rising river closes the roads.
 Public grain has traveled under private seals. You must decide whether to build
 a civic agreement, put rationing under armed control, or evacuate the lower town.
 
@@ -12,7 +12,7 @@ The adventure has **30 passages, three chapters, three endings, and two death
 passages**. Authority measures official standing; public trust measures local
 support. These are not moral scores. Dispatch coins, grain, evidence, a temporary
 commission, and practical knowledge constrain which promises you can keep.
-Naming is optional; the default envoy is Mara Vale.
+Naming is optional; the default trainer is Mara Vale.
 
 This is an independent authoring example, not the story loaded by the browser.
 No application loader, selection UI, scripting feature, or engine fix was added.
@@ -23,7 +23,7 @@ No application loader, selection UI, scripting feature, or engine fix was added.
 From the repository root, after `npm ci`:
 
 ```sh
-node --import tsx --test tests/provincial-crisis.test.ts
+node --import tsx --test tests/harbor-practice.test.ts
 npm test
 ```
 
@@ -34,7 +34,7 @@ alongside the original Node suite. To parse only:
 node --import tsx --input-type=module <<'JS'
 import { readFileSync } from 'node:fs';
 import { parseStory } from './src/story.ts';
-const story = parseStory(readFileSync('examples/provincial-crisis.story', 'utf8'));
+const story = parseStory(readFileSync('examples/harbor-practice.story', 'utf8'));
 console.log(story.passages.length); // 30; the whole story has been validated.
 JS
 ```
@@ -54,33 +54,33 @@ with outer spaces to verify normalization and later interpolation.
 
 All paths below start **after briefing**, and each has a complete test:
 
-- **A — direct order, clerk:** `night_council → guard_offer → ending_guard`.
+- **A — direct order, clerk:** `night_center → guard_offer → ending_guard`.
   Bypasses naming and all field content.
 - **B — investigate and build public confidence, surveyor:**
-  `mill_yard → copied_records → levee_path → flood_survey → night_council
+  `mill_yard → copied_records → levee_path → flood_survey → night_center
   → evidence_hearing → ending_compact`.
 - **C — negotiate and buy local knowledge, clerk:**
-  `mill_yard → sworn_testimony → levee_path → hired_pilot → night_council
+  `mill_yard → sworn_testimony → levee_path → hired_pilot → night_center
   → evidence_hearing → ending_compact`.
 - **D — feed people and share power, surveyor:**
-  `depot_queue → bonded_offer → depot_queue → relief_kitchen → night_council
+  `depot_queue → bonded_offer → depot_queue → relief_kitchen → night_center
   → popular_assembly → ending_compact`. Declining the bond and returning does
   not duplicate the queue's journal event.
 - **E — accept debt and provision barges, surveyor:**
-  `depot_queue → bonded_offer → merchant_bond → night_council → evacuation_plan
+  `depot_queue → bonded_offer → merchant_bond → night_center → evacuation_plan
   → grain_barges → ending_refuge`.
 - **F — skip fieldwork and hire crews, surveyor:**
-  `night_council → evacuation_plan → paid_ferries → ending_refuge`.
+  `night_center → evacuation_plan → paid_ferries → ending_refuge`.
 - **G — retain evidence while rescuing people, surveyor:**
-  `mill_yard → copied_records → levee_path → flood_survey → night_council
+  `mill_yard → copied_records → levee_path → flood_survey → night_center
   → evacuation_plan → guided_evacuation → ending_refuge`.
 - **H — requisition another village's food, surveyor:**
-  `cart_seizure → night_council → guard_offer → ending_guard`.
+  `cart_seizure → night_center → guard_offer → ending_guard`.
 - **I — refuse military terms after requesting help, clerk:**
-  `night_council → guard_offer → evacuation_plan → paid_ferries → ending_refuge`.
+  `night_center → guard_offer → evacuation_plan → paid_ferries → ending_refuge`.
   The request's trust cost survives the refusal.
 - **J — back armed distribution with harvest debt, clerk:**
-  `depot_queue → bonded_offer → merchant_bond → night_council → guard_offer
+  `depot_queue → bonded_offer → merchant_bond → night_center → guard_offer
   → ending_guard`. The guarantee becomes a preferred claim.
 
 Expected final balances (zero grain means its property is absent):
@@ -107,7 +107,7 @@ The documented routes plus the two recovery tests visit every passage.
 
 Additional complete tests cover these variations:
 
-- A clerk can take `mill_yard → sworn_testimony → levee_path → night_council
+- A clerk can take `mill_yard → sworn_testimony → levee_path → night_center
   → evidence_hearing → ending_compact` with only one trust. Diplomacy makes the
   shared compact destination eligible; the trust-based choice remains hidden.
 - A surveyor cannot select protected testimony. Paid accounts plus fresh
@@ -115,19 +115,19 @@ Additional complete tests cover these variations:
 - On route E, one remaining coin cannot hire ferry crews. Taking
   `guided_evacuation` also cannot reach `ending_refuge` without current soundings;
   `grain_barges → ending_refuge` remains safe.
-- After kitchen relief, `night_council → evacuation_plan → grain_barges
+- After kitchen relief, `night_center → evacuation_plan → grain_barges
   → ending_refuge` spends the smallest six-sack reserve exactly: four for crews,
   two for camp, leaving no grain property and five trust.
 
-Briefing issues six sacks; fieldwork can spend at most two before council. The
-reserve boat adds two at council, so at least six remain on every legitimate
+Briefing issues six sacks; fieldwork can spend at most two before center. The
+reserve boat adds two at center, so at least six remain on every legitimate
 arrival. Consequently the unconditional barge option can always pay both its
 four-sack price and the camp's two-sack allocation. Paid accounts, pilot fees,
 ferry fares, and merchant advances are guarded by quantity choices. No route
 requires silently clamping resources or entering an unavoidable failed effect.
 
 The journal starts with `arrival`, the chosen background, and `mandate_briefed`.
-Field events follow, then `council_open`, then the chosen hearing/transport and
+Field events follow, then `center_open`, then the chosen hearing/transport and
 ending events. Chapters remain static. The returned depot visit retains one
 original `depot_queue` record under The River; old records are never rewritten.
 
@@ -136,9 +136,9 @@ original `depot_queue` record under The River; old records are never rewritten.
 - **`briefing`**, before fieldwork: its pre-entry snapshot contains the accepted
   name, background skill, four coins, and writ. Entry adds one authority and six
   sacks and records the mandate. It does not ask for the name again on retry.
-- **`night_council`**, before the final decision: the snapshot includes the actual
+- **`night_center`**, before the final decision: the snapshot includes the actual
   field costs, evidence, flags, skills, and journal. Entry adds two sacks, removes
-  the writ, revokes the commission, and records the council. Recovery replays
+  the writ, revokes the commission, and records the center. Recovery replays
   those effects once from the snapshot, rather than adding two more sacks.
 
 Day hazard: from briefing take `mill_yard → copied_records → levee_path
@@ -146,9 +146,9 @@ Day hazard: from briefing take `mill_yard → copied_records → levee_path
 removing the acquired evidence/death record. The test repeats this three times,
 then completes the requisition/guard route.
 
-Night hazard: follow B as far as `night_council`, then take
+Night hazard: follow B as far as `night_center`, then take
 `evacuation_plan → night_breach`. Try Again retains the name, evidence, spent
-coins, and original journal, and restores the eight-sack council reserve. After
+coins, and original journal, and restores the eight-sack center reserve. After
 three cycles, the test completes the civic compact instead. Both hazards are
 explicitly warned about and have safe alternatives.
 
@@ -156,8 +156,8 @@ Fresh `Game` restoration and `GameSession` JSON round trips test these boundarie
 Session tests use a new injected **memory-only** storage object each time.
 They verify no writes on retry/Continue, complete ordered state reconstruction,
 and successful onward play. These isolated-memory playtests now pass the actual
-Provincial Crisis identity explicitly. Stage 9A adds `tests/story-identity.test.ts`, which uses
-`{ storyId: 'provincial-crisis', storyRevision: 1 }` and tests both real stories
+Harbor Practice identity explicitly. Stage 9A adds `tests/story-identity.test.ts`, which uses
+`{ storyId: 'harbor-practice', storyRevision: 1 }` and tests both real stories
 against one shared fake storage. It verifies independent keys, full restoration,
 revision rejection, failed-write isolation, and death/retry without save writes.
 Run all routes and identity tests with `npm test`; no browser storage is used.
@@ -194,7 +194,7 @@ engine changes. These distinctions matter:
   explicit fixed cohorts and allocations. Dynamic logistics would need a
   separately specified feature, not an invented command in this example.
 - **Deployment:** Stages 9A–9B provide explicit save identity and a static browser
-  library. This story uses its own `provincial-crisis` ID, never `empires-example`.
+  library. This story uses its own `harbor-practice` ID, never `aurelian-league`.
 
 ## Preflight review (Stages 9C–9D)
 
@@ -206,7 +206,7 @@ prefixes, below the 2,000-prefix default budget. Findings were reviewed as follo
   `"Preflight Reader"`; other accepted names are not explored by preflight.
 - `REENTRY_TESTED`: all four eligible first returns from `bonded_offer` to
   `depot_queue` succeed across the naming/background branches. Eight immediate
-  exits are also tested: issuing grain to the kitchen or proceeding to council.
+  exits are also tested: issuing grain to the kitchen or proceeding to center.
   The journal keeps its original single queue event; currency and supplies
   remain unchanged by declining the offer and returning. The cycle is intentional:
   the offer has no entry effects and the queue only records a deduplicated journal
@@ -218,7 +218,7 @@ prefixes, below the 2,000-prefix default budget. Findings were reviewed as follo
   sequences, continuations beyond one immediate exit, other names, and checkpoint/death restoration remain the responsibility of
   route tests and browser playtests.
 
-No actual defect or conservative structural warning was found. The City Gate
+No actual defect or conservative structural warning was found. The Pokémon Center
 separately reports 0 errors, 0 warnings, and 2 information diagnostics over
 14 prefixes (representative input and scope). Neither story/revision was changed.
 

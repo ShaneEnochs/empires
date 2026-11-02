@@ -6,6 +6,10 @@ export function evaluateCondition(condition: Condition, state: GameState): boole
   if (condition.operator === 'and') return evaluateCondition(condition.left, state) && evaluateCondition(condition.right, state);
   if (condition.operator === 'or') return evaluateCondition(condition.left, state) || evaluateCondition(condition.right, state);
   if (condition.operator === 'not') return !evaluateCondition(condition.operand, state);
+  if ('pokemonId' in condition) {
+    const present = state.party.some(member => member.id === condition.pokemonId);
+    return condition.operator === 'has_pokemon' ? present : !present;
+  }
   if ('skillId' in condition) {
     const acquired = state.skills.includes(condition.skillId);
     return condition.operator === 'has_skill' ? acquired : !acquired;

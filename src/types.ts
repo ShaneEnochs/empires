@@ -1,5 +1,8 @@
 export type VariableValue = number | boolean | string;
 export type Variables = Readonly<Record<string, VariableValue>>;
+export interface PokemonDefinition { readonly id: string; readonly species: string; }
+export interface PartyMember extends PokemonDefinition { readonly nickname?: string; }
+export type Party = readonly PartyMember[];
 export type Inventory = Readonly<Record<string, number>>;
 export type ComparisonOperator = '==' | '!=' | '>' | '>=' | '<' | '<=';
 
@@ -10,6 +13,8 @@ export type PassageEffect = (
   | { readonly kind: 'add'; readonly variable: string; readonly value: number }
   | { readonly kind: 'journal'; readonly id: string; readonly text: string }
   | { readonly kind: 'grant_skill' | 'revoke_skill'; readonly skillId: string }
+  | { readonly kind: 'add_pokemon'; readonly pokemonId: string; readonly nicknameVariable?: string }
+  | { readonly kind: 'remove_pokemon'; readonly pokemonId: string }
   | { readonly kind: 'add_item' | 'remove_item'; readonly itemId: string; readonly quantity: number }) & { readonly guards?: readonly EffectGuard[] };
 
 export interface SkillDefinition {
@@ -40,6 +45,7 @@ export type Condition =
   | { readonly operator: 'not'; readonly operand: Condition }
   | { readonly variable: string; readonly operator: '==' | '!='; readonly value: VariableValue }
   | { readonly variable: string; readonly operator: '>' | '>=' | '<' | '<='; readonly value: number }
+  | { readonly operator: 'has_pokemon' | 'lacks_pokemon'; readonly pokemonId: string }
   | { readonly operator: 'has_skill' | 'lacks_skill'; readonly skillId: string }
   | { readonly operator: 'has_item' | 'lacks_item'; readonly itemId: string }
   | { readonly operator: ComparisonOperator; readonly itemId: string; readonly value: number };
@@ -79,6 +85,7 @@ export interface Passage {
 
 export interface Story {
   readonly startId: string;
+  readonly pokemon: readonly PokemonDefinition[];
   readonly initialVariables: Variables;
   readonly skills: readonly SkillDefinition[];
   readonly items: readonly ItemDefinition[];
@@ -93,6 +100,7 @@ export interface GameState {
   readonly journal: readonly JournalEntry[];
   readonly skills: readonly string[];
   readonly inventory: Inventory;
+  readonly party: Party;
 }
 
 /** The single in-memory checkpoint: complete state before destination entry effects. */

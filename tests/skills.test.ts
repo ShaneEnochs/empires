@@ -5,14 +5,14 @@ import { Game } from '../src/game';
 import { interpolate } from '../src/interpolate';
 import { parseStory } from '../src/story';
 
-const definitions = '*skill swordsmanship "Swordsmanship"\n*skill diplomacy "Diplomacy"\n';
+const definitions = '*skill first_aid "First Aid"\n*skill diplomacy "Diplomacy"\n';
 const passage = '*passage start\n*title Start\nText.';
 const withEffects = (effects: string) => `${definitions}*passage start\n*title Start\n${effects}\nText.`;
 const conditional = (condition: string, effects = '') => `${definitions}*var count 0\n*passage start\n*title Start\n${effects}\nAlways.\n\n*show_if ${condition}\nConditional prose.\n*choice\n#Conditional -> target [if ${condition}]\n#Fallback -> fallback\n*passage target\n*title Target\n*grant_skill diplomacy\n*journal entered_target "Target"\nDone.\n*passage fallback\n*title Fallback\nDone.`;
 
 test('skill definitions are immutable metadata and may interleave with variable declarations', () => {
-  const story = parseStory(`*var diplomacy 0\n*skill diplomacy "Diplomacy"\n*var honor 5\n*skill swordsmanship "Swordsmanship"\n*chapter Prologue\n${passage}`);
-  assert.deepEqual(story.skills, [{ id: 'diplomacy', name: 'Diplomacy' }, { id: 'swordsmanship', name: 'Swordsmanship' }]);
+  const story = parseStory(`*var diplomacy 0\n*skill diplomacy "Diplomacy"\n*var honor 5\n*skill first_aid "First Aid"\n*chapter Prologue\n${passage}`);
+  assert.deepEqual(story.skills, [{ id: 'diplomacy', name: 'Diplomacy' }, { id: 'first_aid', name: 'First Aid' }]);
   assert.deepEqual(story.initialVariables, { diplomacy: 0, honor: 5 });
   assert.throws(() => Array.prototype.pop.call(story.skills), TypeError);
   assert.equal(Reflect.set(story.skills[0]!, 'name', 'Changed'), false);
@@ -32,7 +32,7 @@ test('display names use existing JSON escapes and remain literal rather than int
 });
 
 test('duplicate IDs are rejected even when unused or given different display names', () => {
-  assert.throws(() => parseStory(`*skill swordsmanship "First"\n*skill swordsmanship "Second"\n${passage}`), /Line 2: Duplicate skill ID "swordsmanship"/);
+  assert.throws(() => parseStory(`*skill first_aid "First"\n*skill first_aid "Second"\n${passage}`), /Line 2: Duplicate skill ID "first_aid"/);
 });
 
 test('duplicate display names are permitted and acquisition identity remains the ID', () => {
@@ -48,7 +48,7 @@ test('skill IDs follow the existing grammar and remain stable when names or decl
 });
 
 for (const declaration of [
-  '*skill', '*skill swordsmanship', '*skill 1skill "Name"', '*skill Upper "Name"', '*skill bad.id "Name"',
+  '*skill', '*skill first_aid', '*skill 1skill "Name"', '*skill Upper "Name"', '*skill bad.id "Name"',
   '*skill skill 1', '*skill skill true', '*skill skill null', '*skill skill []', '*skill skill {}',
   '*skill skill Name', "*skill skill 'Name'", '*skill skill "unclosed', '*skill skill "ok" trailing',
   '*skill skill ""', '*skill skill "  "', '*skill skill "\\n\\t"', '*skill skill "bad\\x"',
@@ -126,7 +126,7 @@ for (const condition of [
   'has_skill', 'lacks_skill', 'has_skill unknown', 'lacks_skill unknown',
   'has_skill "diplomacy"', 'has_skill 1skill', 'lacks_skill Upper',
   'has_skill diplomacy == true', 'has_skill diplomacy >= 1', 'has_skill diplomacy 1',
-  'has_skill diplomacy && lacks_skill swordsmanship', '(has_skill diplomacy',
+  'has_skill diplomacy && lacks_skill first_aid', '(has_skill diplomacy',
   'has_skill (diplomacy)', '!has_skill diplomacy', 'lacks_skill diplomacy extra',
 ]) {
   test(`rejects malformed skill conditions in both contexts: ${condition}`, () => {
@@ -158,17 +158,17 @@ test('destinations are validated even when the player lacks the required skill',
 });
 
 test('initial entry grants skills in acquisition order with no duplicates', () => {
-  const story = parseStory(withEffects('*grant_skill diplomacy\n*grant_skill swordsmanship\n*grant_skill diplomacy'));
+  const story = parseStory(withEffects('*grant_skill diplomacy\n*grant_skill first_aid\n*grant_skill diplomacy'));
   const game = new Game(story);
-  assert.deepEqual(game.state.skills, ['diplomacy', 'swordsmanship']);
+  assert.deepEqual(game.state.skills, ['diplomacy', 'first_aid']);
   assert.deepEqual(story.passages[0]?.effects, [
-    { kind: 'grant_skill', skillId: 'diplomacy' }, { kind: 'grant_skill', skillId: 'swordsmanship' }, { kind: 'grant_skill', skillId: 'diplomacy' },
+    { kind: 'grant_skill', skillId: 'diplomacy' }, { kind: 'grant_skill', skillId: 'first_aid' }, { kind: 'grant_skill', skillId: 'diplomacy' },
   ]);
 });
 
 test('revoking an absent skill is harmless; revoke and regrant append at the end', () => {
-  const game = new Game(parseStory(withEffects('*revoke_skill diplomacy\n*grant_skill diplomacy\n*grant_skill swordsmanship\n*revoke_skill diplomacy\n*grant_skill diplomacy\n*grant_skill diplomacy')));
-  assert.deepEqual(game.state.skills, ['swordsmanship', 'diplomacy']);
+  const game = new Game(parseStory(withEffects('*revoke_skill diplomacy\n*grant_skill diplomacy\n*grant_skill first_aid\n*revoke_skill diplomacy\n*grant_skill diplomacy\n*grant_skill diplomacy')));
+  assert.deepEqual(game.state.skills, ['first_aid', 'diplomacy']);
 });
 
 for (const [condition, effects, eligible] of [
@@ -190,7 +190,7 @@ for (const [condition, effects, eligible] of [
 }
 
 test('unavailable skill navigation is rejected before destination effects can alter any state', () => {
-  const game = new Game(parseStory(conditional('has_skill swordsmanship')));
+  const game = new Game(parseStory(conditional('has_skill first_aid')));
   const before = game.state;
   assert.throws(() => game.navigate('target'), /has no action/);
   assert.equal(game.state, before);
@@ -201,7 +201,7 @@ test('unavailable skill navigation is rejected before destination effects can al
 });
 
 test('shared destinations permit any eligible skill condition or unconditional choice', () => {
-  const source = conditional('has_skill swordsmanship').replace('#Fallback -> fallback', '#Absent -> target [if lacks_skill diplomacy]\n#Fallback -> fallback');
+  const source = conditional('has_skill first_aid').replace('#Fallback -> fallback', '#Absent -> target [if lacks_skill diplomacy]\n#Fallback -> fallback');
   const eligible = new Game(parseStory(source));
   eligible.navigate('target');
   assert.deepEqual(eligible.state.skills, ['diplomacy']);
@@ -217,7 +217,7 @@ const cycle = `${definitions}*var count 0
 *title Start
 *add count 1
 *grant_skill diplomacy
-*grant_skill swordsmanship
+*grant_skill first_aid
 Count: \${count}.
 *continue revoke
 *passage revoke
@@ -230,17 +230,17 @@ test('legitimate re-entry executes effects again while repeated reads/renders do
   const game = new Game(parseStory(cycle));
   const before = game.state;
   for (let i = 0; i < 3; i++) {
-    assert.deepEqual(game.state.skills, ['diplomacy', 'swordsmanship']);
+    assert.deepEqual(game.state.skills, ['diplomacy', 'first_aid']);
     assert.deepEqual(game.visibleParagraphs.map(p => interpolate(p.text, game.state.variables)), ['Count: 1.']);
     assert.deepEqual(game.availableChoices, []);
     assert.equal(game.state, before);
   }
   game.navigate('revoke');
-  assert.deepEqual(game.state.skills, ['swordsmanship']);
+  assert.deepEqual(game.state.skills, ['first_aid']);
   game.navigate('start');
   assert.equal(game.state.variables.count, 2);
-  assert.deepEqual(game.state.skills, ['swordsmanship', 'diplomacy']);
-  assert.deepEqual(before.skills, ['diplomacy', 'swordsmanship']);
+  assert.deepEqual(game.state.skills, ['first_aid', 'diplomacy']);
+  assert.deepEqual(before.skills, ['diplomacy', 'first_aid']);
 });
 
 test('separate games and previously committed acquired arrays are independent and immutable', () => {
@@ -249,7 +249,7 @@ test('separate games and previously committed acquired arrays are independent an
   const second = new Game(story);
   const before = first.state;
   first.navigate('revoke');
-  assert.deepEqual(second.state.skills, ['diplomacy', 'swordsmanship']);
+  assert.deepEqual(second.state.skills, ['diplomacy', 'first_aid']);
   assert.deepEqual(before.skills, second.state.skills);
   assert.notEqual(first.state.skills, before.skills);
   assert.notEqual(second.state.skills, before.skills);
@@ -262,10 +262,10 @@ test('separate games and previously committed acquired arrays are independent an
 const failure = (effects: string) => `${definitions}*var huge 1e308\n*var count 0\n*passage start\n*title Start\n*grant_skill diplomacy\nStart.\n*choice\n#Risk -> risk\n#Prepare -> prepare\n*passage risk\n*title Risk\n${effects}\nRisk.\n*passage prepare\n*title Prepare\n*set huge 0\nPrepared.\n*continue start`;
 
 for (const effects of [
-  '*grant_skill swordsmanship\n*journal attempt "Attempt"\n*add huge 1e308',
+  '*grant_skill first_aid\n*journal attempt "Attempt"\n*add huge 1e308',
   '*revoke_skill diplomacy\n*add count 1\n*journal attempt "Attempt"\n*add huge 1e308',
-  '*journal attempt "Attempt"\n*grant_skill swordsmanship\n*add count 1\n*add huge 1e308',
-  '*add huge 1e308\n*grant_skill swordsmanship\n*journal attempt "Attempt"',
+  '*journal attempt "Attempt"\n*grant_skill first_aid\n*add count 1\n*add huge 1e308',
+  '*add huge 1e308\n*grant_skill first_aid\n*journal attempt "Attempt"',
 ]) {
   test(`mixed effects roll back completely: ${effects}`, () => {
     const game = new Game(parseStory(failure(effects)));
@@ -279,10 +279,10 @@ for (const effects of [
 }
 
 test('valid navigation and successful retry remain possible after failed skill entry', () => {
-  const game = new Game(parseStory(failure('*grant_skill swordsmanship\n*journal attempt "Attempt"\n*add huge 1e308')));
+  const game = new Game(parseStory(failure('*grant_skill first_aid\n*journal attempt "Attempt"\n*add huge 1e308')));
   assert.throws(() => game.navigate('risk'), /non-finite/);
   game.navigate('prepare'); game.navigate('start'); game.navigate('risk');
-  assert.deepEqual(game.state.skills, ['diplomacy', 'swordsmanship']);
+  assert.deepEqual(game.state.skills, ['diplomacy', 'first_aid']);
   assert.deepEqual(game.state.journal.map(e => e.id), ['attempt']);
 });
 
@@ -295,8 +295,8 @@ test('failed initial entry exposes no partially initialized skill collection', (
 
 test('skill conditions and effects are frozen data', () => {
   const story = parseStory(conditional('has_skill diplomacy', '*grant_skill diplomacy'));
-  assert.equal(Reflect.set(story.passages[0]!.effects[0]!, 'skillId', 'swordsmanship'), false);
-  assert.equal(Reflect.set(story.passages[0]!.paragraphs[1]!.condition!, 'skillId', 'swordsmanship'), false);
+  assert.equal(Reflect.set(story.passages[0]!.effects[0]!, 'skillId', 'first_aid'), false);
+  assert.equal(Reflect.set(story.passages[0]!.paragraphs[1]!.condition!, 'skillId', 'first_aid'), false);
   assert.equal(Reflect.set(story.passages[0]!.choices[0]!.condition!, 'operator', 'lacks_skill'), false);
   assert.deepEqual(JSON.parse(JSON.stringify(story)), story);
 });
@@ -307,13 +307,13 @@ test('the original example routes retain journal/chapter behavior and differ in 
   assert.deepEqual(messenger.state.skills, ['composure']);
   messenger.navigate('messenger');
   assert.deepEqual(messenger.state.skills, ['composure', 'diplomacy']);
-  messenger.navigate('council');
+  messenger.navigate('center');
   assert.deepEqual(messenger.state.skills, ['diplomacy']);
   assert.ok(messenger.visibleParagraphs.some(p => p.text.includes('helps you choose your words')));
-  assert.deepEqual(messenger.state.journal.map(e => e.id), ['arrived_city', 'met_messenger', 'met_council']);
+  assert.deepEqual(messenger.state.journal.map(e => e.id), ['arrived_city', 'met_messenger', 'met_center']);
   const direct = new Game(story);
-  direct.navigate('council');
+  direct.navigate('center');
   assert.deepEqual(direct.state.skills, []);
   assert.ok(direct.visibleParagraphs.some(p => p.text.includes('Without diplomatic training')));
-  assert.deepEqual(direct.state.journal.map(e => e.id), ['arrived_city', 'met_council']);
+  assert.deepEqual(direct.state.journal.map(e => e.id), ['arrived_city', 'met_center']);
 });

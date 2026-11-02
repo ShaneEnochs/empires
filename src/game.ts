@@ -13,10 +13,10 @@ export class Game {
   private currentCheckpoint: GameSnapshot;
 
   /** committedState is storage restoration only: validated post-entry data skips entry.
-   * New games and checkpoint-only legacy/recovery construction retain normal entry. */
+   * New games and checkpoint-only/recovery construction retain normal entry. */
   constructor(private readonly story: Story, options?: { readonly checkpoint: unknown; readonly committedState?: unknown; readonly context?: unknown }) {
     const snapshot = validateSnapshot(options === undefined ? {
-      state: { passageId: story.startId, variables: story.initialVariables, journal: [], skills: [], inventory: {} },
+      state: { passageId: story.startId, variables: story.initialVariables, journal: [], skills: [], inventory: {}, party: [] },
     } : options.checkpoint, story);
     const next = options !== undefined && Object.hasOwn(options, 'committedState')
       ? validateCommittedState(options.committedState, story)
@@ -116,7 +116,7 @@ export class Game {
     // Checkpoints preserve this input boundary; effects run only on the copy below.
     const next = {
       passageId, variables: { ...input.variables }, journal: [...input.journal],
-      skills: [...input.skills], inventory: { ...input.inventory },
+      party: [...input.party], skills: [...input.skills], inventory: { ...input.inventory },
     };
     const temporary = { ...passage.temps };
     const decisions = new Map<number, number>();
@@ -141,6 +141,18 @@ export class Game {
             id: effect.id, chapter: passage.chapter, text: interpolate(effect.text, candidate().variables),
           }));
         }
+      } else if (effect.kind === 'add_pokemon') {
+        if (!next.party.some(member => member.id === effect.pokemonId)) {
+          if (next.party.length >= 6) throw new Error(`Passage "${passageId}": Pokémon party is full (maximum six).`);
+          const definition = this.story.pokemon.find(member => member.id === effect.pokemonId);
+          if (!definition) throw new Error(`Unknown Pokémon "${effect.pokemonId}".`);
+          const raw = effect.nicknameVariable ? next.variables[effect.nicknameVariable] : undefined;
+          const nickname = raw === '' || raw === undefined ? undefined : validateTextInput(raw);
+          next.party.push(Object.freeze({ ...definition, ...(nickname === undefined ? {} : { nickname }) }));
+        }
+      } else if (effect.kind === 'remove_pokemon') {
+        const index = next.party.findIndex(member => member.id === effect.pokemonId);
+        if (index !== -1) next.party.splice(index, 1);
       } else if (effect.kind === 'grant_skill') {
         if (!next.skills.includes(effect.skillId)) next.skills.push(effect.skillId);
       } else if (effect.kind === 'revoke_skill') {
@@ -165,6 +177,7 @@ export class Game {
     Object.freeze(next.journal);
     Object.freeze(next.skills);
     Object.freeze(next.inventory);
+    Object.freeze(next.party);
     return Object.freeze(next);
   }
 
