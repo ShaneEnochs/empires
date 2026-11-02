@@ -1,0 +1,26 @@
+[
+  {
+    "id": "lucia",
+    "name": "Lucia",
+    "description": "An outgoing League contestant in an orange jacket who hopes to explore Torvesca and learn more about wild Pokémon.",
+    "discoveryEvents": [
+      "met_lucia"
+    ]
+  },
+  {
+    "id": "dario",
+    "name": "Dario",
+    "description": "An ambitious contestant who studies the League's rankings and wants to earn his place in the final.",
+    "discoveryEvents": [
+      "met_dario"
+    ]
+  },
+  {
+    "id": "ilaria",
+    "name": "Ilaria",
+    "description": "A thoughtful contestant who questions how the League measures qualities such as judgment and compassion.",
+    "discoveryEvents": [
+      "met_ilaria"
+    ]
+  }
+]

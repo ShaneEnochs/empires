@@ -152,7 +152,9 @@ test('all starter and pronoun paths commit one partner, keep trainer identity an
  const publicStory=parseStory(readFileSync('content/aurelian-league.story','utf8'));
  for(const pronoun of ['he','she','they'])for(const species of ['charmander','chikorita','piplup'])for(const nickname of [undefined,'  Pip 周  ']){
   const storage=new Memory(),session=new GameSession(publicStory,storage);session.newGame(()=>true);
-  session.navigate('name');session.submitText('  Ari  ');session.navigate(pronoun);session.navigate('arrival');session.navigate('starters');
+  session.advancePage();session.navigate('name');session.submitText('  Ari  ');session.navigate(pronoun);
+  session.navigate('lucia_chat');session.navigate('open_deck');session.navigate('rail');session.navigate('dock_approach');
+  session.navigate('arrival');session.navigate('starters');
   for(const examine of ['charmander','chikorita','piplup']){session.navigate('examine_'+examine);session.navigate('starters');assert.deepEqual(session.game!.state.party,[]);}
   session.navigate('examine_'+species);session.navigate('choose_'+species);
   if(nickname){session.navigate('nickname');session.submitText(nickname);}else session.navigate('join');
