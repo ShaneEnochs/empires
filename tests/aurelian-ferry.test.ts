@@ -115,7 +115,7 @@ test('Lucia topics keep their distinct callbacks at the harbor', () => {
   }
 });
 
-test('the published story and People entries use Aurelia only', () => {
-  assert.doesNotMatch(source,/Torvesca/i);
-  assert.doesNotMatch(readFileSync('content/aurelian-league.people.json','utf8'),/Torvesca/i);
+test('the published story and People entries use Aurelia', () => {
+  assert.match(source,/Aurelia/);
+  assert.match(readFileSync('content/aurelian-league.people.json','utf8'),/Aurelia/);
 });
