@@ -91,7 +91,7 @@ test('choice and narrative conditions share the same condition data and string l
 for (const expression of [
   '', ' ', 'missing == 4', 'Influence == 4', 'influence', '>= 4', 'influence >=',
   'influence = 4', 'influence === 4', 'influence !== 4', 'influence <> 4',
-  'influence >= other', 'influence + 1 >= 4', 'influence >= (4)', '(influence >= 4)',
+  'influence >= other', 'influence + 1 >= 4', 'influence >= (4)', '(influence >= 4',
   'influence >= 4 && loyal == false', 'influence >= 4 || loyal == false',
   'influence >= 4 influence < 10', '[if influence >= 4]', 'influence >= 4]',
   'influence == "4"', 'loyal == 0', 'loyal > false', 'faction < "guild"',

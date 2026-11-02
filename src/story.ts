@@ -1,83 +1,8 @@
-import { interpolate } from './interpolate';
-import type { Choice, ComparisonOperator, Condition, ItemDefinition, NarrativeParagraph, Passage, PassageEffect, SkillDefinition, StatDisplay, Story, TextInputAction, Variables, VariableValue } from './types';
+import { formattedParts } from './format';
+import { interpolate, selectInline } from './interpolate';
+import type { Choice, ComparisonOperator, Condition, ItemDefinition, NarrativeParagraph, Passage, PassageEffect, SkillDefinition, StatDisplay, Story, TextInputAction, EffectGuard, Variables, VariableValue } from './types';
 
-function syntaxError(message: string, line: number, passageId?: string): Error {
-  return new Error(`Line ${line}${passageId ? `, passage "${passageId}"` : ''}: ${message}`);
-}
-
-function id(value: string, context: string, line: number, passageId?: string): string {
-  if (!/^[a-z][a-z0-9_-]*$/.test(value)) {
-    throw syntaxError(`${context} must match [a-z][a-z0-9_-]*; received "${value}".`, line, passageId);
-  }
-  return value;
-}
-
-function literal(value: string, line: number, passageId?: string): VariableValue {
-  if (value === 'true' || value === 'false') return value === 'true';
-  if (/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(value)) {
-    const number = Number(value);
-    if (Number.isFinite(number)) return number;
-    throw syntaxError('Numeric literals must be finite.', line, passageId);
-  }
-  if (value.startsWith('"')) {
-    try { return JSON.parse(value) as string; } catch { /* Report the source location below. */ }
-  }
-  throw syntaxError('Expected a finite number, true, false, or a double-quoted string literal.', line, passageId);
-}
-
-function knownSkill(value: string, skills: readonly SkillDefinition[], line: number, passageId?: string): string {
-  const skillId = id(value, 'Skill ID', line, passageId);
-  if (!skills.some(skill => skill.id === skillId)) throw syntaxError(`Unknown skill "${skillId}".`, line, passageId);
-  return skillId;
-}
-
-function knownItem(value: string, items: readonly ItemDefinition[], line: number, passageId?: string): string {
-  const itemId = id(value, 'Item ID', line, passageId);
-  if (!items.some(item => item.id === itemId)) throw syntaxError(`Unknown item "${itemId}".`, line, passageId);
-  return itemId;
-}
-
-function quantityLiteral(source: string, allowZero: boolean, line: number, passageId?: string): number {
-  const quantity = /^(?:0|[1-9]\d*)$/.test(source) ? Number(source) : NaN;
-  if (!Number.isSafeInteger(quantity) || quantity < (allowZero ? 0 : 1)) {
-    throw syntaxError(`Item quantities must be ${allowZero ? 'nonnegative' : 'positive'} safe integer literals in decimal digits.`, line, passageId);
-  }
-  return quantity;
-}
-
-function parseCondition(source: string, variables: Variables, skills: readonly SkillDefinition[], items: readonly ItemDefinition[], line: number, passageId: string): Condition {
-  const count = /^item_count\s+(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(source);
-  if (count) {
-    const itemId = knownItem(count[1]!, items, line, passageId);
-    const value = quantityLiteral(count[3]!.trim(), true, line, passageId);
-    return Object.freeze({ operator: count[2] as ComparisonOperator, itemId, value });
-  }
-  const parts = /^(\S+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(source);
-  if (!parts) {
-    const skill = /^(has_skill|lacks_skill)\s+(\S+)$/.exec(source);
-    if (skill) {
-      const skillId = knownSkill(skill[2]!, skills, line, passageId);
-      return Object.freeze({ operator: skill[1] as 'has_skill' | 'lacks_skill', skillId });
-    }
-    const item = /^(has_item|lacks_item)\s+(\S+)$/.exec(source);
-    if (item) {
-      const itemId = knownItem(item[2]!, items, line, passageId);
-      return Object.freeze({ operator: item[1] as 'has_item' | 'lacks_item', itemId });
-    }
-    throw syntaxError('Expected a variable comparison, has_skill/lacks_skill id, has_item/lacks_item id, or item_count id comparison.', line, passageId);
-  }
-  const variable = id(parts[1]!, 'Condition variable', line, passageId);
-  if (!Object.hasOwn(variables, variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, passageId);
-  const operator = parts[2] as ComparisonOperator;
-  const value = literal(parts[3]!.trim(), line, passageId);
-  if (typeof variables[variable] !== typeof value) {
-    throw syntaxError('Condition operands must have compatible types.', line, passageId);
-  }
-  if (operator === '==' || operator === '!=') return Object.freeze({ variable, operator, value });
-  if (typeof value !== 'number') throw syntaxError('Ordering comparisons require numbers.', line, passageId);
-  return Object.freeze({ variable, operator, value });
-}
-
+import { syntaxError, id, literal, knownSkill, knownItem, quantityLiteral, parseCondition } from './expressions';
 /** Parse and validate the entire story before any passage can be entered. */
 export function parseStory(source: string): Story {
   const passages: Passage[] = [];
@@ -91,9 +16,39 @@ export function parseStory(source: string): Story {
   const stats: StatDisplay[] = [];
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
-    id: string; chapter: string; line: number; title?: string; checkpoint?: true; paragraphs: NarrativeParagraph[];
+    id: string; chapter: string; line: number; temps: Record<string, VariableValue>; title?: string; checkpoint?: true; paragraphs: NarrativeParagraph[];
     choices: Choice[]; effects: PassageEffect[]; continueTo?: string; textInput?: TextInputAction; death?: true;
   } | undefined;
+  let page = 0;
+  const blocks: { indent: number; id: number; branch: number; conditions: Condition[]; pending: boolean; otherwise: boolean; bodyIndent?: number }[] = [];
+  const allBranches: Condition[][] = [];
+  type BranchPath = { id: number; branch: number }[];
+  let paragraphPaths: BranchPath[] = [];
+  let blockInfo: { id: number; path: BranchPath; conditions: Condition[] }[] = [];
+  let explicitShowIf = false;
+  const path = (): BranchPath => blocks.map(b => ({ id: b.id, branch: b.branch }));
+  const samePath = (a: BranchPath, b: BranchPath): boolean => a.length === b.length && a.every((entry, i) => entry.id === b[i]!.id && entry.branch === b[i]!.branch);
+  function guaranteed(parent: BranchPath = []): boolean {
+    return paragraphPaths.some(p => samePath(p, parent)) || blockInfo.some(block => samePath(block.path, parent)
+      && block.conditions.at(-1)?.operator === 'literal'
+      && block.conditions.every((_condition, branch) => guaranteed([...parent, { id: block.id, branch }])));
+  }
+  function variables(): Variables { return { ...initialVariables, ...current?.temps }; }
+  function conjunction(a: Condition | undefined, b: Condition | undefined): Condition | undefined {
+    return a && b ? Object.freeze({ operator: 'and', left: a, right: b }) : a ?? b;
+  }
+  function guard(): Condition | undefined {
+    let result: Condition | undefined;
+    for (const block of blocks) {
+      for (let i = 0; i < block.branch; i++) result = conjunction(result, Object.freeze({ operator: 'not', operand: block.conditions[i]! }));
+      result = conjunction(result, block.conditions[block.branch]);
+    }
+    return result;
+  }
+  function addEffect(effect: PassageEffect): void {
+    const guards: EffectGuard[] = blocks.map(block => Object.freeze({ id: block.id, branch: block.branch, conditions: block.conditions }));
+    current!.effects.push(Object.freeze({ ...effect, ...(guards.length ? { guards: Object.freeze(guards) } : {}) }));
+  }
   let paragraph: string[] = [];
   let paragraphCondition: Condition | undefined;
   let showIfLine = 1;
@@ -102,13 +57,17 @@ export function parseStory(source: string): Story {
 
   function flushParagraph(): void {
     if (current && paragraph.length > 0) {
+      try { selectInline(paragraph.join(' '), variables(), true, text => { formattedParts(text); }); formattedParts(paragraph.join(' ')); } catch (error) { throw syntaxError((error as Error).message, current.line, current.id); }
+      if (!explicitShowIf) paragraphPaths.push(path());
       current.paragraphs.push(Object.freeze({
         text: paragraph.join(' '),
+        ...(page ? { page } : {}),
         ...(paragraphCondition === undefined ? {} : { condition: paragraphCondition }),
       }));
     }
     paragraph = [];
     paragraphCondition = undefined;
+    explicitShowIf = false;
   }
 
   function finishPassage(): void {
@@ -117,23 +76,25 @@ export function parseStory(source: string): Story {
       throw syntaxError('*show_if requires a narrative paragraph on the immediately following source line.', showIfLine, current.id);
     }
     flushParagraph();
+    if (page && current.paragraphs.at(-1)?.page !== page) throw syntaxError('A page break requires following narrative.', current.line, current.id);
     if (current.title === undefined) {
       throw syntaxError('Passage requires exactly one *title.', current.line, current.id);
     }
     if (current.paragraphs.length === 0) {
       throw syntaxError('Passage requires at least one narrative paragraph.', current.line, current.id);
     }
-    if (!current.paragraphs.some(paragraph => paragraph.condition === undefined)) {
+    if (!guaranteed()) {
       throw syntaxError('Passage requires at least one unconditional narrative paragraph.', current.line, current.id);
     }
     if (action === 'choice' && current.choices.length === 0) {
       throw syntaxError('*choice requires at least one choice.', actionLine, current.id);
     }
-    if (current.choices.some(choice => choice.condition !== undefined)
-      && !current.choices.some(choice => choice.condition === undefined)) {
+    if (current.choices.some(choice => choice.condition !== undefined || choice.selectable !== undefined)
+      && !current.choices.some(choice => choice.condition === undefined && choice.selectable === undefined)) {
       throw syntaxError('A conditional choice block requires at least one unconditional choice.', actionLine, current.id);
     }
     passages.push(Object.freeze({
+      ...(Object.keys(current.temps).length ? { temps: Object.freeze(current.temps) } : {}),
       id: current.id, chapter: current.chapter, title: current.title, paragraphs: Object.freeze(current.paragraphs),
       effects: Object.freeze(current.effects),
       choices: Object.freeze(current.choices),
@@ -148,6 +109,45 @@ export function parseStory(source: string): Story {
   for (const [index, raw] of lines.entries()) {
     const line = index + 1;
     const text = raw.trim();
+    if (/^\*comment(?:\s|$)/.test(text)) {
+      if (!text.slice(8).trim()) throw syntaxError('*comment requires text.', line, current?.id);
+      continue;
+    }
+    if (text) {
+      if ((blocks.length || /^\s*\*(?:if|elseif|else)\b/.test(raw)) && /^\s*\t/.test(raw)) throw syntaxError('Use spaces, not tabs, for block indentation.', line, current?.id);
+      const indent = raw.length - raw.trimStart().length;
+      if (paragraphCondition !== undefined && paragraph.length === 0 && text.startsWith('*')) throw syntaxError('*show_if requires a narrative paragraph on the immediately following source line.', line, current?.id);
+      const branch = /^\*(if|elseif|else)(?:\s+(.*))?$/.exec(text);
+      if (blocks.at(-1)?.pending && indent <= blocks.at(-1)!.indent) throw syntaxError('Conditional block requires an indented body.', line, current?.id);
+      while (blocks.length && (indent < blocks.at(-1)!.indent || (indent === blocks.at(-1)!.indent && !branch?.[1]?.match(/^(elseif|else)$/)))) { flushParagraph(); blocks.pop(); }
+      const enclosing = blocks.at(-1);
+      if (enclosing && indent > enclosing.indent) {
+        if (enclosing.bodyIndent === undefined) enclosing.bodyIndent = indent;
+        if (enclosing.bodyIndent !== indent) throw syntaxError('Inconsistent conditional body indentation.', line, current?.id);
+        enclosing.pending = false;
+      }
+      if (branch) {
+        if (action && action !== 'choice') throw syntaxError('Conditional content cannot follow navigation.', line, current?.id);
+        if (!current?.title) throw syntaxError('Conditional blocks require a passage title.', line, current?.id);
+        flushParagraph();
+        if (branch[1] === 'if') {
+          const conditions: Condition[] = []; allBranches.push(conditions);
+          blockInfo.push({ id: line, path: path(), conditions });
+          blocks.push({ indent, id: line, branch: 0, conditions, pending: true, otherwise: false });
+        } else {
+          const block = blocks.at(-1);
+          if (!block || block.indent !== indent || block.otherwise) throw syntaxError('Unmatched or repeated conditional branch.', line, current.id);
+          block.branch++; block.pending = true;
+        }
+        const block = blocks.at(-1)!;
+        if (branch[1] === 'else') {
+          if (branch[2]) throw syntaxError('*else takes no arguments.', line, current.id);
+          block.otherwise = true; block.conditions.push(Object.freeze({ operator: 'literal', value: true }));
+        } else block.conditions.push(parseCondition(branch[2] ?? '', variables(), skills, items, line, current.id));
+        continue;
+      }
+      if (blocks.length) blocks.at(-1)!.pending = false;
+    }
     if (paragraphCondition !== undefined && paragraph.length === 0 && (text === '' || text.startsWith('*'))) {
       throw syntaxError('*show_if requires a narrative paragraph on the immediately following source line.', line, current?.id);
     }
@@ -159,6 +159,21 @@ export function parseStory(source: string): Story {
     if (text.startsWith('*')) {
       const directive = text.split(/\s/, 1)[0]!;
       const argument = text.slice(directive.length).trim();
+      if (blocks.length && ['*passage','*chapter','*title','*checkpoint','*temp','*choice','*continue','*input_text','*death'].includes(directive)) throw syntaxError('This directive cannot be conditional.', line, current?.id);
+      if (directive === '*temp') {
+        if (!current?.title || current.effects.length || current.paragraphs.length || paragraph.length || action) throw syntaxError('*temp must follow title/checkpoint before effects and prose.', line, current?.id);
+        const parts = /^(\S+)\s+(.+)$/.exec(argument);
+        if (!parts) throw syntaxError('*temp requires a name and literal.', line, current.id);
+        const name = id(parts[1]!, 'Temporary variable', line, current.id);
+        if (Object.hasOwn(variables(), name)) throw syntaxError('Duplicate or conflicting temporary variable: ' + name, line, current.id);
+        current.temps[name] = literal(parts[2]!, line, current.id); continue;
+      }
+      if (directive === '*page_break') {
+        if (!current?.title || action || argument || (!paragraph.length && !current.paragraphs.length)) throw syntaxError('Invalid or misplaced *page_break; no arguments are supported.', line, current?.id);
+        flushParagraph();
+        if ((current.paragraphs.at(-1)?.page ?? 0) !== page) throw syntaxError('Consecutive page breaks are not allowed.', line, current.id);
+        page++; continue;
+      }
       if (directive === '*chapter') {
         if (pendingChapterLine !== undefined) {
           throw syntaxError('Each *chapter must be followed by at least one passage.', pendingChapterLine);
@@ -174,7 +189,7 @@ export function parseStory(source: string): Story {
       if (directive === '*checkpoint') {
         if (argument !== '') throw syntaxError('*checkpoint takes no arguments.', line, current?.id);
         if (current?.checkpoint) throw syntaxError('*checkpoint may appear at most once per passage.', line, current.id);
-        if (!current || current.title === undefined || current.effects.length > 0 || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined) {
+        if (!current || current.title === undefined || Object.keys(current.temps).length > 0 || current.effects.length > 0 || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined) {
           throw syntaxError('*checkpoint must immediately follow *title, before entry effects and narrative.', line, current?.id);
         }
         current.checkpoint = true;
@@ -184,7 +199,8 @@ export function parseStory(source: string): Story {
         if (!current || current.title === undefined || action !== undefined || paragraph.length > 0) {
           throw syntaxError('*show_if must be at a paragraph boundary after the title and effects, before navigation.', line, current?.id);
         }
-        paragraphCondition = parseCondition(argument, initialVariables, skills, items, line, current.id);
+        explicitShowIf = true;
+        paragraphCondition = conjunction(guard(), parseCondition(argument, variables(), skills, items, line, current.id));
         showIfLine = line;
         continue;
       }
@@ -193,7 +209,7 @@ export function parseStory(source: string): Story {
           throw syntaxError('Effects must appear after *title and before the first narrative paragraph.', line, current?.id);
         }
         const skillId = knownSkill(argument, skills, line, current.id);
-        current.effects.push(Object.freeze({ kind: directive === '*grant_skill' ? 'grant_skill' : 'revoke_skill', skillId }));
+        addEffect(Object.freeze({ kind: directive === '*grant_skill' ? 'grant_skill' : 'revoke_skill', skillId }));
         continue;
       }
       if (directive === '*add_item' || directive === '*remove_item') {
@@ -204,7 +220,7 @@ export function parseStory(source: string): Story {
         if (!parts) throw syntaxError(`${directive} requires an item ID and quantity.`, line, current.id);
         const itemId = knownItem(parts[1]!, items, line, current.id);
         const quantity = quantityLiteral(parts[2]!, false, line, current.id);
-        current.effects.push(Object.freeze({ kind: directive === '*add_item' ? 'add_item' : 'remove_item', itemId, quantity }));
+        addEffect(Object.freeze({ kind: directive === '*add_item' ? 'add_item' : 'remove_item', itemId, quantity }));
         continue;
       }
       if (directive === '*var' || directive === '*skill' || directive === '*item' || directive === '*stat' || directive === '*set' || directive === '*add' || directive === '*journal') {
@@ -236,26 +252,26 @@ export function parseStory(source: string): Story {
         } else if (directive === '*journal') {
           if (typeof value !== 'string') throw syntaxError('*journal requires a double-quoted string literal.', line, current?.id);
           if (journalIds.has(variable)) throw syntaxError(`Duplicate journal event ID "${variable}".`, line, current?.id);
-          try { interpolate(value, initialVariables); } catch (error) {
+          try { selectInline(value, variables(), true); interpolate(value, variables()); } catch (error) {
             throw syntaxError((error as Error).message, line, current?.id);
           }
           journalIds.add(variable);
-          current!.effects.push(Object.freeze({ kind: 'journal', id: variable, text: value }));
+          addEffect(Object.freeze({ kind: 'journal', id: variable, text: value }));
         } else if (directive === '*var') {
           if (Object.hasOwn(initialVariables, variable)) throw syntaxError(`Duplicate variable "${variable}".`, line);
           initialVariables[variable] = value;
         } else {
-          if (!Object.hasOwn(initialVariables, variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, current?.id);
+          if (!Object.hasOwn(variables(), variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, current?.id);
           if (directive === '*add') {
-            if (typeof initialVariables[variable] !== 'number' || typeof value !== 'number') {
+            if (typeof variables()[variable] !== 'number' || typeof value !== 'number') {
               throw syntaxError('*add requires a numeric variable and numeric literal.', line, current?.id);
             }
-            current!.effects.push(Object.freeze({ kind: 'add', variable, value }));
+            addEffect(Object.freeze({ kind: 'add', variable, value }));
           } else {
-            if (typeof initialVariables[variable] !== typeof value) {
+            if (typeof variables()[variable] !== typeof value) {
               throw syntaxError(`*set must preserve the declared type of "${variable}".`, line, current?.id);
             }
-            current!.effects.push(Object.freeze({ kind: 'set', variable, value }));
+            addEffect(Object.freeze({ kind: 'set', variable, value }));
           }
         }
         continue;
@@ -265,7 +281,8 @@ export function parseStory(source: string): Story {
         const passageId = id(argument, 'Passage ID', line);
         if (ids.has(passageId)) throw syntaxError(`Duplicate passage ID "${passageId}".`, line, passageId);
         ids.add(passageId);
-        current = { id: passageId, chapter, line, paragraphs: [], choices: [], effects: [] };
+        page = 0; paragraphPaths = []; blockInfo = [];
+        current = { temps: {}, id: passageId, chapter, line, paragraphs: [], choices: [], effects: [] };
         pendingChapterLine = undefined;
         action = undefined;
         continue;
@@ -307,8 +324,8 @@ export function parseStory(source: string): Story {
         const parts = /^(\S+)\s+("(?:[^"\\]|\\.)*")\s*->\s*(\S+)$/.exec(argument);
         if (!parts) throw syntaxError('Expected *input_text variable "Label" -> destination_id.', line, current.id);
         const variable = id(parts[1]!, 'Input variable', line, current.id);
-        if (!Object.hasOwn(initialVariables, variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, current.id);
-        if (typeof initialVariables[variable] !== 'string') throw syntaxError('*input_text requires a declared string variable.', line, current.id);
+        if (!Object.hasOwn(variables(), variable)) throw syntaxError(`Undeclared variable "${variable}".`, line, current.id);
+        if (typeof variables()[variable] !== 'string') throw syntaxError('*input_text requires a declared string variable.', line, current.id);
         const label = literal(parts[2]!, line, current.id);
         if (typeof label !== 'string' || label.trim() === '') throw syntaxError('*input_text requires a nonempty double-quoted label.', line, current.id);
         const destinationId = id(parts[3]!, 'Input destination', line, current.id);
@@ -335,13 +352,15 @@ export function parseStory(source: string): Story {
       }
       if (/\[if\b/i.test(label)) throw syntaxError('Choice conditions must follow the destination.', line, current.id);
       const destinationId = id(target, 'Choice destination', line, current.id);
-      let condition: Condition | undefined;
+      let condition: Condition | undefined = guard();
+      let selectable: Condition | undefined;
       if (bracket !== -1) {
-        const wrapper = /^\[if\s+(.+)\]$/.exec(destination.slice(bracket));
+        const wrapper = /^\[(if|selectable_if)\s+(.+)\]$/.exec(destination.slice(bracket));
         if (!wrapper) throw syntaxError('Expected a single [if condition] suffix.', line, current.id);
-        condition = parseCondition(wrapper[1]!, initialVariables, skills, items, line, current.id);
+        const parsed = parseCondition(wrapper[2]!, variables(), skills, items, line, current.id);
+        if (wrapper[1] === 'selectable_if') selectable = parsed; else condition = conjunction(condition, parsed);
       }
-      current.choices.push(Object.freeze({ label, destinationId, ...(condition === undefined ? {} : { condition }) }));
+      current.choices.push(Object.freeze({ label, destinationId, ...(selectable ? { selectable } : {}), ...(condition === undefined ? {} : { condition }) }));
       references.push({ destinationId, passageId: current.id, line });
     } else if (action === 'death') {
       throw syntaxError('*death must conclude the passage; no further prose or choices are allowed.', line, current.id);
@@ -350,14 +369,17 @@ export function parseStory(source: string): Story {
     } else if (action === 'input_text') {
       throw syntaxError('Text input must conclude the passage; no further prose or choices are allowed.', line, current.id);
     } else {
-      try { interpolate(text, initialVariables); } catch (error) {
+      try { selectInline(text, variables(), true); interpolate(text, variables()); } catch (error) {
         throw syntaxError((error as Error).message, line, current.id);
       }
+      if (!paragraph.length) paragraphCondition = conjunction(paragraphCondition, guard());
       paragraph.push(text);
     }
   }
   if (pendingChapterLine !== undefined) throw syntaxError('Each *chapter must be followed by at least one passage.', pendingChapterLine);
+  if (blocks.at(-1)?.pending) throw syntaxError('Conditional block requires a body.', lines.length, current?.id);
   finishPassage();
+  for (const conditions of allBranches) Object.freeze(conditions);
 
   const first = passages[0];
   if (!first) throw syntaxError('Story requires at least one *passage.', 1);

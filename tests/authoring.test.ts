@@ -5,12 +5,12 @@ const json = (path: string) => JSON.parse(readFileSync(path, 'utf8'));
 test('VS Code uses the custom language, discoverable command snippets, and process task arguments', () => {
   assert.equal(json('.vscode/settings.json')['files.associations']['*.story'], 'empires-story');
   const snippets = json('.vscode/empires.code-snippets');
-  assert.equal(Object.keys(snippets).length, 20);
+  assert.equal(Object.keys(snippets).length, 33);
   for (const [name, value] of Object.entries(snippets)) {
     const snippet = value as { prefix: string; scope: string; body: string[] };
     assert.equal(snippet.prefix, 'emp-' + name);
     assert.equal(snippet.scope, 'empires-story,plaintext');
-    assert.ok(snippet.body[0]!.startsWith('*'));
+    assert.match(snippet.body[0]!, /^(?:\*|\\?\$|@\{|\[|#)/);
   }
   const tasks = json('.vscode/tasks.json').tasks;
   assert.deepEqual(tasks.map((task: { label: string }) => task.label), ['Empires: Check Current Story', 'Empires: Check Bundled Stories', 'Empires: Start Local Preview']);

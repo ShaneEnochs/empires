@@ -7,12 +7,17 @@
     <KeyWord name="*chapter" />
     <KeyWord name="*checkpoint" />
     <KeyWord name="*choice" />
+    <KeyWord name="*comment" />
     <KeyWord name="*continue" />
     <KeyWord name="*death" />
+    <KeyWord name="*else" />
+    <KeyWord name="*elseif" />
     <KeyWord name="*grant_skill" />
+    <KeyWord name="*if" />
     <KeyWord name="*input_text" />
     <KeyWord name="*item" />
     <KeyWord name="*journal" />
+    <KeyWord name="*page_break" />
     <KeyWord name="*passage" />
     <KeyWord name="*remove_item" />
     <KeyWord name="*revoke_skill" />
@@ -20,6 +25,7 @@
     <KeyWord name="*show_if" />
     <KeyWord name="*skill" />
     <KeyWord name="*stat" />
+    <KeyWord name="*temp" />
     <KeyWord name="*title" />
     <KeyWord name="*var" />
   </AutoComplete>

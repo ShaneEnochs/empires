@@ -707,3 +707,17 @@ Pronoun tokens such as `{they}` and `{Their}` are available in narrative and
 journal text through ordinary declared string variables. See the complete
 [creation template](docs/SCRIPTING.md#pronoun-tokens-stage-12b) for presets, custom
 values, independent gender/honorifics, and conditional verb forms.
+
+## Advanced authoring (Stage 12C)
+
+See the [syntax guide](docs/SCRIPTING.md#advanced-authoring-stage-12c) and
+[complete playable example](examples/advanced-authoring.story). New author tools
+include capitalization, inline boolean text/plurals, comments, indented conditional
+blocks with compound conditions, safe bold/italic text, resumable pages, disabled
+choices, and passage-local temporary variables. Preview examples at `/author.html`;
+no public story or save identity is changed. Notepad++ completion/highlighting and
+VS Code snippets/highlighting cover the new commands.
+
+Feature passages save page/temp context in format 3; existing formats 1 and 2
+remain readable for compatible stories. No duplicate effects, manual slots, or
+browser history navigation are introduced.

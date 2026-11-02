@@ -65,7 +65,7 @@ for (const suffix of [
   '[if influence >= 4', 'if influence >= 4]', '[[if influence >= 4]]', '[IF influence >= 4]',
   '[if influence >= 4]]', '[if influence >= 4] trailing', '[if influence >= 4] [if loyal == false]',
   '[if influence >= 4 && loyal == false]', '[if influence >= 4 || loyal == false]',
-  '[if influence + 1 >= 4]', '[if (influence >= 4)]', '[if influence >= (4)]',
+  '[if influence + 1 >= 4]', '[if (influence >= 4]', '[if influence >= (4)]',
   '[if influence >= other]', '[if influence >= 2 + 2]', '[if !loyal == true]',
   '[if influence == [4]]', '[if influence == {"value":4}]', '[if influence == null]',
   '[if faction == "unterminated]', "[if faction == 'guild']", '[if faction == "bad\\x"]',

@@ -3,12 +3,14 @@ export type Variables = Readonly<Record<string, VariableValue>>;
 export type Inventory = Readonly<Record<string, number>>;
 export type ComparisonOperator = '==' | '!=' | '>' | '>=' | '<' | '<=';
 
-export type PassageEffect =
+export type EffectGuard = { readonly id: number; readonly branch: number; readonly conditions: readonly Condition[] };
+
+export type PassageEffect = (
   | { readonly kind: 'set'; readonly variable: string; readonly value: VariableValue }
   | { readonly kind: 'add'; readonly variable: string; readonly value: number }
   | { readonly kind: 'journal'; readonly id: string; readonly text: string }
   | { readonly kind: 'grant_skill' | 'revoke_skill'; readonly skillId: string }
-  | { readonly kind: 'add_item' | 'remove_item'; readonly itemId: string; readonly quantity: number };
+  | { readonly kind: 'add_item' | 'remove_item'; readonly itemId: string; readonly quantity: number }) & { readonly guards?: readonly EffectGuard[] };
 
 export interface SkillDefinition {
   readonly id: string;
@@ -32,6 +34,10 @@ export interface JournalEntry {
 }
 
 export type Condition =
+  | { readonly operator: 'literal'; readonly value: boolean }
+  | { readonly operator: 'and'; readonly left: Condition; readonly right: Condition }
+  | { readonly operator: 'or'; readonly left: Condition; readonly right: Condition }
+  | { readonly operator: 'not'; readonly operand: Condition }
   | { readonly variable: string; readonly operator: '==' | '!='; readonly value: VariableValue }
   | { readonly variable: string; readonly operator: '>' | '>=' | '<' | '<='; readonly value: number }
   | { readonly operator: 'has_skill' | 'lacks_skill'; readonly skillId: string }
@@ -42,9 +48,11 @@ export interface Choice {
   readonly label: string;
   readonly destinationId: string;
   readonly condition?: Condition;
+  readonly selectable?: Condition;
 }
 
 export interface NarrativeParagraph {
+  readonly page?: number;
   readonly text: string;
   readonly condition?: Condition;
 }
@@ -56,6 +64,7 @@ export interface TextInputAction {
 }
 
 export interface Passage {
+  readonly temps?: Variables;
   readonly id: string;
   readonly chapter: string;
   readonly title: string;
@@ -90,3 +99,5 @@ export interface GameState {
 export interface GameSnapshot {
   readonly state: GameState;
 }
+
+export interface ResumeContext { readonly page: number; readonly temps: Variables; }

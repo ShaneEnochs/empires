@@ -2,6 +2,14 @@
   "scopeName": "source.empires-story",
   "patterns": [
     {
+      "name": "comment.line.empires",
+      "match": "^\\s*\\*comment(?:\\s.*)?$"
+    },
+    {
+      "name": "keyword.control.inline.empires",
+      "match": "@\\{|\\||\\[/?[bi]\\]|\\b(?:and|or|not|selectable_if)\\b"
+    },
+    {
       "begin": "^\\s*(\\*)(passage)(\\s+)([a-z][a-z0-9_-]*)\\b",
       "beginCaptures": {
         "1": {
@@ -17,7 +25,7 @@
       "end": "$"
     },
     {
-      "begin": "^\\s*(\\*)(var|stat|skill|item|chapter|passage|title|choice|continue|input_text|checkpoint|journal|set|add|grant_skill|revoke_skill|add_item|remove_item|death|show_if)(?=\\s|$)",
+      "begin": "^\\s*(\\*)(comment|if|elseif|else|page_break|temp|var|stat|skill|item|chapter|passage|title|choice|continue|input_text|checkpoint|journal|set|add|grant_skill|revoke_skill|add_item|remove_item|death|show_if)(?=\\s|$)",
       "beginCaptures": {
         "1": {
           "name": "punctuation.definition.directive.empires"
@@ -51,7 +59,7 @@
         },
         {
           "name": "keyword.control.condition.empires",
-          "match": "\\b(?:if|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
+          "match": "\\b(?:if|selectable_if|and|or|not|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
         },
         {
           "name": "constant.language.empires",
@@ -101,7 +109,7 @@
         },
         {
           "name": "keyword.control.condition.empires",
-          "match": "\\b(?:if|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
+          "match": "\\b(?:if|selectable_if|and|or|not|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
         },
         {
           "name": "constant.language.empires",
@@ -142,7 +150,7 @@
     },
     "interpolation": {
       "name": "variable.other.interpolated.empires",
-      "match": "\\$\\{[a-z][a-z0-9_-]*\\}|(?<!\\$)\\{(?:they|them|their|theirs|themself|They|Them|Their|Theirs|Themself)\\}"
+      "match": "\\$(?:!!|!)?\\{[a-z][a-z0-9_-]*\\}|(?<!\\$)\\{(?:they|them|their|theirs|themself|They|Them|Their|Theirs|Themself)\\}"
     }
   }
 }

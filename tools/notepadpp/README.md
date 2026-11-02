@@ -132,3 +132,23 @@ UDL highlights these exact tokens as keywords in prose where lexical rules permi
 quoted journal strings keep string coloring. UDL cannot validate required variables
 or substitute values: save and run preflight for diagnostics. The completion list
 still contains directives only; no new command was added.
+
+## Advanced authoring (Stage 12C)
+
+The [syntax guide](../../docs/SCRIPTING.md#advanced-authoring-stage-12c) and
+[playable example](../../examples/advanced-authoring.story) cover all new features.
+Reimport the UDL and replace the optional Empires.xml completion file after updates.
+New directive completions are `*comment`, `*temp`, `*if`, `*elseif`, `*else`, and
+`*page_break`. Use spaces for indented conditional bodies; align alternate branches.
+Comments use a distinct line-comment style. UDL remains lexical: quoted strings
+and delimiters can mask more specific token colors; it cannot check nesting,
+branch types, markup balance, or save context. Use the existing validation launcher.
+
+Globals (`*var`) belong before chapters; temps (`*temp`) belong after a passage
+ title/checkpoint and before effects. Temps are scratch values, not stats or
+persistent character data. `$!{name}`/`$!!{name}` transform displayed text;
+`@{plural_verbs are|is}` selects authored text. `[b]`/`[i]` format narrative only.
+`*page_break` adds a resumable reading page without re-entering the passage.
+`[if condition]` hides a choice; `[selectable_if condition]` disables it visibly.
+See the guide for strict grammar, safe player-input handling, and limitations.
+Windows interactive UDL import/completion verification remains unavailable here.

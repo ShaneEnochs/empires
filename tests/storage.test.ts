@@ -147,7 +147,7 @@ for (const field of ['extra', 'currentState', 'versionHistory', '__proto__']) {
 }
 
 for (const [field, value, reason] of [
-  ['formatVersion', 0, /save format/], ['formatVersion', 3, /save format/], ['formatVersion', '1', /save format/],
+  ['formatVersion', 0, /save format/], ['formatVersion', 4, /save format/], ['formatVersion', '1', /save format/],
   ['formatVersion', null, /save format/], ['storyId', 'another-story', /another story/],
   ['storyId', 1, /another story/], ['storyRevision', 0, /story revision/],
   ['storyRevision', 2, /story revision/], ['storyRevision', '1', /story revision/],

@@ -107,3 +107,19 @@ failures may lose recent progress; warnings remain visible until a later save
 succeeds. Existing format-1 saves remain compatible and upgrade on a later committed
 action, never on startup inspection. Browser Back is not a gameplay undo feature.
 Local preview uses temporary memory storage; Restart preview discards it.
+
+## Advanced authoring (Stage 12C)
+
+Open `examples/advanced-authoring.story` in your editor and local preview to try
+all new features together. The [syntax guide](SCRIPTING.md#advanced-authoring-stage-12c)
+explains capitalization, inline plural verbs, indented conditions/effects,
+comments, formatting, pages, disabled choices, and local temps. Use spaces for
+block indentation. Global character values use `*var`; scratch values use `*temp`
+after each passage title/checkpoint and reset on entry. Only globals can appear
+in stats or receive text input.
+
+Save files before validation. Notepad++ and VS Code tooling include the new
+commands; highlighting is lexical, so always run the existing validator. Advance
+pages normally in preview, inspect Character/Journal, then test death recovery.
+Public progress restores page/temp context; local preview remains memory-only.
+Revised published declarations still need intentional story revision management.

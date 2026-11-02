@@ -9,7 +9,7 @@ test('language, snippets and tasks retain their registration', () => {
   assert.deepEqual(manifest.contributes.languages[0].extensions, ['.story']);
   assert.equal(manifest.contributes.languages[0].id, 'empires-story');
   const snippets = JSON.parse(fs.readFileSync(path.join(__dirname,'../../../.vscode/empires.code-snippets'),'utf8'));
-  assert.equal(Object.keys(snippets).length, 20);
+  assert.equal(Object.keys(snippets).length, 33);
   for (const entry of Object.values(snippets)) { assert.equal(entry.scope, 'empires-story,plaintext'); assert.ok(entry.prefix.startsWith('emp-')); }
   assert.equal(require('../../../.vscode/tasks.json').tasks.length, 3);
 });

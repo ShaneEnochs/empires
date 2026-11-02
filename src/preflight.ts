@@ -84,6 +84,7 @@ export function exploreGameplay(story: Story, maxRoutes = DEFAULT_ROUTE_LIMIT): 
     try {
       game = new Game(story);
       for (stepIndex = 1; stepIndex < route.length; stepIndex++) {
+        while (game.canAdvancePage) game.advancePage();
         const step = route[stepIndex]!;
         if (phase === 'reentry' && stepIndex === route.length - 1) reentryProbes++;
         if (step.input === undefined) game.navigate(step.passageId);
@@ -116,6 +117,7 @@ export function exploreGameplay(story: Story, maxRoutes = DEFAULT_ROUTE_LIMIT): 
     }
 
     if (phase === 'reentry') successfulReentries++;
+    while (game.canAdvancePage) game.advancePage();
     const passage = game.passage;
     // A follow-up is the last step, even when its passage offers more actions.
     if (passage.death || phase === 'followup') continue;
