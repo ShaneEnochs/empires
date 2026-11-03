@@ -87,6 +87,8 @@ She smiles at you. "Sorry, I should introduce myself. I'm Lucia. You're one of t
 *passage name
 *title A Fellow Contestant
 *journal saw_wingull_approach "You saw Wingull circling on the approach to Lezano."
+*journal met_lucia "You met Lucia, a fellow League contestant, aboard the ferry to Lezano."
+*journal lucia_journalist "Lucia was overwhelmed by a journalist's rapid questions and worries about his article."
 
 Lucia looks pleased when you confirm it. "I tried introducing myself to someone upstairs earlier, but he turned out to be a journalist. As soon as he found out I was entering the League, he started asking me all sorts of questions. What did I think of my chances? Who did I consider my biggest competition? Did I have a strategy?"
 
@@ -108,6 +110,7 @@ She offers you her hand. "There are a hundred of us, and I don't want to wait un
 *passage contact_yes
 *title Keeping in Touch
 *set lucia_contact true
+*journal lucia_contact_shared "You exchanged phone numbers with Lucia."
 
 You exchange numbers. Lucia saves your contact, then slips her phone back into her jacket pocket. "Good. If one of us ends up lost at registration, at least we'll have someone to ask for directions."
 
@@ -122,6 +125,7 @@ You'd rather not exchange numbers just yet. "No problem," Lucia says, putting he
 
 *passage pronouns
 *title Getting Acquainted
+*journal lucia_pronouns "Lucia uses she/her pronouns."
 
 Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she and her. What pronouns do you use?"
 
@@ -174,7 +178,7 @@ Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she an
 
 *passage lucia_chat
 *title An Unusual Beginning
-*journal met_lucia "You met Lucia aboard the ferry to Lezano. She's looking forward to traveling across Aurelia and meeting Pokémon."
+*journal lucia_family "Lucia talked about her family's Floatzel and her hopes for her first Pokémon partner."
 
 "Have you noticed how strange it is to see Pokémon working on the ferry when none of us are allowed to bring our own?" Lucia asks. "I know why the League wants a fresh start, but it's going to take some getting used to. At home, our Floatzel follows me everywhere. He even waits outside the market when I go shopping."
 
@@ -190,6 +194,7 @@ The harbor is getting closer, and Lucia takes one more look at it before turning
 *passage lucia_wildlife
 *title Places Worth Visiting
 *set lucia_topic "wildlife"
+*journal lucia_travel "Lucia wants to explore wild Pokémon habitats across Aurelia and send photos to her brother."
 
 "I want to see the Pokémon," Lucia says. "Not only the ones that live near towns. There are wetlands in the north, old forests, and islands where you have to take a boat to get anywhere. If the League gives me a reason to travel through places like that, I'll be happy."
 
@@ -200,6 +205,7 @@ She touches the Lapras pendant at her throat. "My little brother gave me this be
 *passage lucia_rules
 *title Eight Laurels
 *set lucia_topic "rules"
+*journal lucia_ranking_questions "Lucia wonders how the League judges acts of compassion and other non-battle challenges."
 
 Lucia opens the entrant guide on her phone. "It says we have to earn eight Laurels. Not just for battles, either. They're looking for things like courage, compassion, and good judgment. But only the three highest-ranked contestants with all eight Laurels get to the Triumvirate."
 

@@ -2,7 +2,7 @@ import { discoveredPokemon } from './pokedex';
 import type { PokedexEntry } from './pokedex';
 import type { Game } from './game';
 import type { GameState, Story } from './types';
-import { encounteredPeople } from './people';
+import { encounteredPeople, learnedPersonFacts } from './people';
 import type { PersonReference } from './people';
 
 /** A fresh presentation of committed variables; no values are cached in UI state. */
@@ -154,6 +154,18 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
       const description = document.createElement('p');
       description.textContent = person.description;
       item.append(heading, description);
+      const facts = learnedPersonFacts(person, game.state);
+      if (facts.length > 0) {
+        const details = document.createElement('ul');
+        details.className = 'people-facts';
+        details.setAttribute('aria-label', 'What you know about ' + person.name);
+        for (const text of facts) {
+          const fact = document.createElement('li');
+          fact.textContent = text;
+          details.append(fact);
+        }
+        item.append(details);
+      }
       entries.append(item);
     }
     section.append(entries);

@@ -1165,12 +1165,16 @@ Character contains selectable Stats (default), Skills, Inventory and Journal,
 preserving authored statistics, acquired skill/item order and journal chapter groups.
 These are presentation choices only; they never change state, drafts or saves.
 People uses optional validated immutable definitions associated through each
-`src/catalog.ts` entry. Each has a stable ID, name/role, short description supported
-by the story, and `discoveryEvents` listing one or more existing journal event IDs.
-Selection validates event IDs against the applicable parsed story. Only a recorded
-event reveals its reference; checkpoint recovery derives visibility from the restored
-journal. People mentioned without a recorded encounter are omitted. This introduces
-no story directive or gameplay/save fields, and needs no revision or save migration.
+`src/catalog.ts` entry. Each person has a stable ID, name, introductory description,
+and `discoveryEvents` listing one or more actual journal event IDs. An optional
+`facts` list contains `{ "text": "...", "discoveryEvents": ["event_id"] }` entries,
+each revealed only after its event occurs. All person and fact event references are
+validated against the selected story. The introductory description should contain
+only details visible at first meeting; facts from optional conversations should not
+appear until that route is visited. The People panel derives both names and learned
+facts from the committed journal, so saves, reloads, and checkpoint recovery need
+no separate tracking fields. Authors add explicit `*journal` events to the relevant
+passages rather than detecting facts from prose or exposing future information.
 
 Authored `*choice` options use a native radio group followed by Continue. No choice is
 preselected; Continue stays disabled until selection. Tab enters the group, Space

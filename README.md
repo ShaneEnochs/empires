@@ -34,8 +34,10 @@ Character defaults to Stats (trainer name/pronouns and configured statistics),
 with selectable Skills, Inventory, and Journal subsections. Journal groups events
 by chapter. The chapter bar is visible only in Story. Party shows up to
 six companions in joining order, as `Pip (Piplup)` or `Piplup`. It has no management
-buttons. Tabs retain one row at narrow widths with 44px touch targets. Opening
-information never advances the story, submits a draft, or saves.
+buttons. People lists characters when met and adds personal details as those
+conversations occur, without revealing facts from unvisited story branches.
+Tabs retain one row at narrow widths with 44px touch targets. Opening information
+never advances the story, submits a draft, or saves.
 
 ## Writing stories
 

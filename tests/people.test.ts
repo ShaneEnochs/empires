@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { Game } from '../src/game';
-import { encounteredPeople, validatePeople, parsePeople } from '../src/people';
+import { encounteredPeople, learnedPersonFacts, validatePeople, parsePeople } from '../src/people';
 import { centerVisitPeople, harborPracticePeople } from '../examples/people';
 import { parseStory } from '../src/story';
 
@@ -77,4 +77,99 @@ test('People JSON rejects malformed shapes and freezes safe presentation records
   const parsed = parsePeople([{ ...person, description: '<b>Plain text</b>' }]);
   assert.equal(parsed[0]!.description, '<b>Plain text</b>');
   assert.ok(Object.isFrozen(parsed[0]!.discoveryEvents));
+});
+
+test('People facts validate event references, reject malformed records, and are deeply frozen', () => {
+  const example = centerVisitPeople[0]!;
+  const withFacts = parsePeople([{
+    ...example,
+    facts: [
+      { text: 'A fact learned later.', discoveryEvents: ['met_messenger'] },
+    ],
+  }]);
+  const validated = validatePeople(city, withFacts);
+  const facts = validated[0]!.facts!;
+  assert.equal(facts.length, 1);
+  assert.ok(Object.isFrozen(facts));
+  assert.ok(Object.isFrozen(facts[0]));
+  assert.ok(Object.isFrozen(facts[0]!.discoveryEvents));
+  assert.equal(Reflect.set(facts[0]!, 'text', 'tampered'), false);
+  assert.equal(Reflect.set(facts[0]!.discoveryEvents, '0', 'tampered'), false);
+  for (const bad of [
+    [], null, ['a'], [{}],
+    [{ text: '', discoveryEvents: ['met_messenger'] }],
+    [{ text: 'Known', discoveryEvents: [] }],
+    [{ text: 'Known', discoveryEvents: ['met_messenger', 'met_messenger'] }],
+    [{ text: 'Known', discoveryEvents: ['Bad ID'] }],
+    [
+      { text: 'Duplicate', discoveryEvents: ['met_messenger'] },
+      { text: 'Duplicate', discoveryEvents: ['met_messenger'] },
+    ],
+  ]) {
+    assert.throws(() => parsePeople([{ ...example, facts: bad }]), /People reference/);
+  }
+  const invalidEvents = parsePeople([{
+    ...example,
+    facts: [{ text: 'Unknown lore', discoveryEvents: ['unknown_fact_event'] }],
+  }]);
+  assert.throws(() => validatePeople(city, invalidEvents), /unknown journal event/);
+});
+
+test('Lucia appears on introduction and learns facts only from visited scenes', () => {
+  const publicStory = parseStory(readFileSync('content/aurelian-league.story', 'utf8'));
+  const publicPeople = validatePeople(publicStory, parsePeople(
+    JSON.parse(readFileSync('content/aurelian-league.people.json', 'utf8'))));
+  const lucia = publicPeople.find(person => person.id === 'lucia')!;
+  const game = new Game(publicStory);
+  const recorded = () => learnedPersonFacts(lucia, game.state);
+  game.navigate('ferry_windows');
+  game.navigate('ferry_context');
+  game.navigate('ferry_ad');
+  game.advancePage();
+  assert.deepEqual(encounteredPeople(publicPeople, game.state), []);
+  game.navigate('name');
+  assert.deepEqual(encounteredPeople(publicPeople, game.state).map(person => person.name), ['Lucia']);
+  assert.equal(recorded().length, 1);
+  assert.match(recorded()[0]!, /journalist/);
+  assert.doesNotMatch(recorded().join(' '), /Floatzel|brother|wetlands|rank/);
+
+  game.submitText('Ari');
+  game.navigate('contact_no');
+  game.navigate('pronouns');
+  assert.equal(recorded().length, 2);
+  assert.match(recorded().join(' '), /she\/her/);
+  assert.doesNotMatch(recorded().join(' '), /exchanged phone numbers/);
+  game.navigate('they');
+  game.navigate('lucia_chat');
+  assert.equal(recorded().length, 5);
+  assert.match(recorded().join(' '), /Floatzel/);
+  assert.doesNotMatch(recorded().join(' '), /wetlands|brother|ranks/);
+
+  const committed = game.state;
+  const savedFacts = recorded();
+  assert.deepEqual(recorded(), savedFacts);
+  assert.equal(game.state, committed);
+  game.navigate('lucia_wildlife');
+  assert.equal(recorded().length, 7);
+  assert.match(recorded().join(' '), /brother|wetlands/);
+  assert.doesNotMatch(recorded().join(' '), /ranks/);
+  game.restoreCheckpoint();
+  assert.deepEqual(encounteredPeople(publicPeople, game.state), []);
+  assert.deepEqual(recorded(), []);
+
+  const other = new Game(publicStory);
+  for (const destination of ['ferry_cafe','ferry_context','ferry_ad']) other.navigate(destination);
+  other.advancePage();
+  other.navigate('name');
+  other.submitText('Ari');
+  other.navigate('contact_yes');
+  other.navigate('pronouns');
+  other.navigate('he');
+  other.navigate('lucia_chat');
+  other.navigate('lucia_rules');
+  const alternativeFacts = learnedPersonFacts(lucia, other.state).join(' ');
+  assert.match(alternativeFacts, /exchanged phone numbers/);
+  assert.match(alternativeFacts, /ranks/);
+  assert.doesNotMatch(alternativeFacts, /wetlands|brother/);
+  assert.equal(encounteredPeople(publicPeople, other.state).filter(person => person.id === 'lucia').length, 1);
 });

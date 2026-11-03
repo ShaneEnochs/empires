@@ -66,6 +66,49 @@ temps, disabled choices, pages and recovery. Test longer loops and input variati
 separately. Pages deploys only main after checks with `/pokemon/`; neither editor
 preview nor the private browser-regression catalog is published.
 
+## Adding people and gradually revealed details
+
+Use `content/aurelian-league.people.json` for public People entries, or an optional
+`.people.json` in author preview. Each entry has `id`, `name`, an introductory
+`description`, and `discoveryEvents`. The entry appears only after one of those
+journal events occurs. To add facts learned later, include optional `facts` entries:
+
+```json
+[
+  {
+    "id": "lucia",
+    "name": "Lucia",
+    "description": "A League contestant in an orange jacket.",
+    "discoveryEvents": ["met_lucia"],
+    "facts": [
+      {
+        "text": "Her family keeps a Floatzel.",
+        "discoveryEvents": ["lucia_family"]
+      },
+      {
+        "text": "Her brother gave her a Lapras necklace.",
+        "discoveryEvents": ["lucia_travel"]
+      }
+    ]
+  }
+]
+```
+
+Put the corresponding `*journal` commands in passages where the player
+actually learns those details. For Lucia, `met_lucia` occurs at the first
+introduction/name-input passage, `lucia_family` during the longer conversation,
+and `lucia_travel` only if the player asks about her motivation. Avoid placing
+future or optional information in the always-visible description. Each fact must
+have nonempty text and one or more unique, valid journal IDs, all defined in the
+selected story. Invalid or unknown event references fail validation.
+
+Facts appear as separate entries beneath the character's name and are derived
+exclusively from recorded journal events, without another save collection. They
+accumulate through conversations, survive ordinary save/reload, do not duplicate,
+and disappear on checkpoint recovery if the relevant events are rolled back.
+Old saves are not silently backfilled with newly authored events. This feature
+does not change the save schema or the current public revision.
+
 ## Adding discoverable Pokédex species
 
 The five primary views are Story, Character, Party, Pokédex, and People. Character

@@ -785,15 +785,18 @@ submission, Try Again, terminal endings, and New Game keep their distinct behavi
 
 `people.ts` validates optional per-story arrays associated through `catalog.ts`.
 Private regression definitions live under examples, outside the public bundle.
-Each PersonReference has `id`, `name`, `description`, and `discoveryEvents`.
-`validatePeople` checks stable/unique IDs, nonempty text, and one or more real
-journal event IDs in the selected parsed Story before session construction.
-The library remains inert: importing metadata does not parse stories or read saves.
-`encounteredPeople` filters these definitions from the current journal on each
-People render. Any listed event establishes discovery; missing events reveal
-nothing. Recovery naturally removes references whose events were rolled back.
-Definitions describe only authored encounters; prose alone adds no tracking.
-They are never fields in Story, GameState, snapshots, or save envelopes.
+Each PersonReference has `id`, `name`, `description`, and `discoveryEvents`,
+with optional `facts` entries containing `text` and `discoveryEvents`. The short
+description must reflect information known when the person first appears; further
+facts become visible only after one of their associated events has been recorded.
+`validatePeople` checks stable/unique IDs, nonempty text, immutable nested metadata,
+and that all person/fact event IDs exist in the selected parsed Story before session
+construction. The library remains inert: importing metadata does not parse stories
+or read saves. `encounteredPeople` filters names, and `learnedPersonFacts` filters
+their personal details, using only the committed journal at render time.
+Recovery naturally removes references and facts whose events were rolled back.
+Prose alone adds no tracking. Neither People nor its facts are fields in Story,
+GameState, snapshots, or save envelopes.
 
 ## Local author preview (Stage 11A)
 
