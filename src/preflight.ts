@@ -8,6 +8,8 @@ export type DiagnosticCode = 'UNREACHABLE_PASSAGE' | 'REPEATABLE_EFFECT' | 'ENTR
 export interface PreflightRouteStep {
   readonly passageId: string;
   readonly input?: string;
+  /** Authored index distinguishes two choices to the same destination. */
+  readonly choiceIndex?: number;
 }
 
 export interface PreflightDiagnostic {
@@ -87,7 +89,11 @@ export function exploreGameplay(story: Story, maxRoutes = DEFAULT_ROUTE_LIMIT): 
         while (game.canAdvancePage) game.advancePage();
         const step = route[stepIndex]!;
         if (phase === 'reentry' && stepIndex === route.length - 1) reentryProbes++;
-        if (step.input === undefined) game.navigate(step.passageId);
+        if (step.choiceIndex !== undefined) {
+          const selected = game.passage.choices[step.choiceIndex];
+          if (!selected || selected.destinationId !== step.passageId) throw Error('Invalid preflight choice index.');
+          game.navigateChoice(selected);
+        } else if (step.input === undefined) game.navigate(step.passageId);
         else {
           const passageId = game.passage.id;
           if (!inputPassages.has(passageId)) {
@@ -123,10 +129,16 @@ export function exploreGameplay(story: Story, maxRoutes = DEFAULT_ROUTE_LIMIT): 
     if (passage.death || phase === 'followup') continue;
     const input = passage.textInput;
     const nextSteps: PreflightRouteStep[] = input === undefined
-      ? [...new Set([
-        ...game.availableChoices.map(choice => choice.destinationId),
-        ...(passage.continueTo === undefined ? [] : [passage.continueTo]),
-      ])].map(passageId => ({ passageId }))
+      ? [
+        ...game.availableChoices.map(choice => {
+          const matches = passage.choices.filter(other => other.destinationId === choice.destinationId);
+          return {
+            passageId: choice.destinationId,
+            ...(choice.assignment || matches.length > 1 ? { choiceIndex: passage.choices.indexOf(choice) } : {}),
+          };
+        }),
+        ...(passage.continueTo === undefined ? [] : [{ passageId: passage.continueTo }]),
+      ]
       : [{ passageId: input.destinationId, input: REPRESENTATIVE_INPUT }];
     for (const step of nextSteps) {
       const repeated = route.some(previous => previous.passageId === step.passageId);
