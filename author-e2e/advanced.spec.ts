@@ -36,7 +36,7 @@ test('real reader resumes page two with exact temps and no repeated rewards usin
  await page.reload();await mount(raw);await page.getByRole('button',{name:'Continue Game',exact:true}).click();
  await expect(page.locator('#story-content')).toContainText('He is waiting.');
  expect(await page.evaluate(()=>Reflect.get(window,'__privateProgress'))).toBe(raw);
- await page.getByRole('button',{name:'Character',exact:true}).click();await expect(page.getByRole('region',{name:'Inventory',exact:true})).toContainText('Letter × 1');
+ await page.getByRole('button',{name:'Character',exact:true}).click();await page.getByRole('button',{name:'Inventory',exact:true}).click();await expect(page.getByRole('region',{name:'Inventory',exact:true})).toContainText('Letter × 1');
 });
 
 test('player input cannot introduce authored markup, inline expressions or commands',async({page})=>{

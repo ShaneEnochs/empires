@@ -121,3 +121,14 @@ h1[tabindex='-1']:focus-visible, h2[tabindex='-1']:focus-visible { outline: none
     padding-inline: 0;
   }
 }
+
+.character-navigation { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.4rem; margin-block-end: 1.25rem; }
+.character-navigation button { padding: 0.5rem 0.25rem; font-size: 0.9rem; }
+.character-navigation [aria-pressed='true'] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+h3[tabindex='-1']:focus-visible { outline: none; }
+.pokedex-entries { list-style: none; padding: 0; }
+.pokedex-entries > li { border-block-start: 1px solid var(--border); padding-block-start: 0.5rem; }
+.discovery-status { color: var(--accent); font-size: 0.9rem; margin-block-end: 0.5rem; }
+@media (max-width: 420px) {
+  .character-navigation { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

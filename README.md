@@ -29,8 +29,10 @@ Vite prints the local address. Select New Game, read each passage, and use Conti
 Choice menus require selecting an option before Continue. Text input accepts 1–80
 Unicode code points, trims outer whitespace, and rejects controls and line breaks.
 
-The read-only views are Story, Character, Party, Journal, and People. Character
-shows trainer name/pronouns plus any authored skills/inventory. Party shows up to
+The read-only primary views are Story, Character, Party, Pokédex, and People.
+Character defaults to Stats (trainer name/pronouns and configured statistics),
+with selectable Skills, Inventory, and Journal subsections. Journal groups events
+by chapter. The chapter bar is visible only in Story. Party shows up to
 six companions in joining order, as `Pip (Piplup)` or `Piplup`. It has no management
 buttons. Tabs retain one row at narrow widths with 44px touch targets. Opening
 information never advances the story, submits a draft, or saves.
@@ -163,3 +165,24 @@ after player and editor-tool checks pass; Pages/OIDC write permissions are confi
 The separately packaged editor extension is never bundled with the player. Verify
 the Actions deployment and the actual site after merging; this task does not merge
 or publish automatically.
+
+## Discoverable Pokédex
+
+The Pokédex starts empty and lists only explicitly encountered/acquired species.
+`content/aurelian-league.pokedex.json` maps stable species IDs, names/descriptions,
+and `discoveryEvents` / optional `acquisitionEvents` to existing `*journal` IDs.
+Add entries incrementally; no external database or artwork is used. The ferry
+unlocks Minccino, Machoke, and Wingull through its actual sighting scenes. Lucia's
+Lapras necklace and Floatzel anecdotes do not count as encounters.
+
+For future companions, author `*add_pokemon individual_id` and a corresponding
+`*journal acquired_species "..."` together, then reference that event in the
+entry's acquisitionEvents. This records Acquired status atomically and keeps it
+after party removal. Repeated sightings yield one entry per species.
+
+See the [complete metadata and encounter guide](docs/AUTHORING.md#adding-discoverable-pokédex-species)
+for JSON examples, validation, event timing, and optional author-preview metadata.
+Discovery derives solely from the journal; no save-schema or format change is
+needed. Public revision 5 remains compatible. Existing saves without the new
+events are not silently backfilled. Checkpoint recovery derives the Pokédex from
+the restored journal, just as People does.

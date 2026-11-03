@@ -1,3 +1,6 @@
+import { parsePokedex } from './pokedex';
+import type { PokedexEntry } from './pokedex';
+import aurelianPokedex from '../content/aurelian-league.pokedex.json' with { type: 'json' };
 import { titlePage } from './title-page';
 import aurelianLeagueSource from '../content/aurelian-league.story?raw';
 import { validateSaveIdentity } from './storage';
@@ -13,6 +16,7 @@ export interface CatalogStory {
   readonly source: string;
   readonly identity: StorySaveIdentity;
   readonly people: readonly PersonReference[];
+  readonly pokedex: readonly PokedexEntry[];
 }
 
 /** Static application configuration; importing the catalog never reads saves or enters passages. */
@@ -24,6 +28,7 @@ export const storyCatalog: readonly CatalogStory[] = Object.freeze([
     source: aurelianLeagueSource,
     identity: { storyId: 'aurelian-league', storyRevision: 5 },
     people: parsePeople(aurelianPeople),
+    pokedex: parsePokedex(aurelianPokedex),
   },
 ].map(entry => Object.freeze({ ...entry, identity: validateSaveIdentity(entry.identity) })));
 

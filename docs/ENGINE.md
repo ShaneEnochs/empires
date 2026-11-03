@@ -292,8 +292,8 @@ Labels remain literal. String, number, and boolean variable behavior is unchange
 This metadata adds no state fields, effects, conditions, formulas, categories,
 or conditional visibility.
 
-`panels.ts` owns the three fixed Character/Journal/People views. Character contains
-Character Statistics, Skills, and Inventory as separate read-only sections.
+`panels.ts` owns the Character, Party, Pokédex and People views. Character contains
+selectable Stats, Skills, Inventory and Journal subsections; Stats is the default.
 A small private helper shares native button/section setup, heading creation,
 `hidden`, and `aria-pressed`/`aria-controls`/`aria-labelledby` behavior.
 Another helper shares plain text lists; journal chapter grouping/order is retained.
@@ -349,7 +349,7 @@ heading focus. Authored labels, narrative, and errors use `textContent`.
 Draft text exists only in the field until submission. Rendering or toggling
 Character/Journal/People never submits it; view changes do not rebuild the input form.
 
-The native Journal button selects an accessible inline view with `aria-pressed`
+The native Journal button under Character selects an accessible subsection with `aria-pressed`
 and `aria-controls`. Toggling it changes only presentation; it does not navigate,
 rebuild passage choices, or execute effects. The section groups the current flat
 journal under chapter headings, in first-encountered chapter order and recording
@@ -746,11 +746,13 @@ or merge anything.
 
 ## Compact reading views and deliberate choices (Stages 10B–10C)
 
-Gameplay starts with five responsive controls: Story, Character, Party, Journal,
-People. At narrow widths the grid uses two rows. Flat tabs have at least 44px targets, approximately 0.9rem labels,
+Gameplay starts with five responsive controls: Story, Character, Party, Pokédex,
+People. The primary grid keeps one row at 320px. Flat tabs have at least 44px targets, approximately 0.9rem labels,
 and exactly one active bottom-border indicator. No tab interaction underlines text.
 An opaque CSS sticky wrapper holds the tabs and a separate compact chapter bar,
-derived from `game.passage.chapter` after each successful action. The passage
+derived from `game.passage.chapter` after each successful action and visible only
+in Story. Selecting another view hides the chapter before focus moves. A synchronous
+height measurement and ResizeObserver keep scroll spacing equal to the actual header. The passage
 heading remains in scrollable content, centered and 10% larger, while prose stays
 left-aligned. The centered chapter label has compact padding. CSS scroll spacing
 accounts for the sticky header and keeps focus visible.
@@ -864,3 +866,29 @@ atomic writes, memory-only author preview, and death recovery retain their meani
 Preflight advances through visible pages without replaying effects, then explores
 only enabled routes. Analysis is bounded; it does not prove all loops/resources or
 all possible input-dependent grammar. Use local playtests alongside diagnostics.
+
+## Event-derived Pokédex and Character subsections
+
+`pokedex.ts` validates copied/frozen per-species metadata (stable ID, display name,
+description, discoveryEvents and optional acquisitionEvents) before sessions start.
+`discoveredPokemon` derives species in first recorded journal order, status and
+chapter, without reading prose, party names or persistence. Every event reference
+must exist in the selected story. Acquisition status requires an authored journal
+event paired with the party effect, so it survives removal without a second store.
+
+The public catalog loads content/aurelian-league.pokedex.json; author preview accepts
+optional local .pokedex.json metadata with the same validation and memory-only play.
+The public ferry receives only additive explicit sighting journal effects; narrative,
+passage IDs, pages, choice paths and ending remain intact. A second-page Wingull
+sighting commits on continuing to the following passage, never on first-page entry.
+
+There is no new GameState field, save format, key or revision. Existing revision-5
+saves lacking these journal events still load and stay undiscovered until an event
+occurs; Continue never replays or backfills. Checkpoints preserve exactly their
+journal-based discovery boundary, matching People semantics.
+
+Subsection selection changes only native pressed buttons and hidden content within
+Character; headings receive focus. The reader keeps the story DOM and any drafts,
+errors or selections. Primary navigation stays in one row with 44px targets. The
+chapter is hidden in information views, and header height updates before focus plus
+on later resize/text scaling. No parser or gameplay transition changes are needed.

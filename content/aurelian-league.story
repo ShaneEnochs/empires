@@ -29,6 +29,8 @@ There's still a little time before the ferry reaches Lezano. You could take anot
 
 *passage ferry_cafe
 *title The Breakfast Crowd
+*journal saw_minccino_cafe "You saw Minccino clearing tables in the ferry café."
+*journal saw_machoke_cafe "You saw Machoke moving luggage through the café crowd."
 
 The café queue has barely moved since you last checked. A Minccino in a tiny navy apron is helping the staff clear tables, gathering used napkins into a basket and polishing each empty spot with its tail. A crew member sets a fresh tray of rolls on the counter while Minccino tries, without much success, to convince a man to lift his elbows so it can wipe beneath them. The man eventually obliges, earning an approving chirp.
 
@@ -38,6 +40,9 @@ You consider joining the queue, but a Machoke wearing a crew vest comes through 
 
 *passage ferry_windows
 *title A Better View
+*journal saw_wingull_windows "You saw Wingull following the ferry’s wake."
+*journal saw_machoke_windows "You saw Machoke helping the baggage team."
+*journal saw_minccino_windows "You saw Minccino collecting napkins near the windows."
 
 The crowd thins near the far end of the lounge. Through the glass, the sea is bright in the morning sun, and several Wingull are following the ferry's wake. A Machoke in a blue crew vest is helping the baggage team move suitcases away from the doors. When a trolley catches on the edge of a floor mat, Machoke lifts its front wheels clear while a deckhand straightens the mat.
 
@@ -81,6 +86,7 @@ She smiles at you. "Sorry, I should introduce myself. I'm Lucia. You're one of t
 
 *passage name
 *title A Fellow Contestant
+*journal saw_wingull_approach "You saw Wingull circling on the approach to Lezano."
 
 Lucia looks pleased when you confirm it. "I tried talking to someone upstairs earlier, but he turned out to be a reporter. Before I knew it, he was asking me what I thought my chances were." She shakes her head. "I told him I hadn't even picked a starter yet. I hope he doesn't put that on television."
 
@@ -240,6 +246,7 @@ Dario doesn't answer immediately. When he finally starts to speak, an announceme
 
 *passage rail
 *title The Observation Deck
+*journal saw_wingull_rail "You saw a Wingull land on the observation deck railing."
 *set ferry_encounter "quiet"
 
 The breeze outside is cooler than you expected. Most of the passengers have gathered along the forward rail, but you find a place farther along where you can watch the city come into view. Lezano's pale buildings rise behind the harbor, with green hills stretching inland.

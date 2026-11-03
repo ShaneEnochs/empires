@@ -60,10 +60,13 @@ test('local upload uses the shared reader, index, restart and isolated checkpoin
   await expect(page.getByRole('region', { name: 'Passage reference' })).toContainText('Chapter: Arrival. Destinations: None.');
   await expect(page.locator('#passage-heading')).toHaveText('Camp');
   for (const view of ['Character', 'Journal', 'People']) {
+    if (view === 'Journal') await page.getByRole('button', { name: 'Character', exact: true }).click();
     await page.getByRole('button', { name: view, exact: true }).click();
     if (view === 'Character') {
       await expect(page.getByRole('region', { name: 'Character', exact: true })).toContainText('Ada');
+      await page.getByRole('button', { name: 'Inventory', exact: true }).click();
       await expect(page.getByRole('region', { name: 'Inventory', exact: true })).toContainText('Token × 1');
+      await page.getByRole('button', { name: 'Skills', exact: true }).click();
       await expect(page.getByRole('region', { name: 'Skills', exact: true })).toContainText('Listening');
     }
     if (view === 'Journal') await expect(page.getByRole('region', { name: 'Journal', exact: true })).toContainText('Arrived at camp.');
@@ -77,6 +80,7 @@ test('local upload uses the shared reader, index, restart and isolated checkpoin
   await page.getByRole('button', { name: 'Try Again', exact: true }).click();
   await expect(page.locator('#passage-heading')).toHaveText('Camp');
   await page.getByRole('button', { name: 'Character', exact: true }).click();
+  await page.getByRole('button', { name: 'Inventory', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Inventory', exact: true })).toContainText('Token × 1');
   await page.getByRole('button', { name: 'Story', exact: true }).click();
   await page.getByRole('radio', { name: 'Wait safely', exact: true }).check();

@@ -38,7 +38,7 @@ for (const width of [320, 1280]) for (const route of routes) {
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Approaching Lezano');
     const tabs = page.getByRole('navigation', { name: 'Reading views' }).getByRole('button');
-    await expect(tabs).toHaveText(['Story', 'Character', 'Party', 'Journal', 'People']);
+    await expect(tabs).toHaveText(['Story', 'Character', 'Party', 'Pokédex', 'People']);
     for (const tab of await tabs.all()) {
       const bounds = await tab.boundingBox();
       expect(bounds!.height).toBeGreaterThanOrEqual(44);

@@ -6,9 +6,9 @@ import { checkpointKey, STORAGE_KEY } from '../src/storage';
 export const crisisKey = checkpointKey({ storyId: 'harbor-practice', storyRevision: 1 });
 export const cityKey = STORAGE_KEY;
 export const arrival = 'The last ferry reached Bellwether before the river closed.';
-export const panelNames = ['Character', 'Party', 'Journal', 'People'] as const;
+export const panelNames = ['Character', 'Party', 'Pokédex', 'People'] as const;
 type PanelName = typeof panelNames[number];
-type CharacterSection = 'Skills' | 'Inventory';
+type CharacterSection = 'Stats' | 'Skills' | 'Inventory' | 'Journal';
 
 export async function expectPassage(page: Page, title: string): Promise<void> {
   const heading = page.getByRole('heading', { level: 1, name: title, exact: true });
@@ -37,8 +37,10 @@ export async function startGame(page: Page): Promise<void> {
 }
 
 export async function openPanel(page: Page, name: PanelName | CharacterSection): Promise<Locator> {
-  if (name === 'Skills' || name === 'Inventory') {
+  if (name === 'Stats' || name === 'Skills' || name === 'Inventory' || name === 'Journal') {
     const character = await openPanel(page, 'Character');
+    const button = character.getByRole('button', { name, exact: true });
+    if (await button.getAttribute('aria-pressed') !== 'true') await button.click();
     return character.getByRole('region', { name, exact: true });
   }
   const button = page.getByRole('button', { name, exact: true });

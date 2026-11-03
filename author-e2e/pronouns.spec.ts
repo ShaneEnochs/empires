@@ -17,6 +17,7 @@ for (const [label, subject, possessive, verb] of [
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.locator('#story-content')).toContainText(`${subject} ${verb} ready to begin.`);
+  await page.getByRole('button', { name: 'Character', exact: true }).click();
   await page.getByRole('button', { name: 'Journal', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Journal', exact: true })).toContainText(`${possessive} journey began at the gate.`);
 });
