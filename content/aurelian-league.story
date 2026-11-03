@@ -279,7 +279,7 @@ The ferry settles against the quay with a gentle bump, and the last of the engin
 
 The harbor is bustling with activity. Fishing boats are unloading their morning catches, dockworkers are moving crates between warehouses, and several Machoke are helping the ferry crew transfer luggage onto waiting carts. Red-and-gold banners hang from windows, lampposts, and balconies. A crowd has gathered along the waterfront to welcome the contestants, and a few reporters have already found people willing to give interviews.
 
-When the crew opens the doors, you join the procession making its way down the gangway. The fresh sea air is a relief after the crowded lounge, and you slow a little to take in the city. You're halfway to shore when someone pushes past you, knocking your shoulder hard enough that you have to catch yourself against the railing. The young man has dark hair and a green jacket with **CHAMP** embroidered across the back in large gold letters. "Could you walk any slower?" he snaps, glancing over his shoulder. "Some of us would actually like to get off this boat today, you know."
+When the crew opens the doors, you join the procession making its way down the gangway. The fresh sea air is a relief after the crowded lounge, and you slow a little to take in the city. You're halfway to shore when someone pushes past you, knocking your shoulder hard enough that you have to catch yourself against the railing. The young man has dark hair and a green jacket with [b]CHAMP[/b] embroidered across the back in large gold letters. "Could you walk any slower?" he snaps, glancing over his shoulder. "Some of us would actually like to get off this boat today, you know."
 
 *choice
 #Confront him about his rudeness -> lezano_arrival [set rival_response "confront"]
@@ -301,7 +301,7 @@ You decide he isn't worth the trouble and continue walking. The young man doesn'
 
 Once your feet are finally on solid ground, you take a moment to get your bearings. The waterfront is even livelier up close. A street musician is playing an accordion nearby, and the cheerful music carries over the conversations and occasional cries of Wingull circling above the fishing boats. Between the harbor and the streets beyond, several vendors have already set up their stalls, apparently hoping to take advantage of the sudden influx of visitors.
 
-A little farther along the wharf, a row of temporary booths stands beneath red-and-gold awnings bearing the Aurelian League emblem. Large signs reading **CONTESTANT CHECK-IN** direct the arriving trainers toward them. Volunteers are checking names against tablets and handing out welcome packets. The line moves surprisingly quickly, and before long, you reach the front.
+A little farther along the wharf, a row of temporary booths stands beneath red-and-gold awnings bearing the Aurelian League emblem. Large signs reading [b]CONTESTANT CHECK-IN[/b] direct the arriving trainers toward them. Volunteers are checking names against tablets and handing out welcome packets. The line moves surprisingly quickly, and before long, you reach the front.
 
 *continue lezano_checkin
 
