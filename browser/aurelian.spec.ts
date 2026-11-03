@@ -73,12 +73,27 @@ for (const width of [320, 1280]) for (const route of routes) {
     await choose(page, route.encounter);
     await proceed(page);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lezano Harbor');
+    await expect(page.getByText(/CHAMP/)).toBeVisible();
+    const confront = route.pronouns === 'He / Him';
+    await choose(page, confront ? 'Confront him about his rudeness' : 'Ignore him and keep walking');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Waterfront');
+    await expect(page.getByText(/Once your feet are finally on solid ground/)).toBeVisible();
+    await expect(page.getByText(confront ? /Kinda rude there/ : /You decide he isn't worth the trouble/)).toBeVisible();
+    await proceed(page);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Contestant Check-In');
+    await expect(page.getByText(/starting balance of 100 credits/)).toBeVisible();
+    const hotel = route.pronouns === 'He / Him';
+    await choose(page, hotel ? 'Head to the hotel and check out your room' : 'Find somewhere nice to eat');
+    const endingTitle = hotel ? 'Toward the Hotel' : 'Something to Eat';
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(endingTitle);
     await expect(page.getByRole('button', { name: 'Continue', exact: true })).toHaveCount(0);
-    await expect(page.getByText(/the gangway begins to lower/)).toBeVisible();
 
     const raw = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
     const save = JSON.parse(raw!);
-    expect(save.storyRevision).toBe(5);
+    expect(save.storyRevision).toBe(6);
+    expect(save.currentState.variables.credits).toBe(100);
+    expect(save.currentState.variables.rival_response).toBe(confront ? 'confront' : 'ignore');
+    expect(save.currentState.inventory).toEqual({ league_badge: 1, city_map: 1, hotel_assignment: 1 });
     expect(save.currentState.variables.trainer_name).toBe('Rowan 周');
     expect(save.currentState.variables.pronouns).toBe(route.pronouns);
     expect(save.currentState.variables.lucia_contact).toBe(route.contact === 'Exchange numbers with Lucia');
@@ -96,9 +111,9 @@ for (const width of [320, 1280]) for (const route of routes) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.reload();
     await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lezano Harbor');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(endingTitle);
     await page.getByRole('button', { name: 'Character', exact: true }).click();
-    await expect(page.locator('#character dd')).toHaveText(['Rowan 周', route.pronouns]);
+    await expect(page.locator('#character dd')).toHaveText(['Rowan 周', route.pronouns, '100']);
     expect(await page.evaluate(storageKey => localStorage.getItem(storageKey), key)).toBe(raw);
   });
 }
