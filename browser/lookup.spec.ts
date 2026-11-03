@@ -28,7 +28,7 @@ for(const width of [320,1280])test('explicit lookup card and accessible collapse
  await expect(card).toContainText('Fighting');await expect(card).toContainText('Superpower Pokémon');
  await expect(card).toContainText('Machoke has an exceptionally strong');
  await expect(card.locator('.pokemon-trainer-notes li')).toHaveCount(3);
- await expect(card).toContainText('Never remove');
+ await expect(card).toContainText('Do not remove or tamper with its power-save belt');
  await expect(card.getByRole('link')).toHaveCount(0);
  await expect(card.locator('.pokemon-observations li')).toHaveCount(1);
  const raw=await page.evaluate(key=>localStorage.getItem(key),key);
