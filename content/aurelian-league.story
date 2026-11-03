@@ -88,7 +88,9 @@ She smiles at you. "Sorry, I should introduce myself. I'm Lucia. You're one of t
 *title A Fellow Contestant
 *journal saw_wingull_approach "You saw Wingull circling on the approach to Lezano."
 
-Lucia looks pleased when you confirm it. "I tried talking to someone upstairs earlier, but he turned out to be a reporter. Before I knew it, he was asking me what I thought my chances were." She shakes her head. "I told him I hadn't even picked a starter yet. I hope he doesn't put that on television."
+Lucia looks pleased when you confirm it. "I tried introducing myself to someone upstairs earlier, but he turned out to be a journalist. As soon as he found out I was entering the League, he started asking me all sorts of questions. What did I think of my chances? Who did I consider my biggest competition? Did I have a strategy?"
+
+She adjusts the strap of her bag. "He kept asking another question before I'd even finished answering the last one. I got so overwhelmed that I finally made an excuse and left." She glances toward the stairs. "Now I'm worried about what he's going to write. I probably sounded completely clueless, which I suppose I am. But aren't we all at this point?"
 
 She offers you her hand. "There are a hundred of us, and I don't want to wait until the first challenge to start making friends. What should I call you?"
 
