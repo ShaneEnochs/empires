@@ -175,18 +175,21 @@ test('a post-install opt-in lookup is the only public discovery path', () => {
 
 test('numbered species metadata is preserved, copied and frozen', () => {
   const types = ['Electric','Flying']; const observations = [{eventId:'seen',text:'First scan.'}];
-  const entry = parsePokedex([{...definition,nationalNumber:940,types,category:'Storm Petrel Pokémon',officialSummary:'Coastal bird.',sourceUrl:'https://www.pokemon.com/us/pokedex/wattrel',observations}])[0]!;
-  types.push('Other'); observations[0]!.text='Changed';
+  const trainerNotes = ['Nests on coastal cliffs.', 'Give the wings space.'];
+  const entry = parsePokedex([{...definition,nationalNumber:940,types,category:'Storm Petrel Pokémon',officialSummary:'Coastal bird.',trainerNotes,observations}])[0]!;
+  types.push('Other'); trainerNotes.push('Changed'); observations[0]!.text='Changed';
   assert.equal(entry.nationalNumber,940); assert.deepEqual(entry.types,['Electric','Flying']);
   assert.equal(entry.category,'Storm Petrel Pokémon'); assert.equal(entry.officialSummary,'Coastal bird.');
-  assert.equal(entry.sourceUrl,'https://www.pokemon.com/us/pokedex/wattrel');
+  assert.deepEqual(entry.trainerNotes,['Nests on coastal cliffs.', 'Give the wings space.']);
   assert.deepEqual(entry.observations,[{eventId:'seen',text:'First scan.'}]);
-  assert.ok(Object.isFrozen(entry.types)); assert.ok(Object.isFrozen(entry.observations)); assert.ok(Object.isFrozen(entry.observations[0]));
+  assert.ok(Object.isFrozen(entry.types)); assert.ok(Object.isFrozen(entry.trainerNotes));
+  assert.ok(Object.isFrozen(entry.observations)); assert.ok(Object.isFrozen(entry.observations[0]));
 });
 for(const fields of [
   {nationalNumber:0},{nationalNumber:-1},{nationalNumber:67.5},{nationalNumber:'0067'},
   {types:[]},{types:['Water','Water']},{types:['Water',4]},{types:'Water'},
-  {category:''},{officialSummary:' '},{sourceUrl:'javascript:alert(1)'},{sourceUrl:'http://example.com'},
+  {category:''},{officialSummary:' '},{trainerNotes:[]},{trainerNotes:['']},
+  {trainerNotes:['Repeated','Repeated']},{trainerNotes:[42]},{trainerNotes:'A note'},
   {observations:{}},{observations:[{eventId:'invalid id',text:'Note'}]},
   {observations:[{eventId:'seen',text:''}]},{observations:[{eventId:'seen',text:'One'},{eventId:'seen',text:'Two'}]},
 ])test('rejects malformed extended metadata '+JSON.stringify(fields),()=>assert.throws(()=>parsePokedex([{...definition,...fields}])));
@@ -282,4 +285,14 @@ A later observation.
   assert.equal(reopened.game!.state.journal.some(event=>event.id==='scanned_second'),false);
   const again=new GameSession(s,memory);again.continueGame();
   assert.deepEqual(discoveredPokemon(entries,again.game!.state)[0]!.observations.map(note=>note.text),['First.']);
+});
+
+test('all public species contain substantive trainer notes and no external links', () => {
+  assert.deepEqual(publicDex.map(entry => entry.id).sort(), ['machoke','minccino','wattrel','wingull']);
+  for (const entry of publicDex) {
+    assert.ok((entry.officialSummary?.length ?? 0) > 150, entry.id + ' needs a descriptive overview');
+    assert.equal(entry.trainerNotes?.length, 3, entry.id + ' needs three trainer tips');
+    assert.equal(Object.hasOwn(entry, 'sourceUrl'), false);
+    for (const note of entry.trainerNotes!) assert.ok(note.length > 50, entry.id + ' has an unhelpful note');
+  }
 });

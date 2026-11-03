@@ -142,4 +142,6 @@ h3[tabindex='-1']:focus-visible { outline: none; }
 .pokemon-information dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.4rem 1rem; }
 .pokemon-information dt { font-weight: 650; }
 .pokemon-information dd { margin: 0; }
-.pokemon-information a { display: inline-block; min-block-size: 44px; padding-block: 0.5rem; color: var(--accent); }
+.pokemon-trainer-notes, .pokemon-observations { padding-inline-start: 1.4rem; }
+.pokemon-trainer-notes li + li, .pokemon-observations li + li { margin-block-start: 0.4rem; }
+.pokemon-information h4 { margin-block: 1rem 0.4rem; }

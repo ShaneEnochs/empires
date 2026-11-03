@@ -187,7 +187,7 @@ Add species incrementally to `content/aurelian-league.pokedex.json`. Example:
     "types": ["Electric", "Flying"],
     "category": "Storm Petrel Pokémon",
     "officialSummary": "A short paraphrase based on an official Pokédex source.",
-    "sourceUrl": "https://www.pokemon.com/us/pokedex/wattrel",
+    "trainerNotes": ["Look for Wattrel near coastal cliffs.", "Keep a safe distance if one is frightened."],
     "description": "Legacy fallback for private fixtures.",
     "discoveryEvents": ["scanned_wattrel_harbor", "scanned_wattrel_emergency"],
     "observations": [
@@ -210,9 +210,12 @@ The extra information fields remain optional for legacy fixture compatibility.
 When supplied, nationalNumber is a positive safe integer, displayed with at least
 four digits (Machoke 0067, Wingull 0278, Minccino 0572, Wattrel 0940). types contains
 one or two unique nonempty strings; category/officialSummary are nonempty strings.
-sourceUrl must be an absolute HTTPS URL without credentials. Sources are authored
-and linked, never fetched at runtime. observations is an array of eventId/text
-records. Only notes whose journal IDs are recorded appear, in journal recording
+trainerNotes is an optional list of one to five unique, nonempty strings
+offering practical guidance on behavior, habitat, safe handling, or type strengths
+and weaknesses. Trainer notes are authored locally, not fetched at runtime,
+and should distinguish practical guidance from established species facts.
+No official-site links are displayed in either the Pokédex panel or lookup cards.
+observations is an array of eventId/text records. Only notes whose journal IDs are recorded appear, in journal recording
 order, never all notes from the species definition. Multiple scans still produce
 one species entry, and unknown future observations stay hidden. Official summaries
 are displayed instead of scene-specific legacy descriptions when available.
@@ -231,8 +234,8 @@ The reader derives an in-story information card from a `scanned_` journal effect
 in the current passage **and its committed journal record**. A skipped conditional
 scan has no record and no card. Guards are not re-evaluated against post-effect
 variables; the recorded result is authoritative. Cards show number/name, types,
-classification, official summary/source and only observations associated with that
-passage's recorded scans. Merely seeing or mentioning Pokémon, or visiting a later
+classification, official summary, trainer notes (when present), and only
+observations associated with that passage's recorded scans. Merely seeing or mentioning Pokémon, or visiting a later
 non-scan passage, creates no card. Rendering never triggers discovery or a save.
 Reopening a committed lookup passage can show its recorded lookup without replay.
 

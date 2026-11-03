@@ -18,9 +18,13 @@ export function pokemonInformation(entry: DiscoveredPokemon): HTMLElement {
   if (values.childElementCount) content.append(values);
   const summary = document.createElement('p'); summary.textContent = entry.officialSummary ?? entry.description;
   content.append(summary);
-  if (entry.sourceUrl) {
-    const source = document.createElement('a'); source.href = entry.sourceUrl;
-    source.textContent = 'Official Pokédex source'; source.rel = 'noreferrer'; content.append(source);
+  if (entry.trainerNotes?.length) {
+    const heading = document.createElement('h4'); heading.textContent = 'Trainer notes';
+    const notes = document.createElement('ul'); notes.className = 'pokemon-trainer-notes';
+    for (const text of entry.trainerNotes) {
+      const item = document.createElement('li'); item.textContent = text; notes.append(item);
+    }
+    content.append(heading, notes);
   }
   if (entry.observations.length) {
     const heading = document.createElement('h4'); heading.textContent = 'Your observations';
