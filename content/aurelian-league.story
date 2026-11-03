@@ -57,7 +57,7 @@ Yet here you are, with your luggage packed and your future waiting somewhere on 
 *continue ferry_ad
 
 *passage ferry_ad
-*title Eight Laurels
+*title A Glimpse of the League
 
 The television mounted above the café counter is playing the same advertisement for what must be the eighth time since you boarded. A cheerful little tune accompanies a sweeping aerial view of Aurelia, beginning with its sunlit coastline before moving inland over green hills, forests, and towns. Eight golden Laurels appear one after another across the screen, accompanied by the presenter's familiar voice.
 
@@ -170,14 +170,13 @@ Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she an
 
 "Have you noticed how strange it is to see Pokémon working on the ferry when none of us are allowed to bring our own?" Lucia asks. "I know why the League wants a fresh start, but it's going to take some getting used to. At home, our Floatzel follows me everywhere. He even waits outside the market when I go shopping."
 
-She tells you how he once dragged her brother's boots into a rock pool because he thought somebody had left them too close to the tide. She's spent years helping her family care for him, but she's never raised a Pokémon herself. "I know how he likes his dinner and when he wants to be left alone. With a new partner, I'll have to learn all of that again."
+She tells you how he once dragged her brother's boots into a rock pool because he thought somebody had left them too close to the tide. She's spent years helping her family care for him, but she's never raised a Pokémon herself. "I know how he likes his dinner and when he wants to be left alone. With a new partner, I'll have to learn all of that again." She touches her Lapras pendant. "I hope my starter likes me."
 
 The harbor is getting closer, and Lucia takes one more look at it before turning back to you. "I've been doing all the talking. Is there something you wanted to ask me?"
 
 *choice
 #Ask why she decided to enter the League -> lucia_wildlife
 #Ask what she knows about the Laurels -> lucia_rules
-#Ask if she's nervous about the competition -> lucia_nerves
 #Say you'd like to look around before docking -> open_deck
 
 *passage lucia_wildlife
@@ -197,16 +196,6 @@ She touches the Lapras pendant at her throat. "My little brother gave me this be
 Lucia opens the entrant guide on her phone. "It says we have to earn eight Laurels. Not just for battles, either. They're looking for things like courage, compassion, and good judgment. But only the three highest-ranked contestants with all eight Laurels get to the Triumvirate."
 
 She scrolls down. "I can understand judging a battle. What I don't understand is how they'll compare everything else. Suppose two people help the same frightened Pokémon, but in completely different ways. Who decides which one did better?" She locks the screen. "I hope they explain that when we arrive."
-
-*continue open_deck
-
-*passage lucia_nerves
-*title First-Day Nerves
-*set lucia_topic "nerves"
-
-"A little," Lucia admits. "My mother says she's going to record every episode, and my brother wants to watch with all his friends. I keep thinking I'll trip over something in front of a camera and they'll never let me forget it."
-
-She looks out at the harbor. "Mostly I'm worried about meeting my starter. What if we don't get along right away? People talk about finding their partner as though it happens in an instant, but I know it takes time to earn a Pokémon's trust." She adjusts the strap on her bag. "I just hope I remember that when it's my turn."
 
 *continue open_deck
 
@@ -280,9 +269,6 @@ Lucia appears with her bag and points out two Wingull perched on the harbor wall
 
 *show_if lucia_topic == "rules"
 Lucia rejoins the queue just long enough to tell you that the volunteers are handing out schedules for a briefing. "Maybe we'll finally get some answers," she says.
-
-*show_if lucia_topic == "nerves"
-Lucia catches your eye from near the front of the queue. A camera turns toward the windows, and she steps behind a taller contestant before giving you a sheepish smile.
 
 *show_if lucia_topic == "none"
 Lucia spots you across the lounge and gives you a quick wave before turning to retrieve her bag.
