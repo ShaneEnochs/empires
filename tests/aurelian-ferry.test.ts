@@ -162,31 +162,28 @@ test('CHAMP responses are conditional in one shared arrival passage', () => {
   }
 });
 
-test('check-in grants 100 credits and the welcome items, with two final routes', () => {
-  for (const destination of ['hotel_route', 'food_route']) {
-    const game = beginConversation();
-    game.navigate('open_deck');
-    game.navigate('rail');
-    game.navigate('dock_approach');
-    game.navigateChoice(game.visibleChoices[0]!);
-    assert.equal(game.state.variables.credits, 0);
-    assert.deepEqual(game.state.inventory, {});
-    game.navigate('lezano_checkin');
-    assert.equal(game.state.variables.credits, 100);
-    assert.deepEqual(game.state.inventory, { league_badge: 1, city_map: 1, hotel_assignment: 1 });
-    assert.equal(game.passage.chapter, 'Chapter 2: Orientation');
-    const prose = game.visibleParagraphs.map(p => p.text).join(' ');
-    assert.match(prose, /four o'clock this afternoon/);
-    assert.match(prose, /Civic Forum/);
-    assert.match(prose, /delivered directly to your room/);
-    assert.match(prose, /serves as your debit card/);
-    assert.match(prose, /All the shops here accept credits exclusively/);
-    assert.deepEqual(game.visibleChoices.map(choice => choice.destinationId), ['hotel_route', 'food_route']);
-    game.navigate(destination);
-    assert.equal(game.passage.choices.length, 2);
-    assert.equal(game.passage.hideTitle, true);
-    assert.equal(game.state.party.length, 0);
+test('registration installs the Pokédex before any opt-in lookup or venue choice', () => {
+  const game=beginConversation();
+  game.navigate('open_deck');game.navigate('rail');game.navigate('dock_approach');
+  game.navigateChoice(game.visibleChoices[0]!);
+  assert.equal(game.state.variables.dex_installed,false);
+  assert.equal(game.state.variables.credits,0);
+  game.navigate('lezano_checkin');
+  assert.equal(game.state.variables.credits,100);
+  assert.equal(game.state.variables.dex_installed,true);
+  assert.deepEqual(game.state.inventory,{league_badge:1,city_map:1,hotel_assignment:1});
+  assert.equal(game.passage.chapter,'Chapter 2: Orientation');
+  const prose=game.visibleParagraphs.map(p=>p.text).join(' ');
+  for(const line of ['four o\'clock this afternoon','serves as your debit card','Pokédex app','choose to look one up']){
+    assert.ok(prose.includes(line),line);
   }
+  assert.equal(game.passage.continueTo,'harbor_lookup');
+  game.navigate('harbor_lookup');
+  assert.deepEqual(game.visibleChoices.map(c=>c.destinationId),[
+    'harbor_scan_machoke','harbor_scan_wattrel','harbor_destination'
+  ]);
+  game.navigate('harbor_destination');
+  assert.deepEqual(game.visibleChoices.map(c=>c.destinationId),['hotel_route','food_route']);
 });
 
 test('only opening and harbor passages show visible headings, with numbered chapters', () => {
@@ -203,62 +200,91 @@ test('only opening and harbor passages show visible headings, with numbered chap
   }
 });
 
-test('complete public routes cover ferry, names, contacts, rivals, both locations and outcomes', () => {
-  let runs = 0;
-  for (const first of ['ferry_cafe','ferry_windows'] as const)
-  for (const contact of ['contact_yes','contact_no'] as const)
-  for (const pronoun of ['he','she','they'] as const)
-  for (const encounter of ['group_join','eavesdrop','rail'] as const)
-  for (const rivalIndex of [0,1])
-  for (const location of ['hotel_route','food_route'] as const)
-  for (const actionIndex of [0,1]) {
-    const game = beginConversation(first, 'Alex', contact, pronoun);
-    game.navigate('open_deck');
-    game.navigate(encounter);
-    game.navigate('dock_approach');
+test('288 complete authored routes reach valid orientation destinations with persistent outcomes', () => {
+  function play(first:'ferry_cafe'|'ferry_windows',contact:'contact_yes'|'contact_no',
+    pronoun:'he'|'she'|'they',encounter:'group_join'|'eavesdrop'|'rail',rivalIndex:number,
+    location:'hotel_route'|'food_route',actionIndex:number){
+    const game=beginConversation(first,'Alex',contact,pronoun);
+    game.navigate('open_deck');game.navigate(encounter);game.navigate('dock_approach');
     game.navigateChoice(game.visibleChoices[rivalIndex]!);
-    assert.equal(game.state.variables.rival_response, rivalIndex === 0 ? 'confront' : 'ignore');
+    assert.equal(game.state.variables.rival_response,rivalIndex===0?'confront':'ignore');
     game.navigate('lezano_checkin');
-    assert.equal(game.state.variables.credits, 100);
+    assert.equal(game.state.variables.credits,100);
+    game.navigate('harbor_lookup');
+    if(actionIndex===0){game.navigate('harbor_scan_wattrel');game.navigate('harbor_destination');}
+    else game.navigate('harbor_destination');
     game.navigate(location);
-    assert.deepEqual(game.visibleChoices.length, 2);
-    game.navigateChoice(game.visibleChoices[actionIndex]!);
-    if (location === 'hotel_route') {
-      assert.equal(game.state.variables.hotel_response, actionIndex === 0 ? 'help' : 'leave');
-      const hasVictra = encounteredPeople(people, game.state).some(person => person.id === 'victra');
-      assert.equal(hasVictra, actionIndex === 0);
-      assert.equal(game.state.variables.credits, 100);
-    } else {
-      assert.equal(game.state.variables.restaurant_response, actionIndex === 0 ? 'steady' : 'clear');
-      assert.ok(encounteredPeople(people, game.state).some(person => person.id === 'livia'));
-      assert.equal(game.state.variables.credits, 88);
+    if(location==='hotel_route'){
+      game.navigateChoice(game.visibleChoices[actionIndex===0?0:2]!);
+      if(actionIndex===0){
+        game.navigateChoice(game.visibleChoices[0]!);
+        game.navigate('hotel_followup');
+        game.navigateChoice(game.visibleChoices[0]!);
+        assert.equal(game.state.variables.victra_case,'recovered');
+        assert.ok(encounteredPeople(people,game.state).some(p=>p.id==='victra'));
+      }else{
+        game.navigate('hotel_resolution');
+        assert.equal(game.state.variables.victra_case,'unknown');
+        assert.ok(!encounteredPeople(people,game.state).some(p=>p.id==='victra'));
+      }
+      game.navigate('hotel_wingull');
+      if(actionIndex===0)game.navigate('hotel_scan_wingull');
+      assert.equal(game.state.variables.credits,100);
+      game.navigate('orientation_invitation');
+    }else{
+      game.navigateChoice(game.visibleChoices[actionIndex===0?0:2]!);
+      assert.equal(game.state.variables.livia_impression,actionIndex===0?'helpful':'distracted');
+      game.navigateChoice(game.visibleChoices[actionIndex]!);
+      assert.ok(encounteredPeople(people,game.state).some(p=>p.id==='livia'));
+      assert.equal(game.state.variables.credits,88);
+      if(actionIndex===0)game.navigate('food_scan_wattrel');
+      game.navigate('orientation_invitation');
     }
-    game.navigate('orientation_invitation');
-    assert.equal(game.state.variables.lucia_contact, contact === 'contact_yes');
-    const options = game.visibleChoices.map(choice => choice.destinationId);
-    assert.deepEqual(options, contact === 'contact_yes'
+    assert.equal(game.state.variables.lucia_contact,contact==='contact_yes');
+    const options=game.visibleChoices.map(c=>c.destinationId);
+    assert.deepEqual(options,contact==='contact_yes'
       ? ['orientation_with_lucia','orientation_alone']
       : ['orientation_alone','orientation_scenic']);
-    assert.equal(game.visibleChoices.length, 2);
-    const prose = game.visibleParagraphs.map(p => p.text).join(' ');
-    assert.equal(prose.includes('Lucia'), contact === 'contact_yes');
-    assert.equal(game.state.party.length, 0);
-    for(const endpoint of options) {
-      const copy = new Game(story);
-      copy.navigate(first);
-      copy.navigate('ferry_context');
-      copy.navigate('ferry_ad'); copy.advancePage();
-      copy.navigate('name'); copy.submitText('Alex');
-      copy.navigate(contact); copy.navigate('pronouns'); copy.navigate(pronoun); copy.navigate('lucia_chat');
-      copy.navigate('open_deck'); copy.navigate(encounter); copy.navigate('dock_approach');
-      copy.navigateChoice(copy.visibleChoices[rivalIndex]!); copy.navigate('lezano_checkin'); copy.navigate(location);
-      copy.navigateChoice(copy.visibleChoices[actionIndex]!); copy.navigate('orientation_invitation');
+    assert.equal(game.state.party.length,0);
+    return game;
+  }
+  let runs=0;
+  for(const first of ['ferry_cafe','ferry_windows'] as const)
+  for(const contact of ['contact_yes','contact_no'] as const)
+  for(const pronoun of ['he','she','they'] as const)
+  for(const encounter of ['group_join','eavesdrop','rail'] as const)
+  for(const rivalIndex of [0,1])
+  for(const location of ['hotel_route','food_route'] as const)
+  for(const actionIndex of [0,1]){
+    const game=play(first,contact,pronoun,encounter,rivalIndex,location,actionIndex);
+    for(const endpoint of game.visibleChoices.map(c=>c.destinationId)){
+      const copy=play(first,contact,pronoun,encounter,rivalIndex,location,actionIndex);
       copy.navigate(endpoint);
-      assert.equal(copy.visibleChoices.length,0);
-      assert.equal(copy.passage.continueTo, undefined);
-      if(endpoint==='orientation_with_lucia') assert.ok(copy.state.journal.some(event=>event.id==='lucia_orientation_plans'));
+      assert.equal(copy.passage.choices.length,0);
+      assert.equal(copy.passage.continueTo,undefined);
+      if(endpoint==='orientation_with_lucia')assert.ok(copy.state.journal.some(e=>e.id==='lucia_orientation_plans'));
     }
     runs++;
   }
-  assert.equal(runs, 288);
+  assert.equal(runs,288);
+});
+
+test('hotel late help changes the first conversation without handing over the suitcase at once', () => {
+  const game=beginConversation();
+  game.navigate('open_deck');game.navigate('rail');game.navigate('dock_approach');
+  game.navigateChoice(game.visibleChoices[0]!);game.navigate('lezano_checkin');
+  game.navigate('harbor_lookup');game.navigate('harbor_destination');game.navigate('hotel_route');
+  game.navigateChoice(game.visibleChoices[1]!);
+  assert.ok(game.state.journal.some(e=>e.id==='scanned_minccino_hotel'));
+  game.navigateChoice(game.visibleChoices[0]!);
+  assert.equal(game.state.variables.hotel_response,'latehelp');
+  assert.equal(game.passage.id,'hotel_investigate');
+  assert.equal(game.state.variables.victra_case,'none');
+  game.navigateChoice(game.visibleChoices[1]!);
+  assert.equal(game.passage.id,'hotel_carts');
+  game.navigate('hotel_followup');
+  game.navigateChoice(game.visibleChoices[1]!);
+  assert.equal(game.state.variables.victra_case,'pending');
+  assert.ok(game.state.journal.some(e=>e.id==='victra_directions'));
+  assert.ok(!game.state.journal.some(e=>e.id==='victra_suitcase'));
 });

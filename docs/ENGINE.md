@@ -1,9 +1,20 @@
 # The Aurelian League engine
 
 The sole public story is content/aurelian-league.story, identity aurelian-league,
-revision 7. Pokémon-themed private examples exercise historical engine features;
+revision 8. Pokémon-themed private examples exercise historical engine features;
 they are not public stories or additional Aurelia lore. See README for the current
 workflow and SCRIPTING.md for all syntax.
+
+## Opt-in Pokémon research (current story scope)
+
+At Lezano registration, the story grants `dex_installed = true` and records a
+journal event. The public Pokédex metadata now refers only to explicit
+`scanned_...` journal events, so ferry sightings and later non-looked-up
+Pokémon do not appear in it. This is currently an authored story convention
+rather than a new engine rule; a separate UI update will add a native
+uninstalled/empty state, official numbered entries, observation notes, and
+in-story lookup cards using the authored scan events. No new persistence
+collection or runtime API is needed.
 
 ## Optional visual passage headings
 
@@ -482,7 +493,7 @@ boundary). Try Again re-enters that checkpoint once, discards later changes, and
 saves the recovered current state without moving the checkpoint boundary.
 
 Storage is local to this browser and device; it does not synchronize. The public
-story uses identity `aurelian-league`, revision 7, and key
+story uses identity `aurelian-league`, revision 8, and key
 `pokemon:checkpoint:aurelian-league`. Private fixture identities are separate.
 
 Format 4 stores one atomic JSON record:
@@ -526,7 +537,7 @@ preview clears temporary progress. It never reads or writes public localStorage.
 `src/catalog.ts` is a frozen list of explicit application IDs, titles, descriptions,
 Vite `?raw` source, People definitions, and validated StorySaveIdentity records.
 Initialization checks distinct catalog/save IDs. Only The Aurelian League
-(`aurelian-league`, revision 7) is published. Opening the app parses that entry,
+(`aurelian-league`, revision 8) is published. Opening the app parses that entry,
 constructs its session and presents startup. It reads only that identity's save;
 empty startup never constructs a Game. Continue and confirmed replacement keep
 the existing validation and explicit unsaved-play semantics.

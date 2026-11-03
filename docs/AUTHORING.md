@@ -63,7 +63,7 @@ A seventh companion fails atomically. Party never uses inventory items.
 
 Edit `content/title-page.json` for plain-text brand/title/description/button labels.
 Keep all five fields nonempty strings. The catalog contains only The Aurelian League,
-identity `aurelian-league`, revision 7, key `pokemon:checkpoint:aurelian-league`.
+identity `aurelian-league`, revision 8, key `pokemon:checkpoint:aurelian-league`.
 Display text is not a save identity. The old game's keys are never read or deleted.
 Party-aware saves use format 4, or 5 with reading context; schemas 1–3 are incompatible.
 Continue resumes committed state/page without re-entering. Checkpoints preserve the
@@ -154,6 +154,40 @@ actual `*journal` event in the selected story. Metadata is validated before play
 Unknown/duplicate species IDs, malformed fields, duplicate list references and
 unknown event IDs are errors. There is no complete database or undiscovered-entry UI.
 
+For the public Aurelian League story, the app is installed at registration using
+`*set dex_installed true` and `*journal installed_pokedex_app`.
+Ferry sightings are still authored as journal entries, but no longer unlock
+Pokédex species. Only deliberate lookup passages with `scanned_...`
+journal IDs appear in the current public Pokédex. Add scan choices after
+app installation and never award discoveries for merely mentioning or
+seeing a species. Each lookup passage gives the player an opportunity to
+save a distinct observation. Urgent scenes may make choosing to scan
+a consequential delay rather than a free action.
+
+The public JSON currently carries `nationalNumber`, `types`, `category`,
+`officialSummary`, `sourceUrl`, and `observations` metadata alongside
+the legacy required fields. These additional fields are intentionally
+staged for a separate Pokédex presentation/validation update; the current
+`parsePokedex` still displays only the legacy description. Keep each note
+associated with an explicit `eventId`, so multiple scans of one species
+record the correct encounters without duplicate species entries. The
+facts are short paraphrases of published official Pokédex information,
+not extensive reproduced official prose.
+
+For example, a lookup passage may record:
+
+```text
+*passage harbor_scan_wattrel
+*title Looking Up Wattrel
+*hide_title
+*journal scanned_wattrel_harbor "You looked up Wattrel at the harbor."
+
+You save a note about the Wattrel you saw.
+```
+
+The full in-story lookup card and collapsible Pokédex UI are *not* implemented
+by these authored events alone. They are separate reader work.
+
 Use explicit journal events at the point an encounter has actually happened:
 
 ```text
@@ -162,10 +196,10 @@ Use explicit journal events at the point an encounter has actually happened:
 
 Different scenes need distinct journal IDs, which may all unlock the same species.
 Never infer an encounter from a name in prose, a picture, a necklace, or somebody's
-account of another Pokémon. The ferry records Minccino and Machoke in its café or
-window scenes, and Wingull in its sightings. The Wingull sighting on the second
-page of `ferry_ad` is recorded when continuing into `name`, after reading that page;
-it is not unlocked on entry to the advertisement. Lucia's Lapras necklace and her
+account of another Pokémon. The ferry records Minccino and Machoke in its café or window scenes, and Wingull
+in its sightings, **only in the Journal**, not the Pokédex. The Wingull sighting
+on the second page of `ferry_ad` is journaled when continuing into `name`, after
+reading that page; it never unlocks a species without a later explicit scan. Lucia's Lapras necklace and her
 mention of her family's Floatzel do not unlock entries.
 
 For acquisition, put the party effect and its explicit journal event together,
@@ -192,7 +226,7 @@ restored checkpoint journal, retaining events already there and discarding later
 ones, exactly like People discovery. Nothing outside authoritative state survives
 recovery as hidden progress.
 
-The save key, formats 4/5/6, and public story revision 7 stay unchanged. These
+The save key, formats 4/5/6, and public story revision 8 stay unchanged. These
 additive event IDs/metadata do not invalidate existing revision-5 records. Older
 records without these events remain undiscovered until a later legitimate event;
 startup/Continue never backfill them or write a save. Do not change existing IDs,

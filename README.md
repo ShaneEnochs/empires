@@ -9,7 +9,7 @@ The playable opening takes place aboard a crowded ferry bound for Lezano.
 An early choice introduces the crew's working Pokémon. Meet Lucia, enter your
 first name, decide whether to exchange contact details, and choose your pronouns
 in conversation. You can learn about the League, speak with other contestants,
-listen in, or spend time on the observation deck. Chapter 1 takes place aboard the Portia. In Chapter 2, the player disembarks at Lezano, encounters the rude contestant wearing CHAMP on his jacket, and checks in with 100 credits. The hotel branch follows a luggage mix-up involving Victra; the restaurant branch involves helping a Wattrel and meeting Livia. Lucia can invite the player to walk to the Civic Forum if they exchanged numbers on the ferry. Both branches end before the four-o'clock orientation and starter selection. Charmander, Chikorita, and Piplup remain the planned starter options.
+listen in, or spend time on the observation deck. Chapter 1 takes place aboard the Portia. In Chapter 2, the player disembarks at Lezano, encounters the rude contestant wearing CHAMP on his jacket, and checks in with 100 credits and a new Pokédex phone app. Pokémon appear in the Pokédex only after the player deliberately looks one up. The hotel branch has an extended luggage search involving Victra, with multiple clues and a decision whether to accompany her to the annex. The restaurant branch has a time-sensitive Wattrel rescue; choosing to scan instead of helping can damage Livia's initial impression. Lucia can invite the player to walk to the Civic Forum if they exchanged numbers on the ferry. Both branches end before the four-o'clock orientation and starter selection. Charmander, Chikorita, and Piplup remain the planned starter options.
 The engine's party system is implemented, but players cannot acquire Pokémon
 in this chapter. Battles, evolution, levels, storage boxes, rankings, and external
 Pokémon services are not implemented.
@@ -104,7 +104,7 @@ published build. No editor uploads, accounts, APIs, or new runtime dependencies 
 
 ## Saves and recovery
 
-The sole public story has `storyId: aurelian-league`, `storyRevision: 7`, and key
+The sole public story has `storyId: aurelian-league`, `storyRevision: 8`, and key
 `pokemon:checkpoint:aurelian-league`. This fresh namespace never reads, migrates,
 or deletes the former game's browser records.
 
@@ -183,6 +183,6 @@ after party removal. Repeated sightings yield one entry per species.
 See the [complete metadata and encounter guide](docs/AUTHORING.md#adding-discoverable-pokédex-species)
 for JSON examples, validation, event timing, and optional author-preview metadata.
 Discovery derives solely from the journal; no save-schema or format change is
-needed. Public revision 7 remains compatible. Existing saves without the new
+needed. Public revision 8 remains compatible. Existing saves without the new
 events are not silently backfilled. Checkpoint recovery derives the Pokédex from
 the restored journal, just as People does.
