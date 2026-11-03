@@ -1,3 +1,5 @@
+import { parsePokedex, validatePokedex } from './pokedex';
+import type { PokedexEntry } from './pokedex';
 import { parsePeople, validatePeople } from './people';
 import type { PersonReference } from './people';
 import { parseStory } from './story';
@@ -13,7 +15,7 @@ tools.className = 'author-tools';
 const title = document.createElement('h1');
 title.textContent = 'Local story preview';
 const note = document.createElement('p');
-note.textContent = 'Files stay in this browser. Save edits in your editor, then select the files again. Preview progress is temporary. Optional People metadata stays local.';
+note.textContent = 'Files stay in this browser. Save edits in your editor, then select the files again. Preview progress is temporary. Optional People and Pokédex metadata stay local.';
 const label = document.createElement('label');
 label.textContent = 'Open a .story file';
 const file = document.createElement('input');
@@ -25,6 +27,13 @@ peopleFile.type = 'file'; peopleFile.accept = '.json'; peopleLabel.append(people
 const clearPeople = document.createElement('button');
 clearPeople.textContent = 'Clear People file';
 let people: readonly PersonReference[] = [];
+let pokedex: readonly PokedexEntry[] = [];
+const pokedexLabel = document.createElement('label');
+pokedexLabel.textContent = 'Open optional .pokedex.json file';
+const pokedexFile = document.createElement('input');
+pokedexFile.type = 'file'; pokedexFile.accept = '.json'; pokedexLabel.append(pokedexFile);
+const clearPokedex = document.createElement('button');
+clearPokedex.textContent = 'Clear Pokédex file';
 const status = document.createElement('p');
 status.setAttribute('role', 'status');
 const restart = document.createElement('button');
@@ -44,7 +53,7 @@ function start(): void {
   if (!story) return;
   // A fresh private slot for each restart; never consult browser storage.
   const records = new Map<string, string>();
-  mountReader(reader, { title: filename, identity: { storyId: 'author-preview', storyRevision: 1 }, people }, story, {
+  mountReader(reader, { title: filename, identity: { storyId: 'author-preview', storyRevision: 1 }, people, pokedex }, story, {
     getItem: key => records.get(key) ?? null,
     setItem: (key, value) => { records.set(key, value); },
   });
@@ -88,6 +97,7 @@ file.addEventListener('change', async () => {
     if (version !== selection) return;
     story = parseStory(source); filename = selected.name;
     validatePeople(story, people);
+    validatePokedex(story, pokedex);
     status.textContent = `Loaded ${filename}: ${story.passages.length} passages. Run preflight for bounded route analysis.`;
     restart.disabled = false; search.disabled = false; renderIndex(); start();
   } catch (error) {
@@ -95,16 +105,17 @@ file.addEventListener('change', async () => {
     status.textContent = `Could not open story: ${error instanceof Error ? error.message : String(error)}`;
   }
 });
-function resetPreview(): void {
+function resetPreview(kind = 'People'): void {
   reader.replaceChildren(); detail.replaceChildren();
   if (story) {
     try {
-      validatePeople(story, people); start();
+      validatePeople(story, people);
+      validatePokedex(story, pokedex); start();
       restart.disabled = false; search.disabled = false; renderIndex();
-      status.textContent = `Loaded ${filename} with ${people.length} People references.`;
+      status.textContent = `Loaded ${filename} with ${people.length} People references and ${pokedex.length} Pokédex entries.`;
     } catch (error) {
       restart.disabled = true; search.disabled = true; index.replaceChildren();
-      status.textContent = `Could not open People: ${error instanceof Error ? error.message : String(error)}`;
+      status.textContent = `Could not open ${kind}: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
 }
@@ -127,7 +138,27 @@ peopleFile.addEventListener('change', async () => {
     status.textContent = `Could not open People: ${error instanceof Error ? error.message : String(error)}`;
   }
 });
+pokedexFile.addEventListener('change', async () => {
+  const selected = pokedexFile.files?.[0]; pokedexFile.value = '';
+  if (!selected) return;
+  const version = ++selection;
+  reader.replaceChildren(); index.replaceChildren(); detail.replaceChildren();
+  restart.disabled = true; search.disabled = true;
+  try {
+    if (!selected.name.endsWith('.pokedex.json')) throw new Error('Select a .pokedex.json file.');
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(await selected.arrayBuffer());
+    if (version !== selection) return;
+    pokedex = parsePokedex(JSON.parse(text));
+    status.textContent = `Loaded ${selected.name}. Select a story to preview.`;
+    resetPreview('Pokédex');
+  } catch (error) {
+    if (version !== selection) return;
+    pokedex = [];
+    status.textContent = `Could not open Pokédex: ${error instanceof Error ? error.message : String(error)}`;
+  }
+});
+clearPokedex.addEventListener('click', () => { ++selection; pokedex = []; resetPreview('Pokédex'); });
 clearPeople.addEventListener('click', () => { ++selection; people = []; resetPreview(); });
 restart.addEventListener('click', start);
 search.addEventListener('input', renderIndex);
-tools.append(title, note, label, peopleLabel, clearPeople, status, restart, searchLabel, index, detail);
+tools.append(title, note, label, peopleLabel, clearPeople, pokedexLabel, clearPokedex, status, restart, searchLabel, index, detail);

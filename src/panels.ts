@@ -1,3 +1,5 @@
+import { discoveredPokemon } from './pokedex';
+import type { PokedexEntry } from './pokedex';
 import type { Game } from './game';
 import type { GameState, Story } from './types';
 import { encounteredPeople } from './people';
@@ -52,66 +54,90 @@ function list(section: HTMLElement, entries: readonly string[], emptyText: strin
   section.append(items);
 }
 
-/** The four fixed read-only views; passage actions and focus stay in main.ts. */
-export function createPanels(story: Story, game: Game, people: readonly PersonReference[], select: (title: string) => void) {
+/** Read-only information views; gameplay actions remain in the shared reader. */
+export function createPanels(story: Story, game: Game, people: readonly PersonReference[], pokedex: readonly PokedexEntry[], select: (title: string) => void) {
   const character = panel('character', 'Character', select, section => {
-    const statistics = document.createElement('section');
-    statistics.setAttribute('aria-labelledby', 'statistics-heading');
-    const heading = document.createElement('h3');
-    heading.id = 'statistics-heading';
-    heading.textContent = 'Character Statistics';
-    statistics.append(heading);
-    if (story.stats.length === 0) {
-      const empty = document.createElement('p');
-      empty.textContent = 'No character statistics configured.';
-      statistics.append(empty);
-    } else {
-      const stats = document.createElement('dl');
-      for (const { label, value } of characterStats(story, game.state)) {
-        const term = document.createElement('dt');
-        term.textContent = label;
-        const description = document.createElement('dd');
-        description.textContent = value;
-        stats.append(term, description);
-      }
-      statistics.append(stats);
-    }
-    section.append(statistics);
-    for (const [id, title, entries, empty] of [
-      ['skills', 'Skills', game.state.skills.map(id => story.skills.find(skill => skill.id === id)!.name), 'No skills acquired yet.'],
-      ['inventory', 'Inventory', Object.entries(game.state.inventory).map(([id, quantity]) =>
-        story.items.find(item => item.id === id)!.name + ' × ' + quantity), 'No items in inventory.'],
-    ] as const) {
-      const group = document.createElement('section');
-      group.setAttribute('aria-labelledby', id + '-heading');
+    const navigation = document.createElement('div');
+    navigation.className = 'character-navigation';
+    navigation.setAttribute('role', 'group');
+    navigation.setAttribute('aria-label', 'Character sections');
+    const views = ['Stats', 'Skills', 'Inventory', 'Journal'].map(title => {
+      const id = title.toLowerCase();
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = title;
+      button.setAttribute('aria-controls', 'character-' + id);
+      const content = document.createElement('section');
+      content.id = 'character-' + id;
+      content.setAttribute('aria-labelledby', id + '-heading');
       const heading = document.createElement('h3');
       heading.id = id + '-heading';
       heading.textContent = title;
-      group.append(heading);
-      list(group, entries, empty);
-      section.append(group);
+      heading.tabIndex = -1;
+      content.append(heading);
+      if (title === 'Stats') {
+        if (story.stats.length === 0) list(content, [], 'No character statistics configured.');
+        else {
+          const stats = document.createElement('dl');
+          for (const { label, value } of characterStats(story, game.state)) {
+            const term = document.createElement('dt'); term.textContent = label;
+            const description = document.createElement('dd'); description.textContent = value;
+            stats.append(term, description);
+          }
+          content.append(stats);
+        }
+      } else if (title === 'Skills') {
+        list(content, game.state.skills.map(id => story.skills.find(skill => skill.id === id)!.name), 'No skills acquired yet.');
+      } else if (title === 'Inventory') {
+        list(content, Object.entries(game.state.inventory).map(([id, quantity]) =>
+          story.items.find(item => item.id === id)!.name + ' × ' + quantity), 'No items in inventory.');
+      } else {
+        if (game.state.journal.length === 0) list(content, [], 'No journal entries yet.');
+        const groups = new Map<string, HTMLUListElement>();
+        for (const entry of game.state.journal) {
+          let items = groups.get(entry.chapter);
+          if (!items) {
+            const chapter = document.createElement('h4'); chapter.textContent = entry.chapter;
+            items = document.createElement('ul'); groups.set(entry.chapter, items);
+            content.append(chapter, items);
+          }
+          const item = document.createElement('li'); item.textContent = entry.text; items.append(item);
+        }
+      }
+      button.addEventListener('click', () => {
+        show(title);
+        heading.focus();
+      });
+      return { title, button, content };
+    });
+    function show(title: string): void {
+      for (const view of views) {
+        view.button.setAttribute('aria-pressed', String(view.title === title));
+        view.content.hidden = view.title !== title;
+      }
     }
+    navigation.append(...views.map(view => view.button));
+    section.append(navigation, ...views.map(view => view.content));
+    show('Stats');
   });
 
-  const journal = panel('journal', 'Journal', select, section => {
-    if (game.state.journal.length === 0) {
-      list(section, [], 'No journal entries yet.');
+  const dex = panel('pokedex', 'Pokédex', select, section => {
+    const discovered = discoveredPokemon(pokedex, game.state);
+    if (discovered.length === 0) {
+      list(section, [], "You haven't encountered any Pokémon yet.");
       return;
     }
-    const groups = new Map<string, HTMLUListElement>();
-    for (const entry of game.state.journal) {
-      let items = groups.get(entry.chapter);
-      if (!items) {
-        const chapter = document.createElement('h3');
-        chapter.textContent = entry.chapter;
-        items = document.createElement('ul');
-        groups.set(entry.chapter, items);
-        section.append(chapter, items);
-      }
+    const entries = document.createElement('ul');
+    entries.className = 'pokedex-entries';
+    for (const entry of discovered) {
       const item = document.createElement('li');
-      item.textContent = entry.text;
-      items.append(item);
+      const heading = document.createElement('h3'); heading.textContent = entry.name;
+      const status = document.createElement('p');
+      status.className = 'discovery-status'; status.textContent = `${entry.status} · ${entry.chapter}`;
+      const description = document.createElement('p'); description.textContent = entry.description;
+      item.append(heading, status, description); entries.append(item);
     }
+    section.append(entries);
   });
 
   const reference = panel('people', 'People', select, section => {
@@ -151,7 +177,7 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
       section.append(members);
     }
   });
-  const panels = [character, party, journal, reference];
+  const panels = [character, party, dex, reference];
   return {
     buttons: panels.map(panel => panel.button),
     sections: panels.map(panel => panel.section),

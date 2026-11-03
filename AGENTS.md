@@ -22,7 +22,7 @@ Eight Laurels can be earned without battling; the three highest-ranked contestan
 with all eight qualify for the Triumvirate. Do not invent major characters,
 challenges, mystery explanations, or the full chapter unless explicitly requested.
 Do not add evolution, battles, levels/XP, moves/abilities, HP, storage boxes,
-trading, sprites, Pokédex tracking, shops/crafting, random encounters, relationship
+trading, sprites, a complete Pokémon database, shops/crafting, random encounters, relationship
 systems, character backgrounds/classes, or Laurel/ranking calculations.
 
 ## Architecture and permanent rules
@@ -78,14 +78,20 @@ interpreter rewrite, or unrelated abstraction is needed.
   confirms replacement, constructs successfully, then writes once before activation.
   Failure preserves old bytes/game. Automatic write failures keep committed gameplay
   and display a warning. Storage failure requires explicit unsaved-play consent.
-- Keep Story, Character, Party, Journal and People exclusive inline views. Preserve
+- Keep Story, Character, Party, Pokédex and People exclusive inline views.
+  Character contains selectable Stats (default), Skills, Inventory and Journal. Preserve
   the hidden story DOM, draft text/choices/errors and save warnings. Switching views
   changes no gameplay or storage. Focus the active heading. Use native pressed
-  buttons, 44px targets, a simple responsive five-tab layout, sticky chapter/header,
+  buttons, 44px targets, a single-row five-tab layout at 320px, sticky navigation and Story-only chapter,
   clear focus, no animation or nested panel scrolling, and safe wrapping at 320px.
 - Choices are native unselected radios; Continue alone commits. Failed navigation
   preserves selection/error. Render authored formatting with safe DOM nodes; player
   input stays text and is never HTML, commands, or a recursive template.
+- Pokédex species metadata is incremental and validated against explicit journal
+  discovery/acquisition event IDs. Derive entries solely from the current journal,
+  never prose names or a separate save field. Authors pair acquisitions with journal
+  events atomically. Keep public revision 5 and save formats unchanged for additive
+  event metadata; never backfill old saves or invent post-checkpoint discoveries.
 - People metadata is immutable and validated against journal events; discovery is
   derived from current journal after recovery. No separate tracking/save data.
 - Preflight stays separate from gameplay, reuses fresh Game replays, shares its

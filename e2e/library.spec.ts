@@ -151,7 +151,7 @@ test('Harbor Practice naming, selected metadata, conditional choices, and spendi
   await expectItems(page, 'Inventory', ['Dispatch Coin × 2', 'Grain Sack × 2', 'Attested Grain Accounts × 1']);
   await expect(page.getByText('The board writes ' + name + ' into the agreement as its guarantor. Its next argument will happen across a table, with the accounts open.', { exact: true })).toBeVisible();
   const journal = await openPanel(page, 'Journal');
-  await expect(journal.getByRole('heading', { level: 3 })).toHaveText(['The Writ', 'The River', 'Night Center']);
+  await expect(journal.getByRole('heading', { level: 4 })).toHaveText(['The Writ', 'The River', 'Night Center']);
   await expect(journal.getByRole('listitem')).toHaveCount(8);
   await expect(journal.getByRole('listitem').last()).toHaveText(name + ' secured a civic compact and committed six sacks to public kitchens.');
   await returnToStory(page);

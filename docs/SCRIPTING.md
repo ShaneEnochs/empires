@@ -89,7 +89,7 @@ acquired skills, and inventory persist between passages.
 Browser startup offers New Game and, when valid saved progress exists, Continue
 Game. Continue resumes the last successfully saved committed passage and exact state
 without replaying effects. Authored checkpoints remain dedicated to death recovery.
-The Journal button groups events in first-recorded chapter order; the messenger
+The Journal subsection under Character groups events in first-recorded chapter order; the messenger
 route has an extra event. Stored text keeps its original resolved values.
 Both routes acquire Composure at the gate and lose it at the center. Only the
 messenger route acquires Diplomacy, changing the center's visible prose. The
@@ -181,7 +181,8 @@ Your partner stays behind for this example.
 
 Definitions precede all chapters/passages, can interleave with other metadata, and
 are frozen `{id,species}` records in `Story.pokemon`. IDs use the standard identifier
-grammar; species are nonempty literal JSON strings. No Pokédex or evolution data exists.
+grammar; species are nonempty literal JSON strings. Party definitions contain no species database or evolution data. Separate
+Pokédex presentation metadata maps explicit journal events to species; see AUTHORING.md.
 
 Addition/removal share other entry effects' placement, source order and atomicity.
 The party starts empty, holds at most six unique individuals, and preserves joining
@@ -294,7 +295,7 @@ journal before initial effects, which may immediately record entries. All effect
 are atomic: failure rolls back every candidate append, variable change, and skill change. Failed
 attempts leave no hidden deduplication history.
 
-The Journal button selects a read-only view without navigation or effects.
+The Journal subsection under Character selects a read-only view without navigation or effects.
 Chapter groups appear in first-recorded order; entries within a group retain
 recording order. Later events in an earlier chapter join its existing group.
 An open journal updates after successful navigation. Empty journals display
@@ -1137,9 +1138,9 @@ unless a future task explicitly changes the requirements.
 
 ## Compact reading views and deliberate choices (Stages 10B–10C)
 
-The browser presents five tabs: Story, Character, Party, Journal, People.
-At narrow widths they use two rows; each target remains at least 44px tall. An opaque CSS sticky wrapper holds the tabs and a compact bar
-showing the current passage's authored chapter, in every view. Passage titles
+The browser presents five tabs: Story, Character, Party, Pokédex, People.
+They remain in one row at 320px with at least 44px targets. An opaque CSS sticky wrapper holds the tabs and a compact bar
+showing the current passage's authored chapter only in Story. Passage titles
 remain in scrollable content, centered and approximately 10% larger. Chapter text
 is centered with compact padding; prose stays left-aligned. Tabs have slightly
 larger labels and one bottom-border indicator, with no text underline in any state.
@@ -1160,8 +1161,9 @@ Successful navigation/input/retry rebuild the passage and select Story. Checkpoi
 and save compatibility remain unchanged. The muted palette uses system fonts;
 there are no animations, overlays, sidebars, or separate mobile navigation.
 
-Character contains Character Statistics, Skills, and Inventory, preserving author
-order for stats and acquisition order for skills/items. Journal stays independent.
+Character contains selectable Stats (default), Skills, Inventory and Journal,
+preserving authored statistics, acquired skill/item order and journal chapter groups.
+These are presentation choices only; they never change state, drafts or saves.
 People uses optional validated immutable definitions associated through each
 `src/catalog.ts` entry. Each has a stable ID, name/role, short description supported
 by the story, and `discoveryEvents` listing one or more existing journal event IDs.
@@ -1337,3 +1339,13 @@ must exactly match declarations. Page advancement never repeats party entry effe
 Preflight advances through visible pages without replaying effects, then explores
 only enabled routes. Analysis is bounded; it does not prove all loops/resources or
 all possible input-dependent grammar. Use local playtests alongside diagnostics.
+
+## Pokédex encounter events
+
+Pokédex discovery uses existing `*journal` events and separate incremental species
+metadata, with no new story directives or save fields. Use an explicit event only
+for a witnessed encounter, and pair acquisition events with `*add_pokemon` in the
+same entry/guard. Mentions, images and jewelry never count. See
+[AUTHORING.md](AUTHORING.md#adding-discoverable-pokédex-species) for the full JSON
+contract, acquisition examples, page timing and recovery/compatibility rules.
+The nonempty `*title` requirement and internal passage ID semantics are unchanged.

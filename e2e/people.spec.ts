@@ -2,16 +2,22 @@ import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import { choose, crisisKey, expectPassage, openPanel, returnToStory, expectStartup, startGame } from './helpers';
 
-test('Character combines statistics, skills, and inventory while Journal remains independent', async ({ page }) => {
+test('Character defaults to Stats and exposes separate Skills, Inventory and grouped Journal', async ({ page }) => {
   await startGame(page);
   const character = await openPanel(page, 'Character');
-  await expect(character.getByRole('heading', { level: 3 })).toHaveText(['Character Statistics', 'Skills', 'Inventory']);
-  await expect(page.getByRole('button', { name: 'Skills', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Inventory', exact: true })).toHaveCount(0);
+  await expect(character.getByRole('group', { name: 'Character sections' }).getByRole('button')).toHaveText(['Stats', 'Skills', 'Inventory', 'Journal']);
+  await expect(character.getByRole('button', { name: 'Stats', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(character.getByRole('heading', { level: 3 })).toHaveText(['Stats']);
+  const skills = await openPanel(page, 'Skills');
+  await expect(skills.getByRole('listitem')).toHaveText(['Rescue Training']);
+  const inventory = await openPanel(page, 'Inventory');
+  await expect(inventory.getByRole('listitem')).toHaveText(['Dispatch Coin × 4', 'Emergency Writ × 1']);
   const journal = await openPanel(page, 'Journal');
   await expect(journal.getByRole('listitem')).toHaveText(['The last ferry reached Bellwether before the river closed.']);
-  await expect(journal.getByRole('heading', { level: 3 })).toHaveText(['The Writ']);
-  await expect(character).toBeHidden();
+  await expect(journal.getByRole('heading', { level: 4 })).toHaveText(['The Writ']);
+  await expect(skills).toBeHidden();
+  await expect(inventory).toBeHidden();
+  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button', { name: 'Journal', exact: true })).toHaveCount(0);
 });
 
 test('Provincial references wait for recording and checkpoint recovery removes later encounters', async ({ page }) => {

@@ -1,3 +1,5 @@
+import { validatePokedex } from './pokedex';
+import type { PokedexEntry } from './pokedex';
 import { renderNarrative } from './format';
 import type { TitlePage } from './title-page';
 import type { Game } from './game';
@@ -9,7 +11,7 @@ import { interpolate } from './interpolate';
 import { validatePeople } from './people';
 import type { PersonReference } from './people';
 
-interface ReaderEntry { readonly title: string; readonly titlePage?: TitlePage; readonly description?: string; readonly identity: StorySaveIdentity; readonly people: readonly PersonReference[]; }
+interface ReaderEntry { readonly title: string; readonly titlePage?: TitlePage; readonly description?: string; readonly identity: StorySaveIdentity; readonly people: readonly PersonReference[]; readonly pokedex?: readonly PokedexEntry[]; }
 
 export function showError(root: HTMLElement, error: unknown): void {
   root.querySelector('#story-error')?.remove();
@@ -32,6 +34,7 @@ export function appHeader(branding = 'Aurelian League'): HTMLElement {
 
 export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story, storage: CheckpointStorage, backToLibrary?: () => void): void {
   const people = validatePeople(story, entry.people);
+  const pokedex = validatePokedex(story, entry.pokedex ?? []);
   const session = new GameSession(story, storage, entry.identity);
   let reportedNotice: unknown;
   let confirmation: HTMLDialogElement | undefined;
@@ -180,7 +183,7 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
     storyButton.textContent = 'Story';
     storyButton.setAttribute('aria-controls', 'story-content');
     storyButton.addEventListener('click', () => selectView('Story'));
-    const panels = createPanels(story, game, people, selectView);
+    const panels = createPanels(story, game, people, pokedex, selectView);
     const navigation = document.createElement('nav');
     navigation.className = 'view-navigation';
     navigation.setAttribute('aria-label', 'Reading views');
@@ -191,12 +194,17 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
     header.className = 'reading-header';
     header.append(navigation, chapter);
     // Wrapped chapter names and text scaling change the sticky obstruction.
+    function syncHeaderSize(): void {
+      document.documentElement.style.setProperty('--reading-header-space', `${header.getBoundingClientRect().height}px`);
+    }
     const headerSize = new ResizeObserver(() => {
       if (!header.isConnected) { headerSize.disconnect(); return; }
-      document.documentElement.style.setProperty('--reading-header-space', `${header.getBoundingClientRect().height}px`);
+      syncHeaderSize();
     });
     headerSize.observe(header);
     function selectView(name: string): void {
+      chapter.hidden = name !== 'Story';
+      syncHeaderSize();
       storyContent.hidden = name !== 'Story';
       storyButton.setAttribute('aria-pressed', String(name === 'Story'));
       for (let index = 0; index < panels.sections.length; index++) {
