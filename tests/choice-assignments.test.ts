@@ -16,6 +16,7 @@ const route = [
   '',
   '*show_if response == "ignore"',
   'You ignore him.',
+  '',
   'The harbor welcomes you.',
 ].join('\n');
 
