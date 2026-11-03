@@ -9,7 +9,7 @@ test('language, snippets and tasks retain their registration', () => {
   assert.deepEqual(manifest.contributes.languages[0].extensions, ['.story']);
   assert.equal(manifest.contributes.languages[0].id, 'pokemon-story');
   const snippets = JSON.parse(fs.readFileSync(path.join(__dirname,'../../../.vscode/pokemon.code-snippets'),'utf8'));
-  assert.equal(Object.keys(snippets).length, 38);
+  assert.equal(Object.keys(snippets).length, 39);
   for (const entry of Object.values(snippets)) { assert.equal(entry.scope, 'pokemon-story,plaintext'); assert.ok(entry.prefix.startsWith('pkmn-')); }
   assert.equal(require('../../../.vscode/tasks.json').tasks.length, 3);
 });
@@ -56,6 +56,7 @@ test('real TextMate tokenization covers directives, choices, conditions, strings
   assert.ok(!tokens('*unknown value').some(token=>token.scopes.includes('keyword.control.directive.pokemon')));
   for(const scope of ['string.unquoted.choice.pokemon','entity.name.label.pokemon','keyword.control.condition.pokemon','keyword.operator.comparison.pokemon','constant.numeric.pokemon'])
     assert.ok(tokens('#Go -> destination [if score >= 2]').some(token=>token.scopes.includes(scope)),scope);
+  assert.ok(tokens('#Confront -> arrival [set response "confront"]').some(token=>token.scopes.includes('keyword.control.condition.pokemon')));
   for(const scope of ['string.quoted.double.pokemon','variable.other.interpolated.pokemon'])
     assert.ok(tokens('*journal event "Hello ${name}"').some(token=>token.scopes.includes(scope)),scope);
   assert.deepEqual(tokens('Ordinary narrative.')[0].scopes,['source.pokemon-story']);
