@@ -5,6 +5,17 @@ revision 8. Pokémon-themed private examples exercise historical engine features
 they are not public stories or additional Aurelia lore. See README for the current
 workflow and SCRIPTING.md for all syntax.
 
+## Opt-in Pokémon research (current story scope)
+
+At Lezano registration, the story grants `dex_installed = true` and records a
+journal event. The public Pokédex metadata now refers only to explicit
+`scanned_...` journal events, so ferry sightings and later non-looked-up
+Pokémon do not appear in it. This is currently an authored story convention
+rather than a new engine rule; a separate UI update will add a native
+uninstalled/empty state, official numbered entries, observation notes, and
+in-story lookup cards using the authored scan events. No new persistence
+collection or runtime API is needed.
+
 ## Optional visual passage headings
 
 Each passage still requires a unique authored ID and a nonempty `*title`. An
