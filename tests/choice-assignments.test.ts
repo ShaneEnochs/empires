@@ -13,6 +13,7 @@ const route = [
   '*passage arrival', '*title Arrival',
   '*show_if response == "confront"',
   'You confront him.',
+  '',
   '*show_if response == "ignore"',
   'You ignore him.',
   'The harbor welcomes you.',
