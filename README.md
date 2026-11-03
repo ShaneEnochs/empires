@@ -106,7 +106,7 @@ published build. No editor uploads, accounts, APIs, or new runtime dependencies 
 
 ## Saves and recovery
 
-The sole public story has `storyId: aurelian-league`, `storyRevision: 6`, and key
+The sole public story has `storyId: aurelian-league`, `storyRevision: 7`, and key
 `pokemon:checkpoint:aurelian-league`. This fresh namespace never reads, migrates,
 or deletes the former game's browser records.
 
@@ -185,6 +185,6 @@ after party removal. Repeated sightings yield one entry per species.
 See the [complete metadata and encounter guide](docs/AUTHORING.md#adding-discoverable-pokédex-species)
 for JSON examples, validation, event timing, and optional author-preview metadata.
 Discovery derives solely from the journal; no save-schema or format change is
-needed. Public revision 6 remains compatible. Existing saves without the new
+needed. Public revision 7 remains compatible. Existing saves without the new
 events are not silently backfilled. Checkpoint recovery derives the Pokédex from
 the restored journal, just as People does.
