@@ -52,7 +52,7 @@ A seventh companion fails atomically. Party never uses inventory items.
 
 Edit `content/title-page.json` for plain-text brand/title/description/button labels.
 Keep all five fields nonempty strings. The catalog contains only The Aurelian League,
-identity `aurelian-league`, revision 5, key `pokemon:checkpoint:aurelian-league`.
+identity `aurelian-league`, revision 6, key `pokemon:checkpoint:aurelian-league`.
 Display text is not a save identity. The old game's keys are never read or deleted.
 Party-aware saves use format 4, or 5 with reading context; schemas 1–3 are incompatible.
 Continue resumes committed state/page without re-entering. Checkpoints preserve the
@@ -181,7 +181,7 @@ restored checkpoint journal, retaining events already there and discarding later
 ones, exactly like People discovery. Nothing outside authoritative state survives
 recovery as hidden progress.
 
-The save key, formats 4/5/6, and public story revision 5 stay unchanged. These
+The save key, formats 4/5/6, and public story revision 6 stay unchanged. These
 additive event IDs/metadata do not invalidate existing revision-5 records. Older
 records without these events remain undiscovered until a later legitimate event;
 startup/Continue never backfill them or write a save. Do not change existing IDs,
