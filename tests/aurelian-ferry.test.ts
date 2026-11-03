@@ -79,38 +79,35 @@ test('all pronoun sets and both phone choices lead to Lucia and stay in the ferr
   }
 });
 
-test('conversations, eavesdropping and the deck lead only to the terminal harbor passage', () => {
-  for (const encounter of ['group_join','eavesdrop','rail']) {
-    const game=beginConversation();
+test('all encounters lead to the two-option gangway choice', () => {
+  for (const encounter of ['group_join', 'eavesdrop', 'rail']) {
+    const game = beginConversation();
     game.navigate('open_deck');
     game.navigate(encounter);
-    assert.deepEqual(encounteredPeople(people,game.state).map(p=>p.id),
-      encounter === 'group_join' ? ['lucia','dario','ilaria'] : ['lucia']);
+    assert.deepEqual(encounteredPeople(people, game.state).map(p => p.id),
+      encounter === 'group_join' ? ['lucia', 'dario', 'ilaria'] : ['lucia']);
     game.navigate('dock_approach');
-    assert.equal(game.passage.title,'Lezano Harbor');
-    assert.equal(game.passage.continueTo,undefined);
-    assert.deepEqual(game.passage.choices,[]);
-    assert.equal(game.passage.textInput,undefined);
-    assert.equal(game.state.party.length,0);
+    assert.equal(game.passage.title, 'Lezano Harbor');
+    assert.deepEqual(game.visibleChoices.map(choice => choice.destinationId), ['lezano_arrival', 'lezano_arrival']);
+    assert.deepEqual(game.visibleChoices.map(choice => choice.assignment?.value), ['confront', 'ignore']);
+    assert.equal(game.state.party.length, 0);
     assert.equal(game.state.variables.ferry_encounter,
       encounter === 'group_join' ? 'conversation' : encounter === 'eavesdrop' ? 'eavesdrop' : 'quiet');
   }
-  assert.equal(story.passages.some(p=>p.chapter==='Lezano'),false);
-  assert.equal(story.passages.some(p=>p.id==='starters' || p.id==='arrival'),false);
+  assert.ok(story.passages.some(p => p.chapter === 'Lezano'));
+  assert.equal(story.passages.some(p => p.id === 'starters'), false);
 });
 
-test('Lucia topics keep their distinct callbacks at the harbor', () => {
-  for (const topic of ['lucia_wildlife','lucia_rules']) {
+test('Lucia topics remain recorded without cluttering the dock with prior acquaintances', () => {
+  for (const topic of ['lucia_wildlife', 'lucia_rules']) {
     const game = beginConversation();
     game.navigate(topic);
-    assert.notEqual(game.state.variables.lucia_topic,'none');
+    assert.notEqual(game.state.variables.lucia_topic, 'none');
     game.navigate('open_deck');
     game.navigate('rail');
     game.navigate('dock_approach');
-    assert.equal(game.state.party.length,0);
-    const prose = game.visibleParagraphs.map(p=>p.text).join(' ');
-    if(topic==='lucia_wildlife')assert.match(prose,/photograph them/);
-    if(topic==='lucia_rules')assert.match(prose,/get some answers/);
+    assert.equal(game.state.party.length, 0);
+    assert.doesNotMatch(game.visibleParagraphs.map(p => p.text).join(' '), /Lucia|Dario|Ilaria/);
   }
 });
 
@@ -138,4 +135,56 @@ test('the League advertisement and Lucia explanation have distinct passage title
   assert.equal(advertisement?.title,'A Glimpse of the League');
   assert.equal(explanation?.title,'Eight Laurels');
   assert.equal(story.passages.filter(p=>p.title==='Eight Laurels').length,1);
+});
+
+test('CHAMP responses are conditional in one shared arrival passage', () => {
+  for (const [index, answer] of ['confront', 'ignore'].entries()) {
+    const game = beginConversation();
+    game.navigate('open_deck');
+    game.navigate('rail');
+    game.navigate('dock_approach');
+    assert.match(game.visibleParagraphs.map(p => p.text).join(' '), /CHAMP/);
+    assert.equal(game.state.variables.rival_response, 'none');
+    assert.equal(game.state.variables.credits, 0);
+    assert.throws(() => game.navigate('lezano_arrival'), /select a specific choice/);
+    game.navigateChoice(game.visibleChoices[index]!);
+    assert.equal(game.passage.id, 'lezano_arrival');
+    assert.equal(game.state.variables.rival_response, answer);
+    const arrival = game.visibleParagraphs.map(p => p.text).join(' ');
+    assert.match(arrival, /Once your feet are finally on solid ground/);
+    if (answer === 'confront') {
+      assert.match(arrival, /Kinda rude there/);
+      assert.doesNotMatch(arrival, /You decide he isn't worth the trouble/);
+    } else {
+      assert.match(arrival, /You decide he isn't worth the trouble/);
+      assert.doesNotMatch(arrival, /Kinda rude there/);
+    }
+  }
+});
+
+test('check-in grants 100 credits and the welcome items, with two final routes', () => {
+  for (const destination of ['hotel_route', 'food_route']) {
+    const game = beginConversation();
+    game.navigate('open_deck');
+    game.navigate('rail');
+    game.navigate('dock_approach');
+    game.navigateChoice(game.visibleChoices[0]!);
+    assert.equal(game.state.variables.credits, 0);
+    assert.deepEqual(game.state.inventory, {});
+    game.navigate('lezano_checkin');
+    assert.equal(game.state.variables.credits, 100);
+    assert.deepEqual(game.state.inventory, { league_badge: 1, city_map: 1, hotel_assignment: 1 });
+    assert.equal(game.passage.chapter, 'Lezano');
+    const prose = game.visibleParagraphs.map(p => p.text).join(' ');
+    assert.match(prose, /four o'clock this afternoon/);
+    assert.match(prose, /Civic Forum/);
+    assert.match(prose, /delivered directly to your room/);
+    assert.match(prose, /serves as your debit card/);
+    assert.match(prose, /All the shops here accept credits exclusively/);
+    assert.deepEqual(game.visibleChoices.map(choice => choice.destinationId), ['hotel_route', 'food_route']);
+    game.navigate(destination);
+    assert.equal(game.passage.choices.length, 0);
+    assert.equal(game.passage.continueTo, undefined);
+    assert.equal(game.state.party.length, 0);
+  }
 });
