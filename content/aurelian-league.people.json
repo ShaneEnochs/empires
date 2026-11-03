@@ -2,9 +2,65 @@
   {
     "id": "lucia",
     "name": "Lucia",
-    "description": "An outgoing League contestant in an orange jacket who hopes to explore Aurelia and learn more about wild Pokémon.",
+    "description": "A fellow League contestant with brown hair, an orange jacket, and a silver Lapras necklace.",
     "discoveryEvents": [
       "met_lucia"
+    ],
+    "facts": [
+      {
+        "text": "She was overwhelmed by a journalist's rapid-fire questions and worries about how he might portray her.",
+        "discoveryEvents": [
+          "lucia_journalist"
+        ]
+      },
+      {
+        "text": "You exchanged phone numbers aboard the ferry.",
+        "discoveryEvents": [
+          "lucia_contact_shared"
+        ]
+      },
+      {
+        "text": "She uses she/her pronouns.",
+        "discoveryEvents": [
+          "lucia_pronouns"
+        ]
+      },
+      {
+        "text": "Her family has a Floatzel that follows her around, even when she goes shopping.",
+        "discoveryEvents": [
+          "lucia_family"
+        ]
+      },
+      {
+        "text": "She has helped care for her family's Floatzel, but has never raised a Pokémon of her own.",
+        "discoveryEvents": [
+          "lucia_family"
+        ]
+      },
+      {
+        "text": "She hopes her first Pokémon partner will like her.",
+        "discoveryEvents": [
+          "lucia_family"
+        ]
+      },
+      {
+        "text": "She entered the League to explore wild Pokémon habitats, including Aurelia's wetlands, forests, and islands.",
+        "discoveryEvents": [
+          "lucia_travel"
+        ]
+      },
+      {
+        "text": "Her little brother gave her the Lapras necklace and wants photographs of Water-type Pokémon.",
+        "discoveryEvents": [
+          "lucia_travel"
+        ]
+      },
+      {
+        "text": "She wonders how the League ranks acts of compassion and other challenges that aren't battles.",
+        "discoveryEvents": [
+          "lucia_ranking_questions"
+        ]
+      }
     ]
   },
   {
