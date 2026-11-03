@@ -85,13 +85,47 @@ for (const width of [320, 1280]) for (const route of routes) {
     await proceed(page);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lezano Harbor');
     await expect(page.getByText(/starting balance of 100 credits/)).toBeVisible();
+    await expect(page.getByText(/Pokédex app/)).toBeVisible();
+    await proceed(page); // Opt-in harbor lookup
+    await page.getByRole('button', { name: 'Pokédex', exact: true }).click();
+    await expect(page.locator('#pokedex')).toContainText("You haven't encountered any Pokémon yet.");
+    await page.getByRole('button', { name: 'Story', exact: true }).click();
     const hotel = route.pronouns === 'He / Him';
+    await choose(page, hotel ? 'Look up Machoke in your new Pokédex' : 'Put your phone away and make some plans');
+    if (hotel) {
+      await page.getByRole('button', { name: 'Pokédex', exact: true }).click();
+      await expect(page.locator('#pokedex')).toContainText('Machoke');
+      await expect(page.locator('#pokedex')).not.toContainText('Wingull');
+      await page.getByRole('button', { name: 'Story', exact: true }).click();
+      await proceed(page);
+    }
     await choose(page, hotel ? 'Head to the hotel and check out your room' : 'Find somewhere nice to eat');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(hotel ? 'The Portico Hotel' : 'The Salt and Thyme');
     await expect(page.locator('#passage-heading')).toHaveClass(/visually-hidden/);
-    await choose(page, hotel ? 'Offer to help locate her suitcase' : 'Help the server move people away from the hanging lantern');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(hotel ? 'A Room at Last' : 'A Table by the Water');
-    await proceed(page);
+    const quickScan = route.pronouns === 'They / Them';
+    if (hotel) {
+      await choose(page, 'Offer to help the contestant find her suitcase');
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Following a Lead');
+      await choose(page, 'Ask the clerk to compare the ferry and hotel delivery lists');
+      await proceed(page); // Victra has a lead but no suitcase yet
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Last Step');
+      await choose(page, 'Go with Victra and help retrieve the suitcase');
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('A Room at Last');
+      await proceed(page); // Wingull balcony
+      await choose(page, 'Look up Wingull and save a note about your visitor');
+      await proceed(page);
+    } else {
+      await choose(page, quickScan
+        ? 'Look up Wattrel in the Pokédex before getting involved'
+        : 'Help the server clear diners away from the swinging lantern');
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('A Difficult Rescue');
+      await choose(page, 'Bring a clean cloth to cover and calm the Wattrel');
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('A Table by the Water');
+      await choose(page, quickScan
+        ? 'Put your phone away and enjoy your lunch'
+        : 'Look up Wattrel now and record what happened');
+      if (!quickScan) await proceed(page);
+    }
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Plans for the Afternoon');
     const meeting = route.contact === 'Exchange numbers with Lucia';
     await expect(page.getByRole('radio')).toHaveCount(2);
@@ -105,10 +139,13 @@ for (const width of [320, 1280]) for (const route of routes) {
 
     const raw = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
     const save = JSON.parse(raw!);
-    expect(save.storyRevision).toBe(7);
+    expect(save.storyRevision).toBe(8);
     expect(save.currentState.variables.credits).toBe(hotel ? 100 : 88);
+    expect(save.currentState.variables.dex_installed).toBe(true);
+    expect(save.currentState.variables.victra_case).toBe(hotel ? 'recovered' : 'none');
     expect(save.currentState.variables.hotel_response).toBe(hotel ? 'help' : 'none');
-    expect(save.currentState.variables.restaurant_response).toBe(hotel ? 'none' : 'clear');
+    expect(save.currentState.variables.restaurant_response).toBe(hotel ? 'none' : quickScan ? 'scan' : 'clear');
+    expect(save.currentState.variables.livia_impression).toBe(hotel ? 'none' : quickScan ? 'distracted' : 'helpful');
     expect(save.currentState.variables.rival_response).toBe(confront ? 'confront' : 'ignore');
     expect(save.currentState.inventory).toEqual({ league_badge: 1, city_map: 1, hotel_assignment: 1 });
     expect(save.currentState.variables.trainer_name).toBe('Rowan 周');
