@@ -76,6 +76,8 @@ export interface Passage {
   readonly id: string;
   readonly chapter: string;
   readonly title: string;
+  /** Keep the title accessible to screen readers without displaying a large heading. */
+  readonly hideTitle?: true;
   readonly checkpoint?: true;
   readonly death?: true;
   readonly effects: readonly PassageEffect[];
