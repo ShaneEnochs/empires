@@ -9,7 +9,7 @@ never merge automatically or commit directly to main.
 
 Aurelia is a modern Pokémon region influenced by Roman architecture and civic
 institutions. The public game is `content/aurelian-league.story`, the sole catalog
-entry. Its identity is `aurelian-league`, revision 4. The current playable
+entry. Its identity is `aurelian-league`, revision 5. The current playable
 chapter begins on a ferry to Lezano and ends when the vessel comes into port.
 The player starts without Pokémon, makes an early flavor choice, enters a first
 name, optionally exchanges contact details with Lucia, and chooses pronouns.

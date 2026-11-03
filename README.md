@@ -102,7 +102,7 @@ published build. No editor uploads, accounts, APIs, or new runtime dependencies 
 
 ## Saves and recovery
 
-The sole public story has `storyId: aurelian-league`, `storyRevision: 4`, and key
+The sole public story has `storyId: aurelian-league`, `storyRevision: 5`, and key
 `pokemon:checkpoint:aurelian-league`. This fresh namespace never reads, migrates,
 or deletes the former game's browser records.
 

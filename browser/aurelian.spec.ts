@@ -78,7 +78,7 @@ for (const width of [320, 1280]) for (const route of routes) {
 
     const raw = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
     const save = JSON.parse(raw!);
-    expect(save.storyRevision).toBe(4);
+    expect(save.storyRevision).toBe(5);
     expect(save.currentState.variables.trainer_name).toBe('Rowan 周');
     expect(save.currentState.variables.pronouns).toBe(route.pronouns);
     expect(save.currentState.variables.lucia_contact).toBe(route.contact === 'Exchange numbers with Lucia');
