@@ -9,14 +9,14 @@ never merge automatically or commit directly to main.
 
 Aurelia is a modern Pokémon region influenced by Roman architecture and civic
 institutions. The public game is `content/aurelian-league.story`, the sole catalog
-entry. Its identity is `aurelian-league`, revision 7. The current playable
+entry. Its identity is `aurelian-league`, revision 8. The current playable
 story starts aboard the Portia on its approach to Lezano and currently ends immediately before the four-o'clock orientation.
 The player starts without Pokémon, makes an early flavor choice, enters a first
 name, optionally exchanges contact details with Lucia, and chooses pronouns.
 Only contestants, crew, and League press are aboard; Minccino and Machoke
 assist the crew. Lucia wears a Lapras necklace. The player meets an unnamed
 rival with CHAMP on his jacket on the gangway and checks in at Lezano, receiving
-a badge, a map and 100 credits. Two authored routes visit the Portico Hotel or the Salt and Thyme café, with different small-scale crises and conditional plans to reach orientation. The planned starter choices are Charmander, Chikorita, and Piplup, all equally valid. Do not write the orientation itself or starter selection until requested.
+a badge, a map and 100 credits. Two authored routes visit the Portico Hotel or the Salt and Thyme café, with multi-stage dilemmas and persistent outcomes. At registration the player installs a Pokédex app, and no species is recorded without an explicit scan choice. A later UI/assembly PR will add collapsible Pokédex cards and numbered species detail. The planned starter choices are Charmander, Chikorita, and Piplup, all equally valid. Do not write the orientation itself or starter selection until requested.
 
 Eight Laurels can be earned without battling; the three highest-ranked contestants
 with all eight qualify for the Triumvirate. Do not invent major characters,
@@ -89,9 +89,9 @@ interpreter rewrite, or unrelated abstraction is needed.
   preserves selection/error. Render authored formatting with safe DOM nodes; player
   input stays text and is never HTML, commands, or a recursive template.
 - Pokédex species metadata is incremental and validated against explicit journal
-  discovery/acquisition event IDs. Derive entries solely from the current journal,
+  discovery/acquisition event IDs. Public discoveries must use intentional `scanned_...` events after `dex_installed`, never ferry `saw_...` sightings. Derive entries solely from the current journal,
   never prose names or a separate save field. Authors pair acquisitions with journal
-  events atomically. Keep public revision 7 and save formats unchanged for additive
+  events atomically. Keep public revision 8 and save formats unchanged for additive
   event metadata; never backfill old saves or invent post-checkpoint discoveries.
 - People metadata is immutable and validated against journal events; discovery is
   derived from current journal after recovery. No separate tracking/save data.
