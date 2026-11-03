@@ -14,6 +14,7 @@
     <KeyWord name="*else" />
     <KeyWord name="*elseif" />
     <KeyWord name="*grant_skill" />
+    <KeyWord name="*hide_title" />
     <KeyWord name="*if" />
     <KeyWord name="*input_text" />
     <KeyWord name="*item" />

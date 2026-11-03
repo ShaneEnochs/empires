@@ -177,3 +177,35 @@ test('validated story definitions cannot be changed by callers', () => {
   assert.equal(story.startId, 'opening');
   assert.equal(passage.choices[0]?.destinationId, 'end');
 });
+
+test('visually hidden passage titles keep their authored and accessible metadata', () => {
+  const parsed = parseStory([
+    '*chapter Chapter 1: The Crossing',
+    '*passage opening', '*title Opening', 'The story begins.', '*continue middle',
+    '*passage middle', '*title A Better View', '*hide_title',
+    'You look through the window.', '*continue ending',
+    '*passage ending', '*title The Harbor', 'The ferry docks.',
+  ].join('\n'));
+  assert.equal(parsed.passages[0]!.hideTitle, undefined);
+  assert.equal(parsed.passages[1]!.hideTitle, true);
+  assert.equal(parsed.passages[1]!.title, 'A Better View');
+  assert.equal(parsed.passages[1]!.chapter, 'Chapter 1: The Crossing');
+  assert.ok(Object.isFrozen(parsed.passages[1]));
+  assert.equal(parsed.passages[2]!.hideTitle, undefined);
+});
+
+test('hide_title rejects arguments, duplicates, and commands outside its title boundary', () => {
+  const invalid = [
+    ['*hide_title extra\n', /takes no arguments/],
+    ['*hide_title\n*hide_title\n', /must appear once/],
+    ['*journal heard \"Note\"\n*hide_title\n', /must appear once/],
+    ['*temp temp 0\n*hide_title\n', /must appear once/],
+    ['Narrative.\n*hide_title\n', /must appear once/],
+    ['*checkpoint\n*hide_title\n', /must appear once/],
+  ] as const;
+  for(const [source, message] of invalid) {
+    assert.throws(() => parseStory('*passage start\n*title Start\n'+source+'Narrative.'), message);
+  }
+  assert.throws(() => parseStory('*passage start\n*hide_title\n*title Start\nNarrative.'), /must appear once/);
+  assert.throws(() => parseStory('*var test true\n*passage start\n*title Start\n*if test == true\n  *hide_title\nNarrative.'), /cannot be conditional/);
+});

@@ -118,6 +118,7 @@ messenger route and five on the direct route. Neither route can underflow.
 | `*chapter Label` | Top-level nonempty literal label for subsequent passages; each declaration needs a following passage. Default: `Prologue`. |
 | `*passage id` | Begins a passage with a unique stable ID matching `[a-z][a-z0-9_-]*`. The first passage is the start. |
 | `*title text` | Exactly one nonempty literal title per passage, before navigation. Place it immediately after the header. |
+| `*hide_title` | Optional, no arguments, immediately after `*title`. Hides that passage's large visible heading while retaining its accessible name. The title is still required. |
 | `*checkpoint` | No arguments; static passage metadata immediately after the title and before all effects/prose, at most once. Successful entry captures a replacement checkpoint before effects. |
 | `*set name literal` | Replaces a declared variable with a literal of the same type. Only after the title and before any narrative. |
 | `*add name number` | Adds a numeric literal to a declared numeric variable. Same placement as `*set`. |
@@ -259,6 +260,33 @@ The responsive interface separates story actions from utility buttons. Panels
 remain single active inline; long labels and entries wrap without truncation.
 Responsive styling adds no authoring directives and changes no story routes,
 effects, saved data, checkpoint timing, or recovery behavior.
+
+## Visible and hidden passage headings
+
+Keep `*title` on every passage as a stable internal and accessible label. Use
+`*hide_title` immediately after the title to suppress its large visual heading.
+The reader retains a focusable, visually hidden H1 for screen readers and its
+story region label. The chapter ribbon remains visible whenever the Story tab is
+active, regardless of `*hide_title`. For example:
+
+```text
+*chapter Chapter 1: The Crossing
+*passage ferry
+*title Approaching Lezano Aboard the Portia
+
+The ferry approaches the harbor.
+*continue windows
+
+*passage windows
+*title A Better View
+*hide_title
+
+You move closer to the glass.
+```
+
+`*hide_title` cannot be repeated, given arguments, placed inside a conditional,
+or used after a checkpoint, entry effect, paragraph, temporary declaration, or
+navigation. It never alters saves, state, passage identity, or passage `title`.
 
 ## Chapters and journal events
 
@@ -452,7 +480,7 @@ because existing gate/background snapshots remain compatible.
 ## Browser saving and startup
 
 The application stores one atomic record at `pokemon:checkpoint:aurelian-league`
-for the sole public story (`aurelian-league`, revision 6). Other authored applications
+for the sole public story (`aurelian-league`, revision 7). Other authored applications
 must configure distinct explicit identities. Previous-game keys are never read,
 migrated, or deleted. Unsupported saves stay untouched until confirmed replacement.
 

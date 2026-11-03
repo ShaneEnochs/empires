@@ -231,6 +231,7 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
       const heading = document.createElement('h1');
       heading.id = 'passage-heading';
       heading.textContent = passage.title;
+      if (passage.hideTitle) heading.classList.add('visually-hidden');
       heading.tabIndex = -1;
 
       const paragraphs = game.currentParagraphs.map(({ text }) => {

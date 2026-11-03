@@ -11,6 +11,8 @@
 *var ferry_encounter "none"
 *var rival_response "none"
 *var credits 0
+*var hotel_response "none"
+*var restaurant_response "none"
 *item league_badge "Aurelian League contestant badge"
 *item city_map "Map of Lezano"
 *item hotel_assignment "Hotel room assignment"
@@ -18,10 +20,10 @@
 *stat pronouns "Pronouns"
 *stat credits "Credits"
 
-*chapter The Crossing
+*chapter Chapter 1: The Crossing
 
 *passage ferry
-*title Approaching Lezano
+*title Approaching Lezano Aboard the Portia
 
 The ferry has been underway since very early this morning, and by now you've grown accustomed to the gentle vibration of its engines beneath your feet. Sunlight streams through the passenger lounge's wide windows, catching on the polished floors and the occasional glassware on the many tables. The air smells wonderfully of fresh coffee and warm breakfast rolls. Unfortunately, every seat in the lounge is occupied, and the little café near the stairs has a line stretching almost to the door. Even if you were to treat yourself to something delicious, you'd have nowhere comfortable to sit and enjoy it.
 
@@ -35,6 +37,7 @@ There's still a little time before the ferry reaches Lezano. You could take anot
 
 *passage ferry_cafe
 *title The Breakfast Crowd
+*hide_title
 *journal saw_minccino_cafe "You saw Minccino clearing tables in the ferry café."
 *journal saw_machoke_cafe "You saw Machoke moving luggage through the café crowd."
 
@@ -46,6 +49,7 @@ You consider joining the queue, but a Machoke wearing a crew vest comes through 
 
 *passage ferry_windows
 *title A Better View
+*hide_title
 *journal saw_wingull_windows "You saw Wingull following the ferry’s wake."
 *journal saw_machoke_windows "You saw Machoke helping the baggage team."
 *journal saw_minccino_windows "You saw Minccino collecting napkins near the windows."
@@ -58,6 +62,7 @@ Behind you, a Minccino wearing a café apron darts between tables to collect dis
 
 *passage ferry_context
 *title One of the Hundred
+*hide_title
 
 Everyone aboard is bound for the inaugural Aurelian League. The passengers are contestants, members of the press, or people working aboard the ferry and for the event. Some have traveled halfway around the world for the opportunity. Only one hundred contestants were accepted, and somehow, you're one of them. The whole thing has been so wonderfully unexpected that part of you wonders whether there might have been a mistake.
 
@@ -69,6 +74,7 @@ Yet here you are, with your luggage packed and your future waiting somewhere on 
 
 *passage ferry_ad
 *title A Glimpse of the League
+*hide_title
 
 The television mounted above the café counter is playing the same advertisement for what must be the eighth time since you boarded. A cheerful little tune accompanies a sweeping aerial view of Aurelia, beginning with its sunlit coastline before moving inland over green hills, forests, and towns. Eight golden Laurels appear one after another across the screen, accompanied by the presenter's familiar voice.
 
@@ -92,6 +98,7 @@ She smiles at you. "Sorry, I should introduce myself. I'm Lucia. You're one of t
 
 *passage name
 *title A Fellow Contestant
+*hide_title
 *journal saw_wingull_approach "You saw Wingull circling on the approach to Lezano."
 *journal met_lucia "You met Lucia, a fellow League contestant, aboard the ferry to Lezano."
 *journal lucia_journalist "Lucia was overwhelmed by a journalist's rapid questions and worries about his article."
@@ -106,6 +113,7 @@ She offers you her hand. "There are a hundred of us, and I don't want to wait un
 
 *passage contact_question
 *title A Familiar Face
+*hide_title
 
 "Hi, ${trainer_name}!" Lucia says, giving your hand a warm shake. She glances toward the growing crowd around the windows, then takes out her phone. "Would it be okay if I added you to my contacts? It would be nice to have someone I know when we get to Lezano."
 
@@ -115,6 +123,7 @@ She offers you her hand. "There are a hundred of us, and I don't want to wait un
 
 *passage contact_yes
 *title Keeping in Touch
+*hide_title
 *set lucia_contact true
 *journal lucia_contact_shared "You exchanged phone numbers with Lucia."
 
@@ -124,6 +133,7 @@ You exchange numbers. Lucia saves your contact, then slips her phone back into h
 
 *passage contact_no
 *title Another Time
+*hide_title
 
 You'd rather not exchange numbers just yet. "No problem," Lucia says, putting her phone away. "We might run into each other at registration anyway."
 
@@ -131,6 +141,7 @@ You'd rather not exchange numbers just yet. "No problem," Lucia says, putting he
 
 *passage pronouns
 *title Getting Acquainted
+*hide_title
 *journal lucia_pronouns "Lucia uses she/her pronouns."
 
 Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she and her. What pronouns do you use?"
@@ -142,6 +153,7 @@ Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she an
 
 *passage he
 *title Getting Acquainted
+*hide_title
 *set pronouns "He / Him"
 *set pronouns_subject "he"
 *set pronouns_object "him"
@@ -156,6 +168,7 @@ Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she an
 
 *passage she
 *title Getting Acquainted
+*hide_title
 *set pronouns "She / Her"
 *set pronouns_subject "she"
 *set pronouns_object "her"
@@ -170,6 +183,7 @@ Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she an
 
 *passage they
 *title Getting Acquainted
+*hide_title
 *set pronouns "They / Them"
 *set pronouns_subject "they"
 *set pronouns_object "them"
@@ -184,6 +198,7 @@ Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she an
 
 *passage lucia_chat
 *title An Unusual Beginning
+*hide_title
 *journal lucia_family "Lucia talked about her family's Floatzel and her hopes for her first Pokémon partner."
 
 "Have you noticed how strange it is to see Pokémon working on the ferry when none of us are allowed to bring our own?" Lucia asks. "I know why the League wants a fresh start, but it's going to take some getting used to. At home, our Floatzel follows me everywhere. He even waits outside the market when I go shopping."
@@ -199,6 +214,7 @@ The harbor is getting closer, and Lucia takes one more look at it before turning
 
 *passage lucia_wildlife
 *title Places Worth Visiting
+*hide_title
 *set lucia_topic "wildlife"
 *journal lucia_travel "Lucia wants to explore wild Pokémon habitats across Aurelia and send photos to her brother."
 
@@ -210,6 +226,7 @@ She touches the Lapras pendant at her throat. "My little brother gave me this be
 
 *passage lucia_rules
 *title Eight Laurels
+*hide_title
 *set lucia_topic "rules"
 *journal lucia_ranking_questions "Lucia wonders how the League judges acts of compassion and other non-battle challenges."
 
@@ -221,6 +238,7 @@ She scrolls down. "I can understand judging a battle. What I don't understand is
 
 *passage open_deck
 *title A Little Time to Spare
+*hide_title
 
 Lucia notices the time and heads off to collect the rest of her luggage, promising to look for you at the terminal. You watch her disappear into the crowd before considering what to do with the few minutes you have left.
 
@@ -232,34 +250,37 @@ A neatly dressed young man near the timetable is comparing notes with a woman ho
 #Go up to the observation deck instead -> rail
 
 *passage group_join
-*title Dario and Ilaria
+*title Cassius and Octavia
+*hide_title
 *set ferry_encounter "conversation"
-*journal met_dario "You introduced yourself to Dario, a contestant interested in the League's rankings."
-*journal met_ilaria "You met Ilaria, a contestant curious about how the League will judge its challenges."
+*journal met_cassius "You introduced yourself to Cassius, a contestant interested in the League's rankings."
+*journal met_octavia "You met Octavia, a contestant curious about how the League will judge its challenges."
 
-"I'm Dario," the young man says, moving his notebook so you can see it. "This is Ilaria. Tell me if you can make sense of the rankings. Eight Laurels gets you qualified, but the guide doesn't say how they choose the top three."
+"I'm Cassius," the young man says, moving his notebook so you can see it. "This is Octavia. Tell me if you can make sense of the rankings. Eight Laurels gets you qualified, but the guide doesn't say how they choose the top three."
 
-"It says they consider your performance," Ilaria replies, "but it doesn't explain what counts as good performance when the challenges aren't all battles." She points to a passage in the guide about compassion. "If someone helps a Pokémon without making a spectacle of it, will anyone even know?"
+"It says they consider your performance," Octavia replies, "but it doesn't explain what counts as good performance when the challenges aren't all battles." She points to a passage in the guide about compassion. "If someone helps a Pokémon without making a spectacle of it, will anyone even know?"
 
-Dario takes a moment to consider that. "I still want to win," he says, "but I'd rather know what I'm being judged on." The ship's engines change pitch, and people begin gathering their luggage. You exchange farewells, agreeing you might see one another in Lezano.
+Cassius takes a moment to consider that. "I still want to win," he says, "but I'd rather know what I'm being judged on." The ship's engines change pitch, and people begin gathering their luggage. You exchange farewells, agreeing you might see one another in Lezano.
 
 *continue dock_approach
 
 *passage eavesdrop
 *title Within Earshot
+*hide_title
 *set ferry_encounter "eavesdrop"
-*journal heard_ranking_doubt "You overheard Dario and Ilaria questioning how the League's rankings will be decided."
+*journal heard_ranking_doubt "You overheard Cassius and Octavia questioning how the League's rankings will be decided."
 
 You pause beside the timetable, close enough to hear the two contestants without interrupting. "Eight Laurels, then a ranking," the young man says, tapping his notebook. "There has to be a way to work out what's worth the most. We can't plan anything if we don't know."
 
-"Maybe planning everything isn't the point, Dario," the woman replies. "Suppose you find a Pokémon that needs help, but stopping would put you behind the others. Does the League reward the person who stops? Or the person who gets to the next Laurel first?"
+"Maybe planning everything isn't the point, Cassius," the woman replies. "Suppose you find a Pokémon that needs help, but stopping would put you behind the others. Does the League reward the person who stops? Or the person who gets to the next Laurel first?"
 
-Dario doesn't answer immediately. When he finally starts to speak, an announcement asks everyone to collect their luggage. "I just don't like being surprised," he says, closing his notebook. The woman, Ilaria, gives him an amused look as they head toward the stairs.
+Cassius doesn't answer immediately. When he finally starts to speak, an announcement asks everyone to collect their luggage. "I just don't like being surprised," he says, closing his notebook. The woman, Octavia, gives him an amused look as they head toward the stairs.
 
 *continue dock_approach
 
 *passage rail
 *title The Observation Deck
+*hide_title
 *journal saw_wingull_rail "You saw a Wingull land on the observation deck railing."
 *set ferry_encounter "quiet"
 
@@ -270,6 +291,8 @@ A Wingull lands on the railing near a contestant holding a breakfast roll. The c
 You stay until the ferry sounds its arrival bell. Down on the working deck, the crew's Machoke is already guiding a cart of luggage toward the exit. You take one last look across the water, then head inside to collect your own bag.
 
 *continue dock_approach
+
+*chapter Chapter 2: Orientation
 
 *passage dock_approach
 *title Lezano Harbor
@@ -285,10 +308,9 @@ When the crew opens the doors, you join the procession making its way down the g
 #Confront him about his rudeness -> lezano_arrival [set rival_response "confront"]
 #Ignore him and keep walking -> lezano_arrival [set rival_response "ignore"]
 
-*chapter Lezano
-
 *passage lezano_arrival
-*title The Waterfront
+*title Lezano Harbor
+*journal saw_wattrel_waterfront "You saw Wattrel calling above the fishing boats at Lezano Harbor."
 
 *show_if rival_response == "confront"
 "Kinda rude there, 'champ'," you say, making sure to emphasize the last word in the most mocking way possible. "Getting to shore a few seconds sooner isn't going to really matter now, is it?"
@@ -299,14 +321,14 @@ He stops and gives you an irritated look. For a moment, you think he might actua
 *show_if rival_response == "ignore"
 You decide he isn't worth the trouble and continue walking. The young man doesn't wait for an answer anyway. He's already pushing his way around the next passenger, earning an angry complaint from an older man who nearly drops his tripod and bag in the process. A deckhand calls for him to slow down, but he seems determined to get off the ferry ahead of everyone else.
 
-Once your feet are finally on solid ground, you take a moment to get your bearings. The waterfront is even livelier up close. A street musician is playing an accordion nearby, and the cheerful music carries over the conversations and occasional cries of Wingull circling above the fishing boats. Between the harbor and the streets beyond, several vendors have already set up their stalls, apparently hoping to take advantage of the sudden influx of visitors.
+Once your feet are finally on solid ground, you take a moment to get your bearings. The waterfront is even livelier up close. A street musician is playing an accordion nearby, and the cheerful music carries over the conversations and the sharp calls of Wattrel wheeling above the fishing boats. Between the harbor and the streets beyond, several vendors have already set up their stalls, apparently hoping to take advantage of the sudden influx of visitors.
 
 A little farther along the wharf, a row of temporary booths stands beneath red-and-gold awnings bearing the Aurelian League emblem. Large signs reading [b]CONTESTANT CHECK-IN[/b] direct the arriving trainers toward them. Volunteers are checking names against tablets and handing out welcome packets. The line moves surprisingly quickly, and before long, you reach the front.
 
 *continue lezano_checkin
 
 *passage lezano_checkin
-*title Contestant Check-In
+*title Lezano Harbor
 *set credits 100
 *add_item league_badge 1
 *add_item city_map 1
@@ -330,11 +352,105 @@ She indicates the location of your hotel on the map and wishes you luck before t
 #Find somewhere nice to eat -> food_route
 
 *passage hotel_route
-*title Toward the Hotel
+*title The Portico Hotel
+*hide_title
 
-You fold the map and turn toward the streets leading to your hotel.
+The map takes you away from the busiest part of the waterfront and into a quieter street where climbing vines shade the balconies. Your hotel, the Portico, occupies a pale stone building with a little courtyard out front. Someone has set a bowl of water beside the steps for passing Pokémon, and the lobby smells faintly of lemon polish and fresh flowers. After the ferry, the cushioned chairs by the windows are tempting.
+
+At the reception desk, a clerk checks your League badge and begins preparing your room key. Before he can hand it over, a young woman in a dark blue jacket approaches, looking rather more upset than anyone arriving at a hotel ought to be. She's been told her suitcase was delivered, but it isn't in her room. "It has a red ribbon tied around the handle," she explains. "I watched them load it onto the cart. I know it's here somewhere."
+
+The clerk asks a porter to check the baggage room, but the young woman keeps glancing toward the luggage carts rolling through the lobby. You notice that one of the carts has a suitcase with a red ribbon tucked behind a stack of much larger bags. The porter is already taking it toward the lifts, and the clerk is busy trying to reach someone on his radio.
+
+*choice
+#Offer to help locate her suitcase -> hotel_resolution [set hotel_response "help"]
+#Leave the matter to the hotel staff and head upstairs -> hotel_resolution [set hotel_response "leave"]
+
+*passage hotel_resolution
+*title A Room at Last
+*hide_title
+*if hotel_response == "help"
+  *journal met_victra "You met Victra while helping her locate a misplaced suitcase at the Portico Hotel."
+  *journal victra_suitcase "You helped Victra recover the suitcase with her mother's travel journal inside."
+
+*show_if hotel_response == "help"
+You point out the red ribbon and hurry after the cart with the porter. The suitcase is exactly where you thought, but its room tag has been folded beneath the handle. Once the porter straightens it, the mistake becomes clear. The woman takes the case from him with such obvious relief that you feel glad you spoke up. "Thank you," she says, brushing her hair away from her face. "I'm Victra. My mother's old travel journal is in there, and I couldn't bear the thought of losing it before I'd even begun the trip." She gives the suitcase a firm grip, as though it might wander off again.
+
+*show_if hotel_response == "leave"
+You decide the hotel staff are better equipped to sort out a luggage mix-up and accept your room key. As you head toward the lift, you hear the porter call for someone to stop a cart with a red-ribboned suitcase on it. The young woman turns at once, and her voice sounds considerably happier by the time the lift doors close.
+
+Upstairs, you find a small, comfortable room overlooking a courtyard planted with lemon trees. Your own luggage has arrived intact and is waiting on a stand beside the wardrobe. There's a neatly made bed, a writing desk, and a little balcony just large enough for a chair. You put down your welcome packet, open the balcony door to let in some air, and take a few minutes to unpack.
+
+*continue orientation_invitation
 
 *passage food_route
-*title Something to Eat
+*title The Salt and Thyme
+*hide_title
 
-You follow the smell of cooking toward the waterfront cafés.
+The waterfront is full of places to eat, but a little café called the Salt and Thyme catches your attention. Its terrace looks out over the fishing boats, and the chalkboard by the door promises tomato soup, warm bread, and grilled sandwiches. You take a table beneath a striped awning while a server brings you a menu. The prices are marked in credits, just as the woman at registration said they would be.
+
+You're deciding what to order when you hear a startled cry from the next table. A Wattrel has become tangled in a length of decorative cord hanging from the awning. It beats its wings and twists, catching the cord around one foot. As it struggles, the loose end pulls at the awning frame, and a glass lantern hanging above a nearby table starts to swing. People rise from their chairs, unsure whether to move or try to help.
+
+A young woman with a League badge has already stepped toward the struggling Pokémon. "Don't grab its wings," she calls to a server reaching up from below. "You'll frighten it more. Someone needs to keep that frame steady while we get the cord loose." The server looks from the swaying lantern to the crowded tables beneath it, and you see two things that need doing.
+
+*choice
+#Hold the awning frame steady while they free Wattrel -> food_resolution [set restaurant_response "steady"]
+#Help the server move people away from the hanging lantern -> food_resolution [set restaurant_response "clear"]
+
+*passage food_resolution
+*title A Table by the Water
+*hide_title
+*add credits -12
+*journal met_livia "You met Livia at the Salt and Thyme after a Wattrel became tangled in the terrace awning."
+*journal helped_wattrel "You helped keep the café terrace safe while a tangled Wattrel was freed."
+
+*show_if restaurant_response == "steady"
+You put both hands against the awning frame and hold it in place while the server moves the lantern out of the way. The young woman climbs onto a low step and works the cord loose, speaking quietly to Wattrel whenever it starts to struggle again. At last the final loop slips free. The Pokémon gives an indignant little cry, shakes out its wings, and flutters up onto the roof, where it pauses to inspect the terrace before taking flight.
+
+*show_if restaurant_response == "clear"
+You help the server guide people away from the tables, making sure the chairs and bags are clear of the swinging lantern. The young woman braces the frame while another member of staff lifts the lantern from its hook. With nothing breakable beneath it, they can take their time freeing Wattrel's foot from the cord. It shakes itself once, hops to the edge of the awning, and flies off over the harbor.
+
+The young woman steps down and brushes dust from her hands. "I'm Livia," she says, giving the departing Wattrel a final look. "I don't think it meant to cause all that fuss. It just couldn't work out how to get free." She asks whether you're here for the League and, when you show her your badge, points out a free table where you can both finally sit down. The server thanks you for helping and brings your lunch before the terrace has quite settled. Your soup and bread cost twelve credits, which you pay by tapping your badge against the reader.
+
+*continue orientation_invitation
+
+*passage orientation_invitation
+*title Plans for the Afternoon
+*hide_title
+
+*show_if lucia_contact == true
+By the time you've had a chance to relax, your phone is ringing. Lucia's name appears on the screen. "Hi, ${trainer_name}! I hope I'm not interrupting anything. I made it through registration without getting lost, and I was wondering if you'd like to walk to orientation together. We could meet by the fountain at the harbor around half past three. It's supposed to be easy to find, but I'd feel better going with someone I know." She gives a small laugh. "No pressure, of course. I just thought I'd ask."
+
+*show_if lucia_contact == false
+You check the time. Orientation doesn't begin until four, and you still have a while before you'll need to start uphill toward the Civic Forum. The map marks a direct route from the waterfront, along with a longer way through some of Lezano's smaller shopping streets. It might be pleasant to see a little more of the city before everyone gathers.
+
+The map is folded beside your badge, ready whenever you are. The Civic Forum is only a short walk away, but there's no need to arrive immediately.
+
+*choice
+#Agree to meet Lucia by the harbor fountain -> orientation_with_lucia [if lucia_contact == true]
+#Head to the Civic Forum on your own -> orientation_alone
+#Take the scenic route through the shopping streets -> orientation_scenic [if lucia_contact == false]
+
+*passage orientation_with_lucia
+*title Meeting Lucia
+*hide_title
+*journal lucia_orientation_plans "You arranged to meet Lucia at the harbor fountain before orientation."
+
+"That sounds lovely," you tell Lucia. You agree to meet beside the harbor fountain at half past three, leaving enough time to walk to the Civic Forum together. She promises not to get distracted by every Pokémon along the way, although she doesn't sound entirely confident about it. After the call, you check your map once more and put your badge somewhere you can reach it easily.
+
+*passage orientation_alone
+*title Going on Your Own
+*hide_title
+
+*show_if lucia_contact == true
+You thank Lucia for calling but tell her you'll make your own way to the Civic Forum. She sounds a little disappointed, then cheerfully says she'll look for you inside. You end the call with plenty of time to get there.
+
+*show_if lucia_contact == false
+You decide to take the direct route to the Civic Forum and save the shopping streets for another day.
+
+With the city map and your League badge in hand, you make your way toward the hill above the waterfront. The afternoon is still yours for a little while, and the Forum will be easy enough to find.
+
+*passage orientation_scenic
+*title A Longer Walk
+*hide_title
+
+You take the longer route marked on your map, following a street of small bookshops, bakeries, and open-fronted market stalls. A shopkeeper is watering the flowerpots outside her door, and the scent of baking drifts from somewhere around the corner. You keep an eye on the time as you wander, knowing that the Civic Forum is waiting uphill when you're ready.

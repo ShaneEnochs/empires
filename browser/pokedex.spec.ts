@@ -10,7 +10,7 @@ async function view(page: Page, name: string) {
   await page.getByRole('navigation', { name: 'Reading views' }).getByRole('button', { name, exact: true }).click();
   if (name === 'Story') await expect(page.locator('.chapter-label')).toBeVisible();
   else await expect(page.locator('.chapter-label')).toBeHidden();
-  const heading = page.getByRole('heading', { name: name === 'Story' ? 'Approaching Lezano' : name, exact: true });
+  const heading = page.getByRole('heading', { name: name === 'Story' ? 'Approaching Lezano Aboard the Portia' : name, exact: true });
   if (name !== 'Story') await expect(heading).toBeFocused();
   await expect.poll(() => page.evaluate(() => Math.abs(parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)
     - document.querySelector('.reading-header')!.getBoundingClientRect().height))).toBeLessThan(1);
@@ -47,7 +47,7 @@ for (const width of [320, 1280]) test('primary views, nested Character sections 
   await proceed(page);
   await view(page, 'Pokédex');
   await expect(page.locator('#pokedex h3')).toHaveText(['Minccino', 'Machoke']);
-  await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Encountered · The Crossing', 'Encountered · The Crossing']);
+  await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Encountered · Chapter 1: The Crossing', 'Encountered · Chapter 1: The Crossing']);
   await expect(page.locator('#pokedex')).not.toContainText('Wingull');
   await page.reload(); await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
   const afterEncounter = await saved(page);

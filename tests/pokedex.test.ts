@@ -143,3 +143,16 @@ test('existing revision-5 ferry saves remain valid and are never backfilled duri
   assert.equal(memory.raw, raw); assert.equal(memory.writes, writes);
   assert.equal(checkpointKey(identity), 'pokemon:checkpoint:aurelian-league');
 });
+
+test('Wattrel enters Pokédex when the player reaches Lezano, not before', () => {
+  const game = new Game(publicStory);
+  for(const id of ['ferry_cafe','ferry_context','ferry_ad']) game.navigate(id);
+  game.advancePage();
+  game.navigate('name'); game.submitText('Ari');
+  for(const id of ['contact_no','pronouns','he','lucia_chat','open_deck','rail','dock_approach']) game.navigate(id);
+  assert.ok(!discoveredPokemon(publicDex, game.state).some(entry => entry.id === 'wattrel'));
+  game.navigateChoice(game.visibleChoices[1]!);
+  const wattrel = discoveredPokemon(publicDex, game.state).find(entry => entry.id === 'wattrel');
+  assert.equal(wattrel?.name, 'Wattrel');
+  assert.equal(wattrel?.chapter, 'Chapter 2: Orientation');
+});

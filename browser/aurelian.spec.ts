@@ -16,7 +16,7 @@ const routes = [
   {
     pronouns: 'He / Him', first: "See what's happening at the café",
     contact: 'Exchange numbers with Lucia', encounter: 'Introduce yourself to the two contestants',
-    additionalPerson: 'Dario',
+    additionalPerson: 'Cassius',
   },
   {
     pronouns: 'She / Her', first: 'Find a place by the windows',
@@ -31,12 +31,12 @@ const routes = [
 ] as const;
 
 for (const width of [320, 1280]) for (const route of routes) {
-  test('ferry-only chapter, ' + route.pronouns + ', ' + route.encounter + ' at ' + width + 'px', async ({ page }) => {
+  test('complete Lezano route, ' + route.pronouns + ', ' + route.encounter + ' at ' + width + 'px', async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Aurelian League');
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Approaching Lezano');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Approaching Lezano Aboard the Portia');
     const tabs = page.getByRole('navigation', { name: 'Reading views' }).getByRole('button');
     await expect(tabs).toHaveText(['Story', 'Character', 'Party', 'Pokédex', 'People']);
     for (const tab of await tabs.all()) {
@@ -45,7 +45,9 @@ for (const width of [320, 1280]) for (const route of routes) {
       expect(bounds!.width).toBeGreaterThanOrEqual(44);
     }
 
+    await expect(page.locator('.chapter-label')).toHaveText('Chapter 1: The Crossing');
     await choose(page, route.first);
+    await expect(page.locator('#passage-heading')).toHaveClass(/visually-hidden/);
     await proceed(page);
     await proceed(page);
     await proceed(page);
@@ -73,25 +75,40 @@ for (const width of [320, 1280]) for (const route of routes) {
     await choose(page, route.encounter);
     await proceed(page);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lezano Harbor');
+    await expect(page.locator('.chapter-label')).toHaveText('Chapter 2: Orientation');
     await expect(page.getByText(/CHAMP/)).toBeVisible();
     const confront = route.pronouns === 'He / Him';
     await choose(page, confront ? 'Confront him about his rudeness' : 'Ignore him and keep walking');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Waterfront');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lezano Harbor');
     await expect(page.getByText(/Once your feet are finally on solid ground/)).toBeVisible();
     await expect(page.getByText(confront ? /Kinda rude there/ : /You decide he isn't worth the trouble/)).toBeVisible();
     await proceed(page);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Contestant Check-In');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lezano Harbor');
     await expect(page.getByText(/starting balance of 100 credits/)).toBeVisible();
     const hotel = route.pronouns === 'He / Him';
     await choose(page, hotel ? 'Head to the hotel and check out your room' : 'Find somewhere nice to eat');
-    const endingTitle = hotel ? 'Toward the Hotel' : 'Something to Eat';
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(hotel ? 'The Portico Hotel' : 'The Salt and Thyme');
+    await expect(page.locator('#passage-heading')).toHaveClass(/visually-hidden/);
+    await choose(page, hotel ? 'Offer to help locate her suitcase' : 'Help the server move people away from the hanging lantern');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(hotel ? 'A Room at Last' : 'A Table by the Water');
+    await proceed(page);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Plans for the Afternoon');
+    const meeting = route.contact === 'Exchange numbers with Lucia';
+    await expect(page.getByRole('radio')).toHaveCount(2);
+    if (meeting) await expect(page.getByText(/Lucia's name appears on the screen/)).toBeVisible();
+    else await expect(page.getByText(/The map marks a direct route/)).toBeVisible();
+    await choose(page, meeting ? 'Agree to meet Lucia by the harbor fountain' : 'Take the scenic route through the shopping streets');
+    const endingTitle = meeting ? 'Meeting Lucia' : 'A Longer Walk';
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(endingTitle);
+    await expect(page.locator('#passage-heading')).toHaveClass(/visually-hidden/);
     await expect(page.getByRole('button', { name: 'Continue', exact: true })).toHaveCount(0);
 
     const raw = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
     const save = JSON.parse(raw!);
-    expect(save.storyRevision).toBe(6);
-    expect(save.currentState.variables.credits).toBe(100);
+    expect(save.storyRevision).toBe(7);
+    expect(save.currentState.variables.credits).toBe(hotel ? 100 : 88);
+    expect(save.currentState.variables.hotel_response).toBe(hotel ? 'help' : 'none');
+    expect(save.currentState.variables.restaurant_response).toBe(hotel ? 'none' : 'clear');
     expect(save.currentState.variables.rival_response).toBe(confront ? 'confront' : 'ignore');
     expect(save.currentState.inventory).toEqual({ league_badge: 1, city_map: 1, hotel_assignment: 1 });
     expect(save.currentState.variables.trainer_name).toBe('Rowan 周');
@@ -105,7 +122,7 @@ for (const width of [320, 1280]) for (const route of routes) {
     if (route.additionalPerson) {
       await expect(page.locator('#people')).toContainText(route.additionalPerson);
     } else {
-      await expect(page.locator('#people')).not.toContainText('Dario');
+      await expect(page.locator('#people')).not.toContainText('Cassius');
     }
     await expect(page.locator('#character')).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -113,7 +130,7 @@ for (const width of [320, 1280]) for (const route of routes) {
     await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(endingTitle);
     await page.getByRole('button', { name: 'Character', exact: true }).click();
-    await expect(page.locator('#character dd')).toHaveText(['Rowan 周', route.pronouns, '100']);
+    await expect(page.locator('#character dd')).toHaveText(['Rowan 周', route.pronouns, String(hotel ? 100 : 88)]);
     expect(await page.evaluate(storageKey => localStorage.getItem(storageKey), key)).toBe(raw);
   });
 }
