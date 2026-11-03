@@ -60,23 +60,61 @@
         "discoveryEvents": [
           "lucia_ranking_questions"
         ]
+      },
+      {
+        "text": "She invited you to walk to the Civic Forum together before orientation.",
+        "discoveryEvents": [
+          "lucia_orientation_plans"
+        ]
       }
     ]
   },
   {
-    "id": "dario",
-    "name": "Dario",
+    "id": "cassius",
+    "name": "Cassius",
     "description": "An ambitious contestant who studies the League's rankings and wants to earn his place in the final.",
     "discoveryEvents": [
-      "met_dario"
+      "met_cassius"
     ]
   },
   {
-    "id": "ilaria",
-    "name": "Ilaria",
+    "id": "octavia",
+    "name": "Octavia",
     "description": "A thoughtful contestant who questions how the League measures qualities such as judgment and compassion.",
     "discoveryEvents": [
-      "met_ilaria"
+      "met_octavia"
+    ]
+  },
+  {
+    "id": "victra",
+    "name": "Victra",
+    "description": "A fellow contestant staying at the Portico Hotel, concerned about a missing suitcase.",
+    "discoveryEvents": [
+      "met_victra"
+    ],
+    "facts": [
+      {
+        "text": "You helped her retrieve the suitcase containing her mother's travel journal.",
+        "discoveryEvents": [
+          "victra_suitcase"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "livia",
+    "name": "Livia",
+    "description": "A League contestant you met at the Salt and Thyme on Lezano's waterfront.",
+    "discoveryEvents": [
+      "met_livia"
+    ],
+    "facts": [
+      {
+        "text": "She helped free a Wattrel that became tangled in the café awning.",
+        "discoveryEvents": [
+          "helped_wattrel"
+        ]
+      }
     ]
   }
 ]
