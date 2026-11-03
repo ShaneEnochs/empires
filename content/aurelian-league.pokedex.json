@@ -7,8 +7,7 @@
       "Normal"
     ],
     "category": "Chinchilla Pokémon",
-    "officialSummary": "Minccino keeps itself and its surroundings clean with its tail, sometimes washing the tail thoroughly after a long day of sweeping.",
-    "sourceUrl": "https://in.portal-pokemon.com/pokedex/0572/",
+    "officialSummary": "Minccino is meticulous about cleanliness. It sweeps its surroundings with its soft tail, keeps that tail carefully groomed, and even uses tail-to-tail contact to greet others. After a particularly messy day, it may spend a long time washing its tail.",
     "description": "A tidy Normal-type Pokémon. You saw one polishing a lamp at the Portico Hotel.",
     "discoveryEvents": [
       "scanned_minccino_hotel"
@@ -18,6 +17,11 @@
         "eventId": "scanned_minccino_hotel",
         "text": "You saw a Minccino polishing the Portico Hotel's reception counter and a brass lamp with its tail."
       }
+    ],
+    "trainerNotes": [
+      "Habits: A clean resting area suits Minccino's constant urge to tidy up. Give it opportunities to groom and clean rather than treating those habits as misbehavior.",
+      "Handling: Its tail is important for both cleaning and social greetings. Let Minccino choose when to approach or make contact.",
+      "Type awareness: As a Normal-type, it is vulnerable to Fighting-type moves and unaffected by Ghost-type attacks under ordinary conditions."
     ]
   },
   {
@@ -28,8 +32,7 @@
       "Fighting"
     ],
     "category": "Superpower Pokémon",
-    "officialSummary": "Machoke's powerful muscles require a special belt to help it regulate its movements.",
-    "sourceUrl": "https://in.portal-pokemon.com/pokedex/0067/",
+    "officialSummary": "Machoke has an exceptionally strong, well-trained body and can handle loads far beyond what most people could lift. Its power-save belt helps keep that strength under control. Many Machoke willingly take on demanding physical work as part of their regular training.",
     "description": "A powerful Fighting-type Pokémon. You saw one guiding luggage carts at Lezano Harbor.",
     "discoveryEvents": [
       "scanned_machoke_harbor"
@@ -39,6 +42,11 @@
         "eventId": "scanned_machoke_harbor",
         "text": "You saw a Machoke in a crew vest directing luggage carts through Lezano Harbor."
       }
+    ],
+    "trainerNotes": [
+      "Working together: Machoke excels at moving heavy equipment and cargo. Give clear directions and make sure people and fragile objects are well out of its way.",
+      "Safety: Do not remove or tamper with its power-save belt. It exists to restrain strength that can otherwise become difficult to manage.",
+      "Type awareness: Fighting-type Pokémon must be especially careful around Flying-, Psychic-, and Fairy-type attacks."
     ]
   },
   {
@@ -50,8 +58,7 @@
       "Flying"
     ],
     "category": "Seagull Pokémon",
-    "officialSummary": "Wingull uses rising air currents to glide through the sky and can carry food tucked into its beak.",
-    "sourceUrl": "https://in.portal-pokemon.com/pokedex/0278/",
+    "officialSummary": "Wingull spends much of its life near the sea, gliding on rising air currents with its long, narrow wings. It nests on steep coastal cliffs and carries food in its beak; some Wingull are known to hide food and interesting objects near their nesting places.",
     "description": "A coastal Water- and Flying-type Pokémon. You saw one visiting your hotel balcony.",
     "discoveryEvents": [
       "scanned_wingull_hotel"
@@ -61,6 +68,11 @@
         "eventId": "scanned_wingull_hotel",
         "text": "You saw a curious Wingull investigate your water glass on the Portico Hotel balcony."
       }
+    ],
+    "trainerNotes": [
+      "Where to look: Watch harbor approaches, sea cliffs, and the updrafts above the water. A Wingull may cover a great distance with very little wing-flapping.",
+      "Around people: Keep loose food and small belongings secure near curious Wingull, and avoid disturbing cliffside nesting sites.",
+      "Type awareness: Its Water/Flying combination makes Electric-type attacks especially dangerous. Rock-type attacks are another weakness."
     ]
   },
   {
@@ -72,8 +84,7 @@
       "Flying"
     ],
     "category": "Storm Petrel Pokémon",
-    "officialSummary": "Wattrel generates electricity as wind passes through its wings. It hunts over the sea and nests along coastal cliffs.",
-    "sourceUrl": "https://www.pokemon.com/us/pokedex/wattrel",
+    "officialSummary": "Wattrel lives along coastlines and makes its nests on coastal cliffs. Wind passing through its wings helps it generate electricity, which it can use to stun prey while hunting over the sea. Its connection to the wind is central to both its flight and its feeding habits.",
     "description": "An Electric- and Flying-type coastal bird Pokémon. You saw one at Lezano Harbor or the Salt and Thyme.",
     "discoveryEvents": [
       "scanned_wattrel_harbor",
@@ -93,6 +104,11 @@
         "eventId": "scanned_wattrel_rest",
         "text": "You saved a note about a Wattrel that became tangled in the café awning and was later freed."
       }
+    ],
+    "trainerNotes": [
+      "Where to look: Scan coastal cliffs, fishing harbors, and windy stretches of open water. Wattrel are especially at home where sea breezes are strong.",
+      "Safety: Give a frightened or trapped Wattrel room to move. Its wings can generate electricity, so securing nearby hazards matters more than consulting a Pokédex during a rescue.",
+      "Type awareness: Its Electric/Flying typing is weak to Ice- and Rock-type attacks, while its Flying type ordinarily protects it from Ground-type moves."
     ]
   }
 ]
