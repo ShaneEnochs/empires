@@ -59,7 +59,7 @@
         },
         {
           "name": "keyword.control.condition.pokemon",
-          "match": "\\b(?:if|selectable_if|and|or|not|has_pokemon|lacks_pokemon|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
+          "match": "\\b(?:if|selectable_if|set|and|or|not|has_pokemon|lacks_pokemon|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
         },
         {
           "name": "constant.language.pokemon",
@@ -109,7 +109,7 @@
         },
         {
           "name": "keyword.control.condition.pokemon",
-          "match": "\\b(?:if|selectable_if|and|or|not|has_pokemon|lacks_pokemon|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
+          "match": "\\b(?:if|selectable_if|set|and|or|not|has_pokemon|lacks_pokemon|has_skill|lacks_skill|has_item|lacks_item|item_count)\\b"
         },
         {
           "name": "constant.language.pokemon",
