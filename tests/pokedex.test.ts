@@ -117,17 +117,17 @@ test('a failed entry cannot record a discovery', () => {
   assert.throws(() => game.navigate('fail'), /insufficient inventory/);
   assert.equal(game.state, before); assert.deepEqual(discoveredPokemon(failedDex, game.state), []);
 });
-test('ferry encounters are explicit, route-specific, and do not reveal mentioned species', () => {
-  const cafe = new Game(publicStory); assert.deepEqual(discoveredPokemon(publicDex, cafe.state), []);
-  cafe.navigate('ferry_cafe');
-  assert.deepEqual(discoveredPokemon(publicDex, cafe.state).map(entry => entry.id), ['minccino', 'machoke']);
-  cafe.navigate('ferry_context'); cafe.navigate('ferry_ad');
-  assert.equal(discoveredPokemon(publicDex, cafe.state).length, 2);
-  cafe.advancePage(); // Wingull scene is on the second page, not the advertisement.
-  cafe.navigate('name');
-  assert.deepEqual(discoveredPokemon(publicDex, cafe.state).map(entry => entry.id), ['minccino', 'machoke', 'wingull']);
-  const windows = new Game(publicStory); windows.navigate('ferry_windows');
-  assert.deepEqual(discoveredPokemon(publicDex, windows.state).map(entry => entry.id), ['wingull', 'machoke', 'minccino']);
+test('pre-install sightings never populate the public Pokédex', () => {
+  for(const first of ['ferry_cafe','ferry_windows'] as const){
+    const game = new Game(publicStory);
+    game.navigate(first);
+    assert.deepEqual(discoveredPokemon(publicDex, game.state), []);
+    game.navigate('ferry_context'); game.navigate('ferry_ad'); game.advancePage();
+    game.navigate('name');
+    assert.deepEqual(discoveredPokemon(publicDex, game.state), []);
+    assert.equal(game.state.variables.dex_installed, false);
+    assert.ok(game.state.journal.some(e => e.id.startsWith('saw_')));
+  }
   assert.ok(!publicDex.some(entry => ['Lapras', 'Floatzel', 'Magikarp'].includes(entry.name)));
 });
 test('existing revision-5 ferry saves remain valid and are never backfilled during Continue', () => {
@@ -144,15 +144,30 @@ test('existing revision-5 ferry saves remain valid and are never backfilled duri
   assert.equal(checkpointKey(identity), 'pokemon:checkpoint:aurelian-league');
 });
 
-test('Wattrel enters Pokédex when the player reaches Lezano, not before', () => {
-  const game = new Game(publicStory);
-  for(const id of ['ferry_cafe','ferry_context','ferry_ad']) game.navigate(id);
-  game.advancePage();
-  game.navigate('name'); game.submitText('Ari');
-  for(const id of ['contact_no','pronouns','he','lucia_chat','open_deck','rail','dock_approach']) game.navigate(id);
-  assert.ok(!discoveredPokemon(publicDex, game.state).some(entry => entry.id === 'wattrel'));
-  game.navigateChoice(game.visibleChoices[1]!);
-  const wattrel = discoveredPokemon(publicDex, game.state).find(entry => entry.id === 'wattrel');
-  assert.equal(wattrel?.name, 'Wattrel');
-  assert.equal(wattrel?.chapter, 'Chapter 2: Orientation');
+test('a post-install opt-in lookup is the only public discovery path', () => {
+  const reach = () => {
+    const game = new Game(publicStory);
+    game.navigate('ferry_cafe'); game.navigate('ferry_context'); game.navigate('ferry_ad'); game.advancePage();
+    game.navigate('name'); game.submitText('Ari');
+    for(const id of ['contact_no','pronouns','he','lucia_chat','open_deck','rail','dock_approach']) game.navigate(id);
+    game.navigateChoice(game.visibleChoices[1]!);
+    assert.equal(discoveredPokemon(publicDex,game.state).length,0);
+    game.navigate('lezano_checkin');
+    assert.equal(game.state.variables.dex_installed,true);
+    assert.ok(game.state.journal.some(e=>e.id==='installed_pokedex_app'));
+    game.navigate('harbor_lookup');
+    return game;
+  };
+  const skipped = reach(); skipped.navigate('harbor_destination');
+  assert.deepEqual(discoveredPokemon(publicDex,skipped.state),[]);
+  const wattrel = reach(); wattrel.navigate('harbor_scan_wattrel');
+  assert.deepEqual(discoveredPokemon(publicDex,wattrel.state).map(p=>p.id),['wattrel']);
+  assert.equal(discoveredPokemon(publicDex,wattrel.state)[0]!.chapter, 'Chapter 2: Orientation');
+  const machoke = reach(); machoke.navigate('harbor_scan_machoke');
+  assert.deepEqual(discoveredPokemon(publicDex,machoke.state).map(p=>p.id),['machoke']);
+  wattrel.navigate('harbor_destination'); wattrel.navigate('food_route');
+  wattrel.navigateChoice(wattrel.visibleChoices[2]!);
+  assert.equal(discoveredPokemon(publicDex,wattrel.state).filter(p=>p.id==='wattrel').length,1);
+  assert.ok(wattrel.state.journal.some(e=>e.id==='delayed_restaurant_help'));
+  assert.equal(machoke.state.journal.some(e=>e.id==='scanned_wattrel_emergency'),false);
 });
