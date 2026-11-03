@@ -128,17 +128,21 @@ export function exploreGameplay(story: Story, maxRoutes = DEFAULT_ROUTE_LIMIT): 
     // A follow-up is the last step, even when its passage offers more actions.
     if (passage.death || phase === 'followup') continue;
     const input = passage.textInput;
+    const choiceSteps: PreflightRouteStep[] = [];
+    const traversedDestinations = new Set<string>();
+    for (const choice of game.availableChoices) {
+      const sameDestination = passage.choices.filter(other => other.destinationId === choice.destinationId);
+      const distinctAssignments = sameDestination.length > 1 && sameDestination.some(other => other.assignment !== undefined);
+      // Keep historical deduplication for no-op choices while testing assigned alternatives separately.
+      if (!distinctAssignments && traversedDestinations.has(choice.destinationId)) continue;
+      traversedDestinations.add(choice.destinationId);
+      choiceSteps.push({
+        passageId: choice.destinationId,
+        ...(distinctAssignments ? { choiceIndex: passage.choices.indexOf(choice) } : {}),
+      });
+    }
     const nextSteps: PreflightRouteStep[] = input === undefined
-      ? [
-        ...game.availableChoices.map(choice => {
-          const matches = passage.choices.filter(other => other.destinationId === choice.destinationId);
-          return {
-            passageId: choice.destinationId,
-            ...(choice.assignment || matches.length > 1 ? { choiceIndex: passage.choices.indexOf(choice) } : {}),
-          };
-        }),
-        ...(passage.continueTo === undefined ? [] : [{ passageId: passage.continueTo }]),
-      ]
+      ? [...choiceSteps, ...(passage.continueTo === undefined ? [] : [{ passageId: passage.continueTo }])]
       : [{ passageId: input.destinationId, input: REPRESENTATIVE_INPUT }];
     for (const step of nextSteps) {
       const repeated = route.some(previous => previous.passageId === step.passageId);
