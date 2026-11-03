@@ -367,7 +367,9 @@ export function parseStory(source: string): Story {
       if (!label || !parts || parts[1]!.includes('->') || parts[2]!.trim().startsWith('->')) {
         throw syntaxError('Expected #Nonempty choice label -> destination_id.', line, current.id);
       }
-      if (/\[(?:if|set|selectable_if)\b/i.test(label)) throw syntaxError('Choice suffixes must follow the destination.', line, current.id);
+      if (/\[(?:if|set|selectable_if)\b/i.test(label)) throw syntaxError('Choice conditions must follow the destination; assignments must also be on the destination side.', line, current.id);
+      // Preserve the precise invalid-destination diagnostic for bare malformed IDs.
+      if (parts[2]!.trim() && !parts[2]!.trim().startsWith('[')) id(destination, 'Choice destination', line, current.id);
       const destinationId = id(parts[1]!, 'Choice destination', line, current.id);
       let condition: Condition | undefined = guard();
       let selectable: Condition | undefined;
