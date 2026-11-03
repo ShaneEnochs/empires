@@ -13,7 +13,7 @@ Run `npm ci` and `npm run dev` from the repository root. Notepad++ users can imp
 [Pokemon.xml](../tools/notepadpp/Pokemon.xml); the toolkit README documents saved-file
 validation and optional People JSON. VS Code users can build and locally install
 [Pokémon Story](../tools/vscode-pokemon/README.md). `.story` uses language ID
-`pokemon-story`; Ctrl+Space and `pkmn-` discover 38 workspace snippets. The extension
+`pokemon-story`; Ctrl+Space and `pkmn-` discover 39 workspace snippets. The extension
 uses the same parser for open/save diagnostics; highlighting alone is not validation.
 
 VS Code tasks **Aurelian League: Check Current Story**, **Check Bundled Stories**,
