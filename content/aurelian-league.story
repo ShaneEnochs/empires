@@ -418,7 +418,7 @@ The young woman steps down and brushes dust from her hands. "I'm Livia," she say
 *hide_title
 
 *show_if lucia_contact == true
-By the time you've finished getting settled, your phone is ringing. Lucia's name appears on the screen. "Hi, ${trainer_name}! I hope I'm not interrupting anything. I made it through registration without getting lost, and I was wondering if you'd like to walk to orientation together. We could meet by the fountain at the harbor around half past three. It's supposed to be easy to find, but I'd feel better going with someone I know." She gives a small laugh. "No pressure, of course. I just thought I'd ask."
+By the time you've had a chance to relax, your phone is ringing. Lucia's name appears on the screen. "Hi, ${trainer_name}! I hope I'm not interrupting anything. I made it through registration without getting lost, and I was wondering if you'd like to walk to orientation together. We could meet by the fountain at the harbor around half past three. It's supposed to be easy to find, but I'd feel better going with someone I know." She gives a small laugh. "No pressure, of course. I just thought I'd ask."
 
 *show_if lucia_contact == false
 You check the time. Orientation doesn't begin until four, and you still have a while before you'll need to start uphill toward the Civic Forum. The map marks a direct route from the waterfront, along with a longer way through some of Lezano's smaller shopping streets. It might be pleasant to see a little more of the city before everyone gathers.
