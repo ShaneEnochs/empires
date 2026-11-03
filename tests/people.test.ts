@@ -174,32 +174,48 @@ test('Lucia appears on introduction and learns facts only from visited scenes', 
   assert.equal(encounteredPeople(publicPeople, other.state).filter(person => person.id === 'lucia').length, 1);
 });
 
-test('Roman-inspired entrants unlock only after their introductions and personal facts', () => {
+test('Victra and Livia facts follow the actual multi-stage subplot outcomes', () => {
   const pub = parseStory(readFileSync('content/aurelian-league.story', 'utf8'));
-  const references = validatePeople(pub, parsePeople(JSON.parse(
-    readFileSync('content/aurelian-league.people.json','utf8'))));
-  const names = references.map(p=>p.name);
-  assert.deepEqual(names,['Lucia','Cassius','Octavia','Victra','Livia']);
-  for(const [route,help,expected] of [
-    ['hotel_route',true,'Victra'],['hotel_route',false,'Lucia'],
-    ['food_route',true,'Livia'],['food_route',false,'Livia'],
-  ] as const) {
-    const game = new Game(pub);
+  const people = validatePeople(pub,parsePeople(JSON.parse(readFileSync('content/aurelian-league.people.json','utf8'))));
+  assert.deepEqual(people.map(p=>p.name),['Lucia','Cassius','Octavia','Victra','Livia']);
+  function arrive(destination: 'hotel_route'|'food_route') {
+    const game=new Game(pub);
     for(const id of ['ferry_windows','ferry_context','ferry_ad']) game.navigate(id);
-    game.advancePage(); game.navigate('name'); game.submitText('Ari');
+    game.advancePage();game.navigate('name');game.submitText('Ari');
     for(const id of ['contact_yes','pronouns','they','lucia_chat','open_deck','rail','dock_approach']) game.navigate(id);
     game.navigateChoice(game.visibleChoices[0]!);
-    game.navigate('lezano_checkin'); game.navigate(route);
-    game.navigateChoice(game.visibleChoices[help ? 0 : 1]!);
-    const encountered = encounteredPeople(references,game.state).map(p=>p.name);
-    assert.ok(encountered.includes(expected));
-    assert.equal(encountered.includes('Victra'), route === 'hotel_route' && help);
-    assert.equal(encountered.includes('Livia'), route === 'food_route');
-    const victra = references.find(p=>p.id==='victra')!;
-    assert.equal(learnedPersonFacts(victra,game.state).length,route === 'hotel_route' && help ? 1 : 0);
-    game.navigate('orientation_invitation');
-    assert.equal(learnedPersonFacts(references[0]!,game.state).some(s=>/Civic Forum/.test(s)),false);
-    game.navigate('orientation_with_lucia');
-    assert.equal(learnedPersonFacts(references[0]!,game.state).some(s=>/Civic Forum/.test(s)),true);
+    game.navigate('lezano_checkin');game.navigate('harbor_lookup');game.navigate('harbor_destination');
+    game.navigate(destination);
+    return game;
+  }
+  const victra=people.find(p=>p.id==='victra')!,livia=people.find(p=>p.id==='livia')!;
+  for(const final of [0,1]){
+    const game=arrive('hotel_route');
+    game.navigateChoice(game.visibleChoices[0]!); // offer help
+    assert.equal(encounteredPeople(people,game.state).some(p=>p.id==='victra'),true);
+    game.navigateChoice(game.visibleChoices[final]!); // delivery list or tags
+    game.navigate('hotel_followup');
+    game.navigateChoice(game.visibleChoices[final]!); // accompany or delegate
+    assert.equal(game.state.variables.victra_case,final===0?'recovered':'pending');
+    assert.equal(learnedPersonFacts(victra,game.state).length,1);
+    assert.equal(game.state.journal.some(e=>e.id==='victra_suitcase'),final===0);
+    assert.equal(game.state.journal.some(e=>e.id==='victra_directions'),final===1);
+  }
+  const skipped=arrive('hotel_route');
+  skipped.navigateChoice(skipped.visibleChoices[2]!);
+  skipped.navigate('hotel_resolution');
+  assert.equal(skipped.state.variables.victra_case,'unknown');
+  assert.equal(encounteredPeople(people,skipped.state).some(p=>p.id==='victra'),false);
+
+  for(const action of [0,1,2]){
+    const game=arrive('food_route');
+    game.navigateChoice(game.visibleChoices[action]!);
+    assert.equal(game.state.variables.livia_impression,action===2?'distracted':'helpful');
+    game.navigateChoice(game.visibleChoices[0]!);
+    assert.equal(game.state.variables.credits,88);
+    assert.equal(encounteredPeople(people,game.state).some(p=>p.id==='livia'),true);
+    const facts=learnedPersonFacts(livia,game.state).join(' ');
+    assert.match(facts,action===2?/disappointed/:/appreciated/);
+    assert.equal(game.state.journal.some(e=>e.id==='livia_disappointed'),action===2);
   }
 });
