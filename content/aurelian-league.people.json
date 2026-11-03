@@ -88,15 +88,21 @@
   {
     "id": "victra",
     "name": "Victra",
-    "description": "A fellow contestant staying at the Portico Hotel, concerned about a missing suitcase.",
+    "description": "A League contestant at the Portico Hotel, trying to recover a misplaced suitcase containing her mother's travel journal.",
     "discoveryEvents": [
       "met_victra"
     ],
     "facts": [
       {
-        "text": "You helped her retrieve the suitcase containing her mother's travel journal.",
+        "text": "You found a lead on her missing suitcase and accompanied her to the annex to retrieve it.",
         "discoveryEvents": [
           "victra_suitcase"
+        ]
+      },
+      {
+        "text": "You found a lead on her suitcase but left her to collect it from the hotel annex.",
+        "discoveryEvents": [
+          "victra_directions"
         ]
       }
     ]
@@ -104,13 +110,25 @@
   {
     "id": "livia",
     "name": "Livia",
-    "description": "A League contestant you met at the Salt and Thyme on Lezano's waterfront.",
+    "description": "A League contestant who helped rescue a Wattrel tangled in the Salt and Thyme café awning.",
     "discoveryEvents": [
       "met_livia"
     ],
     "facts": [
       {
-        "text": "She helped free a Wattrel that became tangled in the café awning.",
+        "text": "She appreciated your quick response to the struggling Wattrel.",
+        "discoveryEvents": [
+          "livia_grateful"
+        ]
+      },
+      {
+        "text": "She was disappointed that you checked your Pokédex before helping with the emergency.",
+        "discoveryEvents": [
+          "livia_disappointed"
+        ]
+      },
+      {
+        "text": "You helped free the Wattrel from the awning.",
         "discoveryEvents": [
           "helped_wattrel"
         ]
