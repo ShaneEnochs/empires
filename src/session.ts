@@ -1,7 +1,7 @@
 import { Game } from './game';
 import { DEFAULT_SAVE_IDENTITY, loadCheckpoint, saveProgress, validateSaveIdentity } from './storage';
 import type { CheckpointStorage, StorySaveIdentity } from './storage';
-import type { Story } from './types';
+import type { Choice, Story } from './types';
 
 type Notice = { readonly message: string; readonly error?: unknown };
 type StartResult = 'started' | 'cancelled' | 'failed';
@@ -85,6 +85,10 @@ export class GameSession {
 
   navigate(destinationId: string): void {
     this.act(game => game.navigate(destinationId));
+  }
+
+  navigateChoice(choice: Choice): void {
+    this.act(game => game.navigateChoice(choice));
   }
 
   submitText(value: unknown): void {
