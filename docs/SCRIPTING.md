@@ -502,7 +502,7 @@ events: `*var diplomacy 0` and `*skill diplomacy "Diplomacy"` may coexist.
 Explicit skill commands/conditions distinguish them.
 
 Names use the same double-quoted JSON string literals as variables, including
-`\"`, `\\`, `\n`, and `\u2665` escapes. They must contain non-whitespace text after
+`\"`, `\`, `\n`, and `\u2665` escapes. They must contain non-whitespace text after
 decoding; single quotes, unquoted names, trailing content, and malformed escapes
 are invalid. Duplicate display names are allowed because IDs establish identity.
 Names remain literal, without `${...}` interpolation, and are rendered as text.
@@ -684,7 +684,7 @@ Supported literals:
   JavaScript floating-point precision; numeric overflow fails passage entry.
 - **Booleans:** exactly `true` or `false`.
 - **Strings:** double-quoted text, including the empty string `""`. Standard JSON
-  string escapes work: `\"`, `\\`, `\n`, and `\u2665`, for example. Single quotes,
+  string escapes work: `\"`, `\`, `\n`, and `\u2665`, for example. Single quotes,
   unquoted names, raw multiline strings, and trailing content are invalid.
 
 Arrays, objects, `null`, and custom values are unsupported. `*set` cannot change
@@ -871,7 +871,7 @@ rejected with passage/source-line errors before gameplay can start.
 A choice can set one declared **global** variable and navigate directly to a shared passage.
 Use this when the response differs but the narrative immediately rejoins:
 
-\`\`\`text
+```text
 *var rival_response "none"
 
 *passage gangway
@@ -893,14 +893,14 @@ You call out to him.
 You let him pass without answering.
 
 You step onto the wharf.
-\`\`\`
+```
 
-The reader preserves the selected choice even if both destinations are \`arrival\`.
-Assignments are typed like \`*set\` and applied atomically before destination entry
+The reader preserves the selected choice even if both destinations are `arrival`.
+Assignments are typed like `*set` and applied atomically before destination entry
 effects, the checkpoint boundary, and conditional narrative evaluation. Use
-\`navigateChoice(choice)\` in integrations; \`navigate(destinationId)\` deliberately
+`navigateChoice(choice)` in integrations; `navigate(destinationId)` deliberately
 rejects ambiguous same-destination options. No automatic transition passages or
-implicit page skips are required. The \`*show_if\` paragraphs and the shared
+implicit page skips are required. The `*show_if` paragraphs and the shared
 paragraph appear together on the arrival page.
 
 ## Conditional narrative
