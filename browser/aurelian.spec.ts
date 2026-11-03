@@ -113,3 +113,58 @@ test('old Empire saves remain isolated and no Pokémon join during the ferry', a
   await expect(page.locator('#party li')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('empires:checkpoint:provincial-crisis'))).toBe('old progress');
 });
+
+
+test('People records Lucia at introduction and reveals only learned details across saves', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  await page.getByRole('button', { name: 'People', exact: true }).click();
+  await expect(page.locator('#people')).toContainText('No people recorded yet.');
+  await page.getByRole('button', { name: 'Story', exact: true }).click();
+
+  await choose(page, 'Find a place by the windows');
+  await proceed(page); // Ferry context
+  await proceed(page); // League advertisement
+  await proceed(page); // Advertisement's second reading page
+  await proceed(page); // Lucia has introduced herself; name input
+
+  await page.getByRole('button', { name: 'People', exact: true }).click();
+  const panel = page.locator('#people');
+  const facts = panel.getByRole('list', { name: 'What you know about Lucia' }).getByRole('listitem');
+  await expect(panel.getByRole('heading', { name: 'Lucia', exact: true })).toBeVisible();
+  await expect(facts).toHaveCount(1);
+  await expect(facts.first()).toContainText('journalist');
+  await expect(panel).not.toContainText('Floatzel');
+  await expect(panel).not.toContainText('wetlands');
+
+  await page.getByRole('button', { name: 'Story', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Your first name', exact: true }).fill('Ari');
+  await proceed(page);
+  await choose(page, 'Politely decline');
+  await proceed(page); // Lucia shares her pronouns
+  await page.getByRole('button', { name: 'People', exact: true }).click();
+  await expect(facts).toHaveCount(2);
+  await expect(panel).toContainText('she/her');
+  await expect(panel).not.toContainText('exchanged phone numbers');
+
+  await page.getByRole('button', { name: 'Story', exact: true }).click();
+  await choose(page, 'They / Them');
+  await proceed(page); // An Unusual Beginning
+  await page.getByRole('button', { name: 'People', exact: true }).click();
+  await expect(facts).toHaveCount(5);
+  await expect(panel).toContainText('Floatzel');
+  await expect(panel).not.toContainText('little brother');
+
+  await page.getByRole('button', { name: 'Story', exact: true }).click();
+  await choose(page, 'Ask why she decided to enter the League');
+  await page.getByRole('button', { name: 'People', exact: true }).click();
+  await expect(facts).toHaveCount(7);
+  await expect(panel).toContainText('little brother');
+  await expect(panel).not.toContainText('ranks acts of compassion');
+  const raw = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
+  await page.reload();
+  await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
+  await page.getByRole('button', { name: 'People', exact: true }).click();
+  await expect(page.getByRole('list', { name: 'What you know about Lucia' }).getByRole('listitem')).toHaveCount(7);
+  expect(await page.evaluate(storageKey => localStorage.getItem(storageKey), key)).toBe(raw);
+});
