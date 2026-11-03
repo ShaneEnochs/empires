@@ -46,13 +46,12 @@ for (const width of [320, 1280]) test('primary views, nested Character sections 
   await expect(page.getByRole('radio', { name: "See what's happening at the café", exact: true })).toBeChecked();
   await proceed(page);
   await view(page, 'Pokédex');
-  await expect(page.locator('#pokedex h3')).toHaveText(['Minccino', 'Machoke']);
-  await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Encountered · Chapter 1: The Crossing', 'Encountered · Chapter 1: The Crossing']);
-  await expect(page.locator('#pokedex')).not.toContainText('Wingull');
+  await expect(page.locator('#pokedex')).toContainText("You haven't encountered any Pokémon yet.");
+  await expect(page.locator('#pokedex h3')).toHaveCount(0);
   await page.reload(); await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
   const afterEncounter = await saved(page);
   const dex = page.getByRole('button', { name: 'Pokédex', exact: true }); await dex.focus(); await page.keyboard.press('Space');
-  await expect(page.locator('#pokedex h3')).toHaveText(['Minccino', 'Machoke']); expect(await saved(page)).toBe(afterEncounter);
+  await expect(page.locator('#pokedex h3')).toHaveCount(0); expect(await saved(page)).toBe(afterEncounter);
   await page.getByRole('button', { name: 'Story', exact: true }).click();
   for (let i = 0; i < 4; i++) await proceed(page);
   await page.getByRole('textbox', { name: 'Your first name', exact: true }).fill('Draft 周');
@@ -66,7 +65,7 @@ for (const width of [320, 1280]) test('primary views, nested Character sections 
   await expect(page.getByRole('textbox', { name: 'Your first name', exact: true })).toHaveValue('Draft 周');
   await proceed(page); await choose(page, 'Exchange numbers with Lucia'); await proceed(page); await choose(page, 'They / Them'); await proceed(page);
   await view(page, 'Pokédex');
-  await expect(page.locator('#pokedex h3')).toHaveText(['Minccino', 'Machoke', 'Wingull']);
+  await expect(page.locator('#pokedex h3')).toHaveCount(0);
   for (const mentioned of ['Lapras', 'Floatzel', 'Magikarp', 'Charmander', 'Chikorita', 'Piplup']) await expect(page.locator('#pokedex')).not.toContainText(mentioned);
   await view(page, 'Party'); await expect(page.locator('#party li')).toHaveCount(0);
 });
