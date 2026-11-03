@@ -90,6 +90,11 @@ export class Game {
       return;
     }
     if (matches.length > 1) {
+      // Historical destination-only calls remain valid when no choice has a side effect.
+      if (matches.every(choice => choice.assignment === undefined)) {
+        this.transition({ ...this.currentState, passageId: destinationId });
+        return;
+      }
       throw new Error('Multiple choices lead to "' + destinationId + '"; select a specific choice.');
     }
     throw new Error(`Passage "${this.passage.id}" has no action to "${destinationId}".`);
