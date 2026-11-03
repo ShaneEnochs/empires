@@ -30,7 +30,7 @@ for (const width of [320, 1280]) test('primary views, nested Character sections 
       const group = page.getByRole('group', { name: 'Character sections' });
       await expect(group.getByRole('button')).toHaveText(sections);
       await expect(group.getByRole('button', { name: 'Stats', exact: true })).toHaveAttribute('aria-pressed', 'true');
-      await expect(page.locator('#character-stats dd')).toHaveText(['Unknown', 'They / Them']);
+      await expect(page.locator('#character-stats dd')).toHaveText(['Unknown', 'They / Them', '0']);
       for (const section of sections) {
         await group.getByRole('button', { name: section, exact: true }).click();
         await expect(page.getByRole('heading', { name: section, level: 3, exact: true })).toBeFocused();
