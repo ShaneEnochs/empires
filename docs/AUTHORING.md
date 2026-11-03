@@ -33,6 +33,17 @@ after edits, even with the same name. The passage index searches IDs/titles and
 shows authored destinations without navigating the game. No upload, source editing,
 automatic registration or publishing occurs. Normal builds exclude author.html.
 
+## Headings and chapter numbering
+
+Author numbered chapter labels as literal `*chapter` directives, for example
+`*chapter Chapter 2: Orientation`. Keep a required `*title` in every
+passage. Use `*hide_title` immediately after `*title` on transitional
+passages where the large visible heading would interrupt the narrative.
+The heading remains available to screen readers and in author tools; it is
+only visually hidden. The public ferry shows its opening title, and Lezano
+Harbor keeps one consistent visible title through registration. Hotel,
+restaurant, and onward-planning passages hide their individual titles.
+
 ## Trainer creation and companions
 
 Use a global `trainer_name` string with `*input_text`; use choices and ordinary sets
