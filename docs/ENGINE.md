@@ -5,6 +5,17 @@ revision 7. Pokémon-themed private examples exercise historical engine features
 they are not public stories or additional Aurelia lore. See README for the current
 workflow and SCRIPTING.md for all syntax.
 
+## Optional visual passage headings
+
+Each passage still requires a unique authored ID and a nonempty `*title`. An
+optional static `*hide_title` immediately after `*title` records
+`Passage.hideTitle: true`. In the native reader, the H1 remains focusable and
+available to assistive technologies, with the same ID and region association,
+but uses the existing `visually-hidden` CSS class. Internal passage titles,
+story navigation, author preview, reading context, and save formats are
+unchanged. Chapters are explicitly authored as `Chapter 1: The Crossing`
+and `Chapter 2: Orientation` for the public story.
+
 ## Party and save schema
 
 Story.pokemon declares frozen individual ID/species records. GameState.party starts
