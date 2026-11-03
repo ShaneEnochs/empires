@@ -364,7 +364,7 @@ export function parseStory(source: string): Story {
       const label = text.startsWith('#') && arrow !== -1 ? text.slice(1, arrow).trim() : '';
       const destination = arrow !== -1 ? text.slice(arrow + 2).trim() : '';
       const parts = /^([^\s\[]+)(.*)$/.exec(destination);
-      if (!label || !parts || destination.includes('->')) {
+      if (!label || !parts || parts[1]!.includes('->') || parts[2]!.trim().startsWith('->')) {
         throw syntaxError('Expected #Nonempty choice label -> destination_id.', line, current.id);
       }
       if (/\[(?:if|set|selectable_if)\b/i.test(label)) throw syntaxError('Choice suffixes must follow the destination.', line, current.id);
