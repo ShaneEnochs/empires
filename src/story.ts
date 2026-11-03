@@ -17,7 +17,7 @@ export function parseStory(source: string): Story {
   const stats: StatDisplay[] = [];
   const references: { destinationId: string; passageId: string; line: number }[] = [];
   let current: {
-    id: string; chapter: string; line: number; temps: Record<string, VariableValue>; title?: string; checkpoint?: true; paragraphs: NarrativeParagraph[];
+    id: string; chapter: string; line: number; temps: Record<string, VariableValue>; title?: string; hideTitle?: true; checkpoint?: true; paragraphs: NarrativeParagraph[];
     choices: Choice[]; effects: PassageEffect[]; continueTo?: string; textInput?: TextInputAction; death?: true;
   } | undefined;
   let page = 0;
@@ -96,7 +96,7 @@ export function parseStory(source: string): Story {
     }
     passages.push(Object.freeze({
       ...(Object.keys(current.temps).length ? { temps: Object.freeze(current.temps) } : {}),
-      id: current.id, chapter: current.chapter, title: current.title, paragraphs: Object.freeze(current.paragraphs),
+      id: current.id, chapter: current.chapter, title: current.title, ...(current.hideTitle ? { hideTitle: true } : {}), paragraphs: Object.freeze(current.paragraphs),
       effects: Object.freeze(current.effects),
       choices: Object.freeze(current.choices),
       ...(current.checkpoint === undefined ? {} : { checkpoint: current.checkpoint }),
@@ -160,7 +160,17 @@ export function parseStory(source: string): Story {
     if (text.startsWith('*')) {
       const directive = text.split(/\s/, 1)[0]!;
       const argument = text.slice(directive.length).trim();
-      if (blocks.length && ['*passage','*chapter','*title','*checkpoint','*temp','*choice','*continue','*input_text','*death'].includes(directive)) throw syntaxError('This directive cannot be conditional.', line, current?.id);
+      if (blocks.length && ['*passage','*chapter','*title','*hide_title','*checkpoint','*temp','*choice','*continue','*input_text','*death'].includes(directive)) throw syntaxError('This directive cannot be conditional.', line, current?.id);
+      if (directive === '*hide_title') {
+        if (argument !== '') throw syntaxError('*hide_title takes no arguments.', line, current?.id);
+        if (!current || current.title === undefined || current.hideTitle || Object.keys(current.temps).length > 0
+          || current.effects.length > 0 || current.paragraphs.length > 0 || paragraph.length > 0 || action !== undefined
+          || current.checkpoint) {
+          throw syntaxError('*hide_title must appear once immediately after *title, before effects and prose.', line, current?.id);
+        }
+        current.hideTitle = true;
+        continue;
+      }
       if (directive === '*temp') {
         if (!current?.title || current.effects.length || current.paragraphs.length || paragraph.length || action) throw syntaxError('*temp must follow title/checkpoint before effects and prose.', line, current?.id);
         const parts = /^(\S+)\s+(.+)$/.exec(argument);
