@@ -73,6 +73,17 @@
     ],
     "description": "Aurelian League conditional-choice"
   },
+  "choice-assignment": {
+    "scope": "pokemon-story,plaintext",
+    "prefix": "pkmn-choice-assignment",
+    "body": [
+      "*choice",
+      "  #${1:Confront him} -> ${3:arrival} [set ${2:response} \"${4:confront}\"]",
+      "  #${5:Ignore him} -> ${3:arrival} [set ${2:response} \"${6:ignore}\"]",
+      "$0"
+    ],
+    "description": "Two choices assign different values before a shared destination"
+  },
   "show-if": {
     "scope": "pokemon-story,plaintext",
     "prefix": "pkmn-show-if",
