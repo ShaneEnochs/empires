@@ -1,7 +1,7 @@
 # The Aurelian League engine
 
 The sole public story is content/aurelian-league.story, identity aurelian-league,
-revision 4. Pokémon-themed private examples exercise historical engine features;
+revision 5. Pokémon-themed private examples exercise historical engine features;
 they are not public stories or additional Aurelia lore. See README for the current
 workflow and SCRIPTING.md for all syntax.
 
@@ -471,7 +471,7 @@ boundary). Try Again re-enters that checkpoint once, discards later changes, and
 saves the recovered current state without moving the checkpoint boundary.
 
 Storage is local to this browser and device; it does not synchronize. The public
-story uses identity `aurelian-league`, revision 4, and key
+story uses identity `aurelian-league`, revision 5, and key
 `pokemon:checkpoint:aurelian-league`. Private fixture identities are separate.
 
 Format 4 stores one atomic JSON record:
@@ -515,7 +515,7 @@ preview clears temporary progress. It never reads or writes public localStorage.
 `src/catalog.ts` is a frozen list of explicit application IDs, titles, descriptions,
 Vite `?raw` source, People definitions, and validated StorySaveIdentity records.
 Initialization checks distinct catalog/save IDs. Only The Aurelian League
-(`aurelian-league`, revision 4) is published. Opening the app parses that entry,
+(`aurelian-league`, revision 5) is published. Opening the app parses that entry,
 constructs its session and presents startup. It reads only that identity's save;
 empty startup never constructs a Game. Continue and confirmed replacement keep
 the existing validation and explicit unsaved-play semantics.
