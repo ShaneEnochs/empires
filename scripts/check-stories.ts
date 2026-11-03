@@ -1,3 +1,6 @@
+import { resolve, isAbsolute } from 'node:path';
+import { publicStoryFiles, parseStorySources } from '../src/story-source';
+import type { StorySource } from '../src/story-source';
 import { readFileSync } from 'node:fs';
 import { analyzeStory } from '../src/preflight';
 import type { PreflightDiagnostic } from '../src/preflight';
@@ -5,24 +8,38 @@ import { parseStory } from '../src/story';
 import type { Story } from '../src/types';
 
 const files = process.argv.slice(2);
-if (files.length === 0) files.push('content/aurelian-league.story', 'src/example.story', 'examples/harbor-practice.story', 'examples/advanced-authoring.story');
+if (files.length === 0) files.push('content/aurelian-league/sources.json', 'src/example.story', 'examples/harbor-practice.story', 'examples/advanced-authoring.story');
 const totals = { error: 0, warning: 0, information: 0 };
+let checkedPublic = false;
 for (const file of files) {
+  const bundled = resolve(file) === resolve('content/aurelian-league/sources.json') || publicStoryFiles.some(path => resolve(path) === resolve(file));
+  if (bundled && checkedPublic) continue;
+  if (bundled) checkedPublic = true;
   console.log('\n' + file);
-  if (!file.endsWith('.story')) {
+  if (!bundled && !file.endsWith('.story')) {
     console.log('  ERROR FILE_ERROR: Expected a .story filename. Action: Provide a UTF-8 .story file.');
     totals.error++;
     continue;
   }
-  let source: string;
-  try { source = readFileSync(file, 'utf8'); } catch (error) {
+  let source = '';
+  let parts: StorySource[] = [];
+  try {
+    if (bundled) parts = publicStoryFiles.map(path => ({path, text: readFileSync(path, 'utf8')}));
+    else source = readFileSync(file, 'utf8');
+  } catch (error) {
     console.log('  ERROR FILE_ERROR: ' + (error instanceof Error ? error.message : String(error)));
     console.log('    Action: Check the filename and file permissions.');
     totals.error++;
     continue;
   }
   let story: Story;
-  try { story = parseStory(source); } catch (error) {
+  try { story = bundled ? parseStorySources(parts) : parseStory(source); } catch (error) {
+    if (error instanceof Error && 'sourcePath' in error && 'sourceMessage' in error) {
+      console.log(isAbsolute(file) ? resolve(String(error.sourcePath)) : String(error.sourcePath));
+      console.log('  ERROR PARSE_ERROR: ' + String(error.sourceMessage));
+      console.log('    Action: Fix the reported chapter source, then rerun preflight.');
+      totals.error++; continue;
+    }
     console.log('  ERROR PARSE_ERROR: ' + (error instanceof Error ? error.message : String(error)));
     console.log('    Action: Fix the reported syntax or reference, then rerun preflight.');
     totals.error++;

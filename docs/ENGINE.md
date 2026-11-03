@@ -1,6 +1,6 @@
 # The Aurelian League engine
 
-The sole public story is content/aurelian-league.story, identity aurelian-league,
+The sole public story is assembled from content/aurelian-league/sources.json, identity aurelian-league,
 revision 8. Pokémon-themed private examples exercise historical engine features;
 they are not public stories or additional Aurelia lore. See README for the current
 workflow and SCRIPTING.md for all syntax.
@@ -10,11 +10,11 @@ workflow and SCRIPTING.md for all syntax.
 At Lezano registration, the story grants `dex_installed = true` and records a
 journal event. The public Pokédex metadata now refers only to explicit
 `scanned_...` journal events, so ferry sightings and later non-looked-up
-Pokémon do not appear in it. This is currently an authored story convention
-rather than a new engine rule; a separate UI update will add a native
-uninstalled/empty state, official numbered entries, observation notes, and
-in-story lookup cards using the authored scan events. No new persistence
-collection or runtime API is needed.
+Pokémon do not appear in it. The reader now supplies an uninstalled/empty state,
+numbered native disclosure entries, recorded observations and in-story lookup
+cards. These derive from committed scan events, with no new persistence store or
+runtime information fetch. Existing private fixtures may omit the installation
+variable and optional numbered species fields.
 
 ## Optional visual passage headings
 
@@ -903,13 +903,12 @@ event paired with the party effect, so it survives removal without a second stor
 
 The public catalog loads content/aurelian-league.pokedex.json; author preview accepts
 optional local .pokedex.json metadata with the same validation and memory-only play.
-The public ferry receives only additive explicit sighting journal effects; narrative,
-passage IDs, pages, choice paths and ending remain intact. A second-page Wingull
-sighting commits on continuing to the following passage, never on first-page entry.
+Ferry sightings remain journal-only. Public Pokédex metadata uses explicit scanned_
+events after registration, not sighting IDs. Source assembly preserves every
+passage, page, choice, effect and narrative outcome.
 
-There is no new GameState field, save format, key or revision. Existing revision-5
-saves lacking these journal events still load and stay undiscovered until an event
-occurs; Continue never replays or backfills. Checkpoints preserve exactly their
+There is no new GameState field, save format, key or revision. Existing revision-8
+saves retain exactly their recorded lookups; absent observations stay undiscovered; Continue never replays or backfills. Checkpoints preserve exactly their
 journal-based discovery boundary, matching People semantics.
 
 Subsection selection changes only native pressed buttons and hidden content within
@@ -917,3 +916,29 @@ Character; headings receive focus. The reader keeps the story DOM and any drafts
 errors or selections. Primary navigation stays in one row with 44px targets. The
 chapter is hidden in information views, and header height updates before focus plus
 on later resize/text scaling. No parser or gameplay transition changes are needed.
+
+## Ordered chapter sources and completed Pokédex presentation
+
+The public story is assembled eagerly from the ordered
+`content/aurelian-league/sources.json` list: globals, Chapter 1 and Chapter 2.
+One complete source still enters the existing parser and one Game/session;
+no dynamic loading or per-chapter state/save exists. The pure story-source helper
+normalizes file boundaries and maps parser diagnostics to a filename/local line.
+CLI checks of any public member validate all sources; editor diagnostics use
+open buffers, and author preview has a public chapter button with memory saves.
+
+The Pokédex respects the optional global dex_installed flag, with legacy fixtures
+without it remaining usable. Only authored lookup records unlock public species.
+Metadata preserves optional National number, types, category, official summary,
+HTTPS source URL and frozen eventId/text observations. Derived entries include
+only journal-recorded notes in journal order. Native details/summary controls start
+collapsed and display this data without changing state or storage.
+
+In-story cards require a scanned_ effect authored in the current passage and its
+committed journal record. They use the shared safe DOM renderer, show only the
+current scan's observations, and never execute effects or re-evaluate guards after
+entry. No new directive is needed. The restaurant delay/Livia consequences remain
+author-controlled and unchanged. See AUTHORING.md for the full contract/examples.
+
+The exact original source is preserved by the physical split. Public revision 8,
+GameState, save formats, identity and checkpoint semantics remain unchanged.

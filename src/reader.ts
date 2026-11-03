@@ -1,4 +1,5 @@
-import { validatePokedex } from './pokedex';
+import { lookupCard } from './pokedex-view';
+import { validatePokedex, passageLookups } from './pokedex';
 import type { PokedexEntry } from './pokedex';
 import { renderNarrative } from './format';
 import type { TitlePage } from './title-page';
@@ -335,7 +336,7 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
       }
 
       chapter.textContent = passage.chapter;
-      storyContent.replaceChildren(heading, ...paragraphs, actions);
+      storyContent.replaceChildren(heading, ...paragraphs, ...passageLookups(pokedex, game.state, passage).map(lookupCard), actions);
       root.replaceChildren(header, storyContent, ...panels.sections);
       selectView('Story');
       renderNotice();

@@ -2,7 +2,7 @@ import { parsePokedex } from './pokedex';
 import type { PokedexEntry } from './pokedex';
 import aurelianPokedex from '../content/aurelian-league.pokedex.json' with { type: 'json' };
 import { titlePage } from './title-page';
-import aurelianLeagueSource from '../content/aurelian-league.story?raw';
+import { aurelianLeagueSource } from './aurelian-source';
 import { validateSaveIdentity } from './storage';
 import type { StorySaveIdentity } from './storage';
 import { parsePeople } from './people';

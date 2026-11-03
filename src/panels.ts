@@ -1,4 +1,5 @@
-import { discoveredPokemon } from './pokedex';
+import { pokemonInformation } from './pokedex-view';
+import { discoveredPokemon, pokedexInstalled, pokemonLabel } from './pokedex';
 import type { PokedexEntry } from './pokedex';
 import type { Game } from './game';
 import type { GameState, Story } from './types';
@@ -122,20 +123,22 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
   });
 
   const dex = panel('pokedex', 'Pokédex', select, section => {
+    if (!pokedexInstalled(game.state)) {
+      list(section, [], 'Install the Pokédex app at registration to start researching Pokémon.');
+      return;
+    }
     const discovered = discoveredPokemon(pokedex, game.state);
     if (discovered.length === 0) {
-      list(section, [], "You haven't encountered any Pokémon yet.");
+      list(section, [], "No Pokémon recorded yet.");
       return;
     }
     const entries = document.createElement('ul');
     entries.className = 'pokedex-entries';
     for (const entry of discovered) {
       const item = document.createElement('li');
-      const heading = document.createElement('h3'); heading.textContent = entry.name;
-      const status = document.createElement('p');
-      status.className = 'discovery-status'; status.textContent = `${entry.status} · ${entry.chapter}`;
-      const description = document.createElement('p'); description.textContent = entry.description;
-      item.append(heading, status, description); entries.append(item);
+      const details = document.createElement('details');
+      const summary = document.createElement('summary'); summary.textContent = pokemonLabel(entry);
+      details.append(summary, pokemonInformation(entry)); item.append(details); entries.append(item);
     }
     section.append(entries);
   });

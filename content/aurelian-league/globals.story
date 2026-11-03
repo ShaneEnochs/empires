@@ -1,0 +1,27 @@
+*var trainer_name "Unknown"
+*var pronouns "They / Them"
+*var pronouns_subject "they"
+*var pronouns_object "them"
+*var pronouns_possessive "their"
+*var pronouns_possessive_pronoun "theirs"
+*var pronouns_reflexive "themself"
+*var use_plural_verbs true
+*var lucia_contact false
+*var lucia_topic "none"
+*var ferry_encounter "none"
+*var rival_response "none"
+*var credits 0
+*var hotel_response "none"
+*var restaurant_response "none"
+*var dex_installed false
+*var hotel_clue "none"
+*var hotel_followup "none"
+*var victra_case "none"
+*var restaurant_followup "none"
+*var livia_impression "none"
+*item league_badge "Aurelian League contestant badge"
+*item city_map "Map of Lezano"
+*item hotel_assignment "Hotel room assignment"
+*stat trainer_name "Trainer name"
+*stat pronouns "Pronouns"
+*stat credits "Credits"

@@ -1,3 +1,4 @@
+import { publicStorySource } from './public-story';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
@@ -116,7 +117,7 @@ test('People facts validate event references, reject malformed records, and are 
 });
 
 test('Lucia appears on introduction and learns facts only from visited scenes', () => {
-  const publicStory = parseStory(readFileSync('content/aurelian-league.story', 'utf8'));
+  const publicStory = parseStory(publicStorySource());
   const publicPeople = validatePeople(publicStory, parsePeople(
     JSON.parse(readFileSync('content/aurelian-league.people.json', 'utf8'))));
   const lucia = publicPeople.find(person => person.id === 'lucia')!;
@@ -175,7 +176,7 @@ test('Lucia appears on introduction and learns facts only from visited scenes', 
 });
 
 test('Victra and Livia facts follow the actual multi-stage subplot outcomes', () => {
-  const pub = parseStory(readFileSync('content/aurelian-league.story', 'utf8'));
+  const pub = parseStory(publicStorySource());
   const people = validatePeople(pub,parsePeople(JSON.parse(readFileSync('content/aurelian-league.people.json','utf8'))));
   assert.deepEqual(people.map(p=>p.name),['Lucia','Cassius','Octavia','Victra','Livia']);
   function arrive(destination: 'hotel_route'|'food_route') {

@@ -39,14 +39,14 @@ for (const width of [320, 1280]) test('primary views, nested Character sections 
         expect(await saved(page)).toBe(raw);
       }
     }
-    if (name === 'Pokédex') await expect(page.locator('#pokedex')).toContainText("You haven't encountered any Pokémon yet.");
+    if (name === 'Pokédex') await expect(page.locator('#pokedex')).toContainText("Install the Pokédex app at registration to start researching Pokémon.");
     expect(await saved(page)).toBe(raw);
   }
   await view(page, 'Story');
   await expect(page.getByRole('radio', { name: "See what's happening at the café", exact: true })).toBeChecked();
   await proceed(page);
   await view(page, 'Pokédex');
-  await expect(page.locator('#pokedex')).toContainText("You haven't encountered any Pokémon yet.");
+  await expect(page.locator('#pokedex')).toContainText("Install the Pokédex app at registration to start researching Pokémon.");
   await expect(page.locator('#pokedex h3')).toHaveCount(0);
   await page.reload(); await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
   const afterEncounter = await saved(page);
