@@ -55,6 +55,8 @@ export interface Choice {
   readonly destinationId: string;
   readonly condition?: Condition;
   readonly selectable?: Condition;
+  /** Applied before destination entry, once the selected choice is committed. */
+  readonly assignment?: { readonly variable: string; readonly value: VariableValue };
 }
 
 export interface NarrativeParagraph {

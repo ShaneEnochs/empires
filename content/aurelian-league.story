@@ -9,8 +9,14 @@
 *var lucia_contact false
 *var lucia_topic "none"
 *var ferry_encounter "none"
+*var rival_response "none"
+*var credits 0
+*item league_badge "Aurelian League contestant badge"
+*item city_map "Map of Lezano"
+*item hotel_assignment "Hotel room assignment"
 *stat trainer_name "Trainer name"
 *stat pronouns "Pronouns"
+*stat credits "Credits"
 
 *chapter The Crossing
 
@@ -267,25 +273,68 @@ You stay until the ferry sounds its arrival bell. Down on the working deck, the 
 
 *passage dock_approach
 *title Lezano Harbor
+*journal saw_champ "A contestant with CHAMP embroidered on his jacket shoved past you on the ferry's gangway."
 
-The ferry passes between the breakwaters and slows beside the quays. Fishing boats rock in their berths, and red-and-gold League banners hang from the terminal. Above the crowd waiting on shore, a digital sign welcomes the contestants. Several camera operators are filming the ferry as it approaches.
+The ferry settles against the quay with a gentle bump, and the last of the engine's vibrations fades beneath your feet. Outside, Lezano is considerably larger than it appeared from the water. Rows of cream and terracotta buildings climb the hills beyond the harbor, their balconies crowded with flowers and laundry drying in the morning sun. Narrow streets wind between them, occasionally opening into little squares where cafés have arranged tables beneath colorful awnings. Farther uphill, the white columns of an enormous building rise above the rooftops.
 
-*show_if ferry_encounter == "conversation"
-Dario spots you near the stairs and waves. Ilaria lifts a hand from where she's standing beside him, then turns to make sure her notebook is safely tucked into her bag.
+The harbor is bustling with activity. Fishing boats are unloading their morning catches, dockworkers are moving crates between warehouses, and several Machoke are helping the ferry crew transfer luggage onto waiting carts. Red-and-gold banners hang from windows, lampposts, and balconies. A crowd has gathered along the waterfront to welcome the contestants, and a few reporters have already found people willing to give interviews.
 
-*show_if ferry_encounter == "eavesdrop"
-Dario and Ilaria stand a few places ahead of you, still talking quietly. They haven't noticed that you heard their earlier conversation.
+When the crew opens the doors, you join the procession making its way down the gangway. The fresh sea air is a relief after the crowded lounge, and you slow a little to take in the city. You're halfway to shore when someone pushes past you, knocking your shoulder hard enough that you have to catch yourself against the railing. The young man has dark hair and a green jacket with **CHAMP** embroidered across the back in large gold letters. "Could you walk any slower?" he snaps, glancing over his shoulder. "Some of us would actually like to get off this boat today, you know."
 
-*show_if ferry_encounter == "quiet"
-Through the window, you spot the same Wingull circling above a fishing boat. It has finally found somewhere more promising than the observation deck.
+*choice
+#Confront him about his rudeness -> lezano_arrival [set rival_response "confront"]
+#Ignore him and keep walking -> lezano_arrival [set rival_response "ignore"]
 
-*show_if lucia_topic == "wildlife"
-Lucia appears with her bag and points out two Wingull perched on the harbor wall. She's already trying to photograph them through the glass.
+*chapter Lezano
 
-*show_if lucia_topic == "rules"
-Lucia rejoins the queue just long enough to tell you that the volunteers are handing out schedules for a briefing. "Maybe we'll finally get some answers," she says.
+*passage lezano_arrival
+*title The Waterfront
 
-*show_if lucia_topic == "none"
-Lucia spots you across the lounge and gives you a quick wave before turning to retrieve her bag.
+*show_if rival_response == "confront"
+"Kinda rude there, 'champ'," you say, making sure to emphasize the last word in the most mocking way possible. "Getting to shore a few seconds sooner isn't going to really matter now, is it?"
 
-A low thump runs through the deck as the ferry settles against its berth. The engines fall quiet. The crew begins securing the lines, and the passengers gather near the doors with their luggage. You're still aboard when the gangway begins to lower, with Lezano waiting just beyond the glass.
+*show_if rival_response == "confront"
+He stops and gives you an irritated look. For a moment, you think he might actually argue with you, but then he glances toward the dock and shakes his head. "Whatever. Not worth my time." Before you can respond, he's already making his way down the remaining stretch of gangway, squeezing past another contestant as he goes.
+
+*show_if rival_response == "ignore"
+You decide he isn't worth the trouble and continue walking. The young man doesn't wait for an answer anyway. He's already pushing his way around the next passenger, earning an angry complaint from an older man who nearly drops his tripod and bag in the process. A deckhand calls for him to slow down, but he seems determined to get off the ferry ahead of everyone else.
+
+Once your feet are finally on solid ground, you take a moment to get your bearings. The waterfront is even livelier up close. A street musician is playing an accordion nearby, and the cheerful music carries over the conversations and occasional cries of Wingull circling above the fishing boats. Between the harbor and the streets beyond, several vendors have already set up their stalls, apparently hoping to take advantage of the sudden influx of visitors.
+
+A little farther along the wharf, a row of temporary booths stands beneath red-and-gold awnings bearing the Aurelian League emblem. Large signs reading **CONTESTANT CHECK-IN** direct the arriving trainers toward them. Volunteers are checking names against tablets and handing out welcome packets. The line moves surprisingly quickly, and before long, you reach the front.
+
+*continue lezano_checkin
+
+*passage lezano_checkin
+*title Contestant Check-In
+*set credits 100
+*add_item league_badge 1
+*add_item city_map 1
+*add_item hotel_assignment 1
+*journal league_registered "You checked in at Lezano, received your League badge and city map, and learned that orientation is at four o'clock."
+
+"Welcome to Lezano!" says a friendly-looking woman in a red League polo shirt. "Could I have your name, please?" You give her your name, and she finds your entry on her tablet.
+
+After checking your information, she retrieves a packet from beneath the counter and passes it to you. Inside are your contestant identification badge, a hotel room assignment, and a surprisingly detailed map of the city. Several important locations have been highlighted, including the Pokémon Center, the waterfront markets, the League reception center, and a large public square labeled the Lezano Civic Forum.
+
+"Your orientation is at four o'clock this afternoon, at the Civic Forum," she explains, pointing out the square on your map. "It's just up the hill from the harbor, and there'll be signs along the way, so you shouldn't have any trouble finding it. Until then, you're free to explore the city, get something to eat, or settle into your hotel room. Your accommodations have already been arranged, and all of your luggage will be delivered directly to your room, so you won't have to worry about carrying anything around."
+
+"That's wonderful, thank you," you say, smiling at the nice lady.
+
+She taps your identification badge. "This also serves as your debit card. The League has already loaded it with a starting balance of 100 credits, which should help you get settled in. All the shops here accept credits exclusively, so you won't be able to use any other currency while you're in Lezano. There's lots of ways to make credits, which they'll go over during orientation. Make sure you keep your badge on you at all times!"
+
+She indicates the location of your hotel on the map and wishes you luck before turning to greet the next contestant. You step aside to let the line continue moving. You have several hours before orientation, and for the first time since leaving home, there's no particular reason to hurry. Your hotel isn't far, and after a morning aboard the ferry, a little time to yourself sounds appealing. On the other hand, you haven't had a proper meal since breakfast, and the smells drifting from the waterfront restaurants are increasingly difficult to ignore.
+
+*choice
+#Head to the hotel and check out your room -> hotel_route
+#Find somewhere nice to eat -> food_route
+
+*passage hotel_route
+*title Toward the Hotel
+
+You fold the map and turn toward the streets leading to your hotel.
+
+*passage food_route
+*title Something to Eat
+
+You follow the smell of cooking toward the waterfront cafés.

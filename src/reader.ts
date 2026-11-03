@@ -273,7 +273,7 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
           group.append(legend);
           let selected: typeof choices[number] | undefined;
           const continueButton = addAction('Continue', () => {
-            if (selected !== undefined) session.navigate(selected.destinationId);
+            if (selected !== undefined) session.navigateChoice(selected);
           });
           continueButton.disabled = true;
           for (const [index, choice] of choices.entries()) {

@@ -140,6 +140,7 @@ messenger route and five on the direct route. Neither route can underflow.
 | `${name}` | In narrative only, displays the variable's post-entry value as text. |
 | `*choice` | Takes no arguments; starts one or more flat choice lines. Must conclude the passage. |
 | `#Label -> destination_id` | Inside a choice block, a nonempty literal label and explicit existing destination. Exactly one `->` separator. |
+| `#Label -> destination_id [set name literal]` | Optional assignment to an existing global variable before the destination's entry effects, using the same primitive types and validation as `*set`. One assignment per choice. |
 | `#Label -> destination_id [if name operator literal]` | Optional single typed condition, evaluated against the committed post-entry state. The block must include an unconditional choice. |
 | `#Label -> destination_id [if has_skill id]` / `[if lacks_skill id]` | Optional skill condition, using the same evaluator and requiring an unconditional fallback. |
 | `#Label -> destination_id [if has_item id]` / `[if lacks_item id]` / `[if item_count id >= 1]` | Optional item condition with the same evaluator/fallback rules; all six comparison operators work for counts. |
@@ -451,7 +452,7 @@ because existing gate/background snapshots remain compatible.
 ## Browser saving and startup
 
 The application stores one atomic record at `pokemon:checkpoint:aurelian-league`
-for the sole public story (`aurelian-league`, revision 5). Other authored applications
+for the sole public story (`aurelian-league`, revision 6). Other authored applications
 must configure distinct explicit identities. Previous-game keys are never read,
 migrated, or deleted. Unsupported saves stay untouched until confirmed replacement.
 
@@ -501,7 +502,7 @@ events: `*var diplomacy 0` and `*skill diplomacy "Diplomacy"` may coexist.
 Explicit skill commands/conditions distinguish them.
 
 Names use the same double-quoted JSON string literals as variables, including
-`\"`, `\\`, `\n`, and `\u2665` escapes. They must contain non-whitespace text after
+`\"`, `\`, `\n`, and `\u2665` escapes. They must contain non-whitespace text after
 decoding; single quotes, unquoted names, trailing content, and malformed escapes
 are invalid. Duplicate display names are allowed because IDs establish identity.
 Names remain literal, without `${...}` interpolation, and are rendered as text.
@@ -683,7 +684,7 @@ Supported literals:
   JavaScript floating-point precision; numeric overflow fails passage entry.
 - **Booleans:** exactly `true` or `false`.
 - **Strings:** double-quoted text, including the empty string `""`. Standard JSON
-  string escapes work: `\"`, `\\`, `\n`, and `\u2665`, for example. Single quotes,
+  string escapes work: `\"`, `\`, `\n`, and `\u2665`, for example. Single quotes,
   unquoted names, raw multiline strings, and trailing content are invalid.
 
 Arrays, objects, `null`, and custom values are unsupported. `*set` cannot change
@@ -855,15 +856,52 @@ Eligibility uses committed values after entry effects, never initial declaration
 values or DOM state. Evaluating choices or rerendering never applies effects.
 A later legitimate re-entry applies its effects once and recomputes eligibility.
 The runtime also enforces conditions when navigating; bypassing a hidden option
-cannot change state. If choices share a destination, any eligible one permits it.
+cannot change state. A choice may use both one `[set name literal]` and one `[if ...]` or `[selectable_if ...]` suffix, in either order. The assignment is applied only after the player commits the selected option; browsing or highlighting a choice never changes state. Checkpoints capture the assigned pre-entry state and failed destination effects roll back the assignment. Assignments cannot target temporary variables. If choices share a destination, the reader passes the selected Choice object to `navigateChoice`; `navigate(destinationId)` remains available for unique destinations and Continue, but rejects an ambiguous destination rather than guessing. Preflight replays all options to a shared destination separately.
 
 Unsupported: variable-to-variable comparisons and arithmetic.
 Boolean and/or/not, parentheses and indented if/elseif/else are supported.
 For example, `[if influence >= other]`, `[if influence + 1 >= 5]`, and
 `[if influence >= 5 && loyal == true]` are errors. Type mismatches such as
 `[if loyal == 0]`, ordered strings such as `[if faction > "guild"]`, non-finite
-numbers, missing operands/brackets, extra suffixes, and invalid operators are also
+numbers, missing operands/brackets, duplicate `[set]`/condition suffixes, and invalid operators are also
 rejected with passage/source-line errors before gameplay can start.
+
+### Choice assignments and shared passages
+
+A choice can set one declared **global** variable and navigate directly to a shared passage.
+Use this when the response differs but the narrative immediately rejoins:
+
+```text
+*var rival_response "none"
+
+*passage gangway
+*title The Gangway
+
+Someone pushes past you.
+
+*choice
+#Confront him -> arrival [set rival_response "confront"]
+#Ignore him -> arrival [set rival_response "ignore"]
+
+*passage arrival
+*title Lezano Waterfront
+
+*show_if rival_response == "confront"
+You call out to him.
+
+*show_if rival_response == "ignore"
+You let him pass without answering.
+
+You step onto the wharf.
+```
+
+The reader preserves the selected choice even if both destinations are `arrival`.
+Assignments are typed like `*set` and applied atomically before destination entry
+effects, the checkpoint boundary, and conditional narrative evaluation. Use
+`navigateChoice(choice)` in integrations; `navigate(destinationId)` deliberately
+rejects ambiguous same-destination options. No automatic transition passages or
+implicit page skips are required. The `*show_if` paragraphs and the shared
+paragraph appear together on the arrival page.
 
 ## Conditional narrative
 

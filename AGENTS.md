@@ -9,13 +9,14 @@ never merge automatically or commit directly to main.
 
 Aurelia is a modern Pokémon region influenced by Roman architecture and civic
 institutions. The public game is `content/aurelian-league.story`, the sole catalog
-entry. Its identity is `aurelian-league`, revision 5. The current playable
-chapter begins on a ferry to Lezano and ends when the vessel comes into port.
+entry. Its identity is `aurelian-league`, revision 6. The current playable
+chapter begins on a ferry to Lezano and ends with the player's choice to head to the hotel or find food after registration.
 The player starts without Pokémon, makes an early flavor choice, enters a first
 name, optionally exchanges contact details with Lucia, and chooses pronouns.
 Only contestants, crew, and League press are aboard; Minccino and Machoke
-assist the crew. Lucia wears a Lapras necklace. Do not write disembarkation or
-starter selection into the public story until requested. The planned choices
+assist the crew. Lucia wears a Lapras necklace. The player meets an unnamed
+rival with CHAMP on his jacket on the gangway and checks in at Lezano, receiving
+a badge, a map and 100 credits. Do not write hotel, food, or starter scenes until requested. The planned choices
 for the next chapter are Charmander, Chikorita, and Piplup, all equally valid.
 
 Eight Laurels can be earned without battling; the three highest-ranked contestants
@@ -84,13 +85,13 @@ interpreter rewrite, or unrelated abstraction is needed.
   changes no gameplay or storage. Focus the active heading. Use native pressed
   buttons, 44px targets, a single-row five-tab layout at 320px, sticky navigation and Story-only chapter,
   clear focus, no animation or nested panel scrolling, and safe wrapping at 320px.
-- Choices are native unselected radios; Continue alone commits. Failed navigation
+- Choices are native unselected radios; Continue alone commits. Optional `[set global literal]` suffixes on choices apply before destination entry. For two choices sharing a destination, pass the selected Choice object, not just its destination ID. Failed navigation
   preserves selection/error. Render authored formatting with safe DOM nodes; player
   input stays text and is never HTML, commands, or a recursive template.
 - Pokédex species metadata is incremental and validated against explicit journal
   discovery/acquisition event IDs. Derive entries solely from the current journal,
   never prose names or a separate save field. Authors pair acquisitions with journal
-  events atomically. Keep public revision 5 and save formats unchanged for additive
+  events atomically. Keep public revision 6 and save formats unchanged for additive
   event metadata; never backfill old saves or invent post-checkpoint discoveries.
 - People metadata is immutable and validated against journal events; discovery is
   derived from current journal after recovery. No separate tracking/save data.

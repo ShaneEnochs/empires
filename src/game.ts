@@ -77,16 +77,39 @@ export class Game {
       paragraph.condition === undefined || evaluateCondition(paragraph.condition, { ...this.currentState, variables: this.variables })));
   }
 
-  /** One explicit action enters one passage; there is no automatic traversal. */
+  /** Legacy destination navigation remains unambiguous for ordinary choices and Continue. */
   navigate(destinationId: string): void {
     if (this.canAdvancePage) throw Error('Finish reading this passage first.');
-    const current = this.passage;
-    const allowed = current.continueTo === destinationId
-      || this.availableChoices.some(choice => choice.destinationId === destinationId);
-    if (!allowed) {
-      throw new Error(`Passage "${current.id}" has no action to "${destinationId}".`);
+    if (this.passage.continueTo === destinationId) {
+      this.transition({ ...this.currentState, passageId: destinationId });
+      return;
     }
-    this.transition({ ...this.currentState, passageId: destinationId });
+    const matches = this.availableChoices.filter(choice => choice.destinationId === destinationId);
+    if (matches.length === 1) {
+      this.navigateChoice(matches[0]!);
+      return;
+    }
+    if (matches.length > 1) {
+      // Historical destination-only calls remain valid when no choice has a side effect.
+      if (matches.every(choice => choice.assignment === undefined)) {
+        this.transition({ ...this.currentState, passageId: destinationId });
+        return;
+      }
+      throw new Error('Multiple choices lead to "' + destinationId + '"; select a specific choice.');
+    }
+    throw new Error(`Passage "${this.passage.id}" has no action to "${destinationId}".`);
+  }
+
+  /** Apply the actual selected option before destination effects, as one atomic transition. */
+  navigateChoice(choice: Choice): void {
+    if (this.canAdvancePage) throw Error('Finish reading this passage first.');
+    if (!this.passage.choices.includes(choice) || !this.availableChoices.includes(choice)) {
+      throw new Error('That choice is not currently available.');
+    }
+    const variables = choice.assignment
+      ? { ...this.currentState.variables, [choice.assignment.variable]: choice.assignment.value }
+      : this.currentState.variables;
+    this.transition({ ...this.currentState, passageId: choice.destinationId, variables });
   }
 
   /** The validated current passage alone selects the variable and destination. */

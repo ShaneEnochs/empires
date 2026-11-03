@@ -13,7 +13,7 @@ Run `npm ci` and `npm run dev` from the repository root. Notepad++ users can imp
 [Pokemon.xml](../tools/notepadpp/Pokemon.xml); the toolkit README documents saved-file
 validation and optional People JSON. VS Code users can build and locally install
 [Pokémon Story](../tools/vscode-pokemon/README.md). `.story` uses language ID
-`pokemon-story`; Ctrl+Space and `pkmn-` discover 38 workspace snippets. The extension
+`pokemon-story`; Ctrl+Space and `pkmn-` discover 39 workspace snippets. The extension
 uses the same parser for open/save diagnostics; highlighting alone is not validation.
 
 VS Code tasks **Aurelian League: Check Current Story**, **Check Bundled Stories**,
@@ -52,7 +52,7 @@ A seventh companion fails atomically. Party never uses inventory items.
 
 Edit `content/title-page.json` for plain-text brand/title/description/button labels.
 Keep all five fields nonempty strings. The catalog contains only The Aurelian League,
-identity `aurelian-league`, revision 5, key `pokemon:checkpoint:aurelian-league`.
+identity `aurelian-league`, revision 6, key `pokemon:checkpoint:aurelian-league`.
 Display text is not a save identity. The old game's keys are never read or deleted.
 Party-aware saves use format 4, or 5 with reading context; schemas 1–3 are incompatible.
 Continue resumes committed state/page without re-entering. Checkpoints preserve the
@@ -181,7 +181,7 @@ restored checkpoint journal, retaining events already there and discarding later
 ones, exactly like People discovery. Nothing outside authoritative state survives
 recovery as hidden progress.
 
-The save key, formats 4/5/6, and public story revision 5 stay unchanged. These
+The save key, formats 4/5/6, and public story revision 6 stay unchanged. These
 additive event IDs/metadata do not invalidate existing revision-5 records. Older
 records without these events remain undiscovered until a later legitimate event;
 startup/Continue never backfill them or write a save. Do not change existing IDs,

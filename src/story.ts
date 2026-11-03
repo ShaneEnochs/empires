@@ -363,22 +363,47 @@ export function parseStory(source: string): Story {
       const arrow = text.indexOf('->');
       const label = text.startsWith('#') && arrow !== -1 ? text.slice(1, arrow).trim() : '';
       const destination = arrow !== -1 ? text.slice(arrow + 2).trim() : '';
-      const bracket = destination.indexOf('[');
-      const target = (bracket === -1 ? destination : destination.slice(0, bracket)).trim();
-      if (!label || !target || target.includes('->')) {
+      const parts = /^([^\s\[]+)(.*)$/.exec(destination);
+      if (!label || !parts || parts[1]!.includes('->') || parts[2]!.trim().startsWith('->')) {
         throw syntaxError('Expected #Nonempty choice label -> destination_id.', line, current.id);
       }
-      if (/\[if\b/i.test(label)) throw syntaxError('Choice conditions must follow the destination.', line, current.id);
-      const destinationId = id(target, 'Choice destination', line, current.id);
+      if (/\[(?:if|set|selectable_if)\b/i.test(label)) throw syntaxError('Choice conditions must follow the destination; assignments must also be on the destination side.', line, current.id);
+      // Preserve the precise invalid-destination diagnostic for bare malformed IDs.
+      if (parts[2]!.trim() && !parts[2]!.trim().startsWith('[')) id(destination, 'Choice destination', line, current.id);
+      const destinationId = id(parts[1]!, 'Choice destination', line, current.id);
       let condition: Condition | undefined = guard();
       let selectable: Condition | undefined;
-      if (bracket !== -1) {
-        const wrapper = /^\[(if|selectable_if)\s+(.+)\]$/.exec(destination.slice(bracket));
-        if (!wrapper) throw syntaxError('Expected a single [if condition] suffix.', line, current.id);
-        const parsed = parseCondition(wrapper[2]!, variables(), skills, items, line, current.id, pokemon);
-        if (wrapper[1] === 'selectable_if') selectable = parsed; else condition = conjunction(condition, parsed);
+      let assignment: Choice['assignment'];
+      let seenCondition = false;
+      let suffixes = parts[2]!.trim();
+      while (suffixes) {
+        // Brackets inside a quoted literal are part of the value, not a suffix boundary.
+        const suffix = /^\[((?:[^\]"\\]|"(?:[^"\\]|\\.)*")*)\](?=\s|$)/.exec(suffixes);
+        if (!suffix) throw syntaxError('Expected [if condition], [selectable_if condition], or [set variable literal] suffix.', line, current.id);
+        const content = suffix[1]!.trim();
+        const set = /^set\s+(\S+)\s+(.+)$/.exec(content);
+        if (set) {
+          if (assignment) throw syntaxError('A choice may assign only one variable.', line, current.id);
+          const variable = id(set[1]!, 'Choice assignment variable', line, current.id);
+          if (!Object.hasOwn(initialVariables, variable)) {
+            throw syntaxError('Choice assignment requires a declared global variable: "' + variable + '".', line, current.id);
+          }
+          const value = literal(set[2]!.trim(), line, current.id);
+          if (typeof initialVariables[variable] !== typeof value) {
+            throw syntaxError('Choice assignment must preserve the declared type of "' + variable + '".', line, current.id);
+          }
+          assignment = Object.freeze({ variable, value });
+        } else {
+          const conditional = /^(if|selectable_if)\s+(.+)$/.exec(content);
+          if (!conditional || seenCondition) throw syntaxError('A choice supports at most one condition suffix and one assignment.', line, current.id);
+          seenCondition = true;
+          const parsed = parseCondition(conditional[2]!, variables(), skills, items, line, current.id, pokemon);
+          if (conditional[1] === 'selectable_if') selectable = parsed; else condition = conjunction(condition, parsed);
+        }
+        suffixes = suffixes.slice(suffix[0].length).trim();
       }
-      current.choices.push(Object.freeze({ label, destinationId, ...(selectable ? { selectable } : {}), ...(condition === undefined ? {} : { condition }) }));
+      current.choices.push(Object.freeze({ label, destinationId, ...(selectable ? { selectable } : {}),
+        ...(condition === undefined ? {} : { condition }), ...(assignment ? { assignment } : {}) }));
       references.push({ destinationId, passageId: current.id, line });
     } else if (action === 'death') {
       throw syntaxError('*death must conclude the passage; no further prose or choices are allowed.', line, current.id);

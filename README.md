@@ -10,7 +10,7 @@ An early choice introduces the crew's working Pokémon. Meet Lucia, enter your
 first name, decide whether to exchange contact details, and choose your pronouns
 in conversation. You can learn about the League, speak with other contestants,
 listen in, or spend time on the observation deck. The current story ends when
-the ferry enters port, before disembarkation or starter selection. Charmander,
+the ferry enters port, then the player disembarks, meets a rude contestant wearing CHAMP on his jacket, and checks in at Lezano. The story stops immediately after choosing to visit the hotel or find food, before starter selection. Charmander,
 Chikorita, and Piplup remain the planned starter options for a future chapter.
 The engine's party system is implemented, but players cannot acquire Pokémon
 in this chapter. Battles, evolution, levels, storage boxes, rankings, and external
@@ -106,7 +106,7 @@ published build. No editor uploads, accounts, APIs, or new runtime dependencies 
 
 ## Saves and recovery
 
-The sole public story has `storyId: aurelian-league`, `storyRevision: 5`, and key
+The sole public story has `storyId: aurelian-league`, `storyRevision: 6`, and key
 `pokemon:checkpoint:aurelian-league`. This fresh namespace never reads, migrates,
 or deletes the former game's browser records.
 
@@ -185,6 +185,6 @@ after party removal. Repeated sightings yield one entry per species.
 See the [complete metadata and encounter guide](docs/AUTHORING.md#adding-discoverable-pokédex-species)
 for JSON examples, validation, event timing, and optional author-preview metadata.
 Discovery derives solely from the journal; no save-schema or format change is
-needed. Public revision 5 remains compatible. Existing saves without the new
+needed. Public revision 6 remains compatible. Existing saves without the new
 events are not silently backfilled. Checkpoint recovery derives the Pokédex from
 the restored journal, just as People does.
