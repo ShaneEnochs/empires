@@ -2,37 +2,97 @@
   {
     "id": "minccino",
     "name": "Minccino",
-    "description": "Seen helping the ferry café staff clear tables.",
+    "nationalNumber": 572,
+    "types": [
+      "Normal"
+    ],
+    "category": "Chinchilla Pokémon",
+    "officialSummary": "Minccino keeps itself and its surroundings clean with its tail, sometimes washing the tail thoroughly after a long day of sweeping.",
+    "sourceUrl": "https://in.portal-pokemon.com/pokedex/0572/",
+    "description": "A tidy Normal-type Pokémon. You saw one polishing a lamp at the Portico Hotel.",
     "discoveryEvents": [
-      "saw_minccino_cafe",
-      "saw_minccino_windows"
+      "scanned_minccino_hotel"
+    ],
+    "observations": [
+      {
+        "eventId": "scanned_minccino_hotel",
+        "text": "You saw a Minccino polishing the Portico Hotel's reception counter and a brass lamp with its tail."
+      }
     ]
   },
   {
     "id": "machoke",
     "name": "Machoke",
-    "description": "Seen helping the ferry crew move luggage.",
+    "nationalNumber": 67,
+    "types": [
+      "Fighting"
+    ],
+    "category": "Superpower Pokémon",
+    "officialSummary": "Machoke's powerful muscles require a special belt to help it regulate its movements.",
+    "sourceUrl": "https://in.portal-pokemon.com/pokedex/0067/",
+    "description": "A powerful Fighting-type Pokémon. You saw one guiding luggage carts at Lezano Harbor.",
     "discoveryEvents": [
-      "saw_machoke_cafe",
-      "saw_machoke_windows"
+      "scanned_machoke_harbor"
+    ],
+    "observations": [
+      {
+        "eventId": "scanned_machoke_harbor",
+        "text": "You saw a Machoke in a crew vest directing luggage carts through Lezano Harbor."
+      }
     ]
   },
   {
     "id": "wingull",
     "name": "Wingull",
-    "description": "Seen around the ferry on the approach to Lezano.",
+    "nationalNumber": 278,
+    "types": [
+      "Water",
+      "Flying"
+    ],
+    "category": "Seagull Pokémon",
+    "officialSummary": "Wingull uses rising air currents to glide through the sky and can carry food tucked into its beak.",
+    "sourceUrl": "https://in.portal-pokemon.com/pokedex/0278/",
+    "description": "A coastal Water- and Flying-type Pokémon. You saw one visiting your hotel balcony.",
     "discoveryEvents": [
-      "saw_wingull_windows",
-      "saw_wingull_approach",
-      "saw_wingull_rail"
+      "scanned_wingull_hotel"
+    ],
+    "observations": [
+      {
+        "eventId": "scanned_wingull_hotel",
+        "text": "You saw a curious Wingull investigate your water glass on the Portico Hotel balcony."
+      }
     ]
   },
   {
     "id": "wattrel",
     "name": "Wattrel",
-    "description": "A coastal Pokémon seen calling above Lezano Harbor and around its waterfront cafés.",
+    "nationalNumber": 940,
+    "types": [
+      "Electric",
+      "Flying"
+    ],
+    "category": "Storm Petrel Pokémon",
+    "officialSummary": "Wattrel generates electricity as wind passes through its wings. It hunts over the sea and nests along coastal cliffs.",
+    "sourceUrl": "https://www.pokemon.com/us/pokedex/wattrel",
+    "description": "An Electric- and Flying-type coastal bird Pokémon. You saw one at Lezano Harbor or the Salt and Thyme.",
     "discoveryEvents": [
-      "saw_wattrel_waterfront"
+      "scanned_wattrel_harbor",
+      "scanned_wattrel_emergency",
+      "scanned_wattrel_rest"
+    ],
+    "observations": [
+      {
+        "eventId": "scanned_wattrel_harbor",
+        "text": "You watched a Wattrel ride the breeze after taking off from a post in Lezano Harbor."
+      },
+      {
+        "eventId": "scanned_wattrel_emergency",
+        "text": "You looked up a Wattrel while it was tangled in the Salt and Thyme's awning, delaying your help."
+      },
+      {
+        "eventId": "scanned_wattrel_rest",
+        "text": "You saved a note about a Wattrel that became tangled in the café awning and was later freed."
+      }
     ]
   }
 ]
