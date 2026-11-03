@@ -3,18 +3,36 @@
     "id": "minccino",
     "name": "Minccino",
     "description": "Seen helping the ferry café staff clear tables.",
-    "discoveryEvents": ["saw_minccino_cafe", "saw_minccino_windows"]
+    "discoveryEvents": [
+      "saw_minccino_cafe",
+      "saw_minccino_windows"
+    ]
   },
   {
     "id": "machoke",
     "name": "Machoke",
     "description": "Seen helping the ferry crew move luggage.",
-    "discoveryEvents": ["saw_machoke_cafe", "saw_machoke_windows"]
+    "discoveryEvents": [
+      "saw_machoke_cafe",
+      "saw_machoke_windows"
+    ]
   },
   {
     "id": "wingull",
     "name": "Wingull",
     "description": "Seen around the ferry on the approach to Lezano.",
-    "discoveryEvents": ["saw_wingull_windows", "saw_wingull_approach", "saw_wingull_rail"]
+    "discoveryEvents": [
+      "saw_wingull_windows",
+      "saw_wingull_approach",
+      "saw_wingull_rail"
+    ]
+  },
+  {
+    "id": "wattrel",
+    "name": "Wattrel",
+    "description": "A coastal Pokémon seen calling above Lezano Harbor and around its waterfront cafés.",
+    "discoveryEvents": [
+      "saw_wattrel_waterfront"
+    ]
   }
 ]
