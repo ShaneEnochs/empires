@@ -13,7 +13,7 @@ export interface PokedexEntry {
   readonly types?: readonly string[];
   readonly category?: string;
   readonly officialSummary?: string;
-  readonly sourceUrl?: string;
+  readonly trainerNotes?: readonly string[];
   readonly observations: readonly PokemonObservation[];
 }
 
@@ -33,16 +33,14 @@ export function parsePokedex(value: unknown): readonly PokedexEntry[] {
       || discoveryEvents.length + acquisitionEvents.length === 0) {
       throw new Error(`Invalid or duplicate Pokédex entry: ${typeof id === 'string' ? id : index + 1}`);
     }
-    const { nationalNumber, types, category, officialSummary, sourceUrl, observations = [] } = raw as Record<string, unknown>;
+    const { nationalNumber, types, category, officialSummary, trainerNotes, observations = [] } = raw as Record<string, unknown>;
     if (nationalNumber !== undefined && (typeof nationalNumber !== 'number' || !Number.isSafeInteger(nationalNumber) || nationalNumber <= 0)) throw new Error(`Invalid National Pokédex number for "${id}".`);
     if (types !== undefined && (!Array.isArray(types) || types.length < 1 || types.length > 2 || ![...types].every(nonempty) || new Set(types).size !== types.length)) throw new Error(`Invalid Pokémon types for "${id}".`);
     if ((category !== undefined && !nonempty(category)) || (officialSummary !== undefined && !nonempty(officialSummary))) throw new Error(`Invalid species information for "${id}".`);
-    if (sourceUrl !== undefined) {
-      try {
-        if (typeof sourceUrl !== 'string') throw new Error();
-        const url = new URL(sourceUrl);
-        if (url.protocol !== 'https:' || url.username || url.password) throw new Error();
-      } catch { throw new Error(`Invalid HTTPS Pokédex source URL for "${id}".`); }
+    if (trainerNotes !== undefined && (!Array.isArray(trainerNotes) || trainerNotes.length < 1
+      || trainerNotes.length > 5 || !trainerNotes.every(nonempty)
+      || new Set(trainerNotes).size !== trainerNotes.length)) {
+      throw new Error(`Invalid trainer notes for "${id}".`);
     }
     if (!Array.isArray(observations)) throw new Error(`Invalid observations for "${id}".`);
     const observationIds = new Set<string>();
@@ -59,7 +57,7 @@ export function parsePokedex(value: unknown): readonly PokedexEntry[] {
       ...(types === undefined ? {} : { types: Object.freeze([...(types as string[])]) }),
       ...(category === undefined ? {} : { category: category as string }),
       ...(officialSummary === undefined ? {} : { officialSummary: officialSummary as string }),
-      ...(sourceUrl === undefined ? {} : { sourceUrl: sourceUrl as string }),
+      ...(trainerNotes === undefined ? {} : { trainerNotes: Object.freeze([...(trainerNotes as string[])]) }),
       observations: Object.freeze(notes),
       discoveryEvents: Object.freeze([...discoveryEvents]), acquisitionEvents: Object.freeze([...acquisitionEvents]),
     });
