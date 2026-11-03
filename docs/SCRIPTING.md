@@ -480,7 +480,7 @@ because existing gate/background snapshots remain compatible.
 ## Browser saving and startup
 
 The application stores one atomic record at `pokemon:checkpoint:aurelian-league`
-for the sole public story (`aurelian-league`, revision 7). Other authored applications
+for the sole public story (`aurelian-league`, revision 8). Other authored applications
 must configure distinct explicit identities. Previous-game keys are never read,
 migrated, or deleted. Unsupported saves stay untouched until confirmed replacement.
 
