@@ -173,3 +173,33 @@ test('Lucia appears on introduction and learns facts only from visited scenes', 
   assert.doesNotMatch(alternativeFacts, /wetlands|brother/);
   assert.equal(encounteredPeople(publicPeople, other.state).filter(person => person.id === 'lucia').length, 1);
 });
+
+test('Roman-inspired entrants unlock only after their introductions and personal facts', () => {
+  const pub = parseStory(readFileSync('content/aurelian-league.story', 'utf8'));
+  const references = validatePeople(pub, parsePeople(JSON.parse(
+    readFileSync('content/aurelian-league.people.json','utf8'))));
+  const names = references.map(p=>p.name);
+  assert.deepEqual(names,['Lucia','Cassius','Octavia','Victra','Livia']);
+  for(const [route,help,expected] of [
+    ['hotel_route',true,'Victra'],['hotel_route',false,'Lucia'],
+    ['food_route',true,'Livia'],['food_route',false,'Livia'],
+  ] as const) {
+    const game = new Game(pub);
+    for(const id of ['ferry_windows','ferry_context','ferry_ad']) game.navigate(id);
+    game.advancePage(); game.navigate('name'); game.submitText('Ari');
+    for(const id of ['contact_yes','pronouns','they','lucia_chat','open_deck','rail','dock_approach']) game.navigate(id);
+    game.navigateChoice(game.visibleChoices[0]!);
+    game.navigate('lezano_checkin'); game.navigate(route);
+    game.navigateChoice(game.visibleChoices[help ? 0 : 1]!);
+    const encountered = encounteredPeople(references,game.state).map(p=>p.name);
+    assert.ok(encountered.includes(expected));
+    assert.equal(encountered.includes('Victra'), route === 'hotel_route' && help);
+    assert.equal(encountered.includes('Livia'), route === 'food_route');
+    const victra = references.find(p=>p.id==='victra')!;
+    assert.equal(learnedPersonFacts(victra,game.state).length,route === 'hotel_route' && help ? 1 : 0);
+    game.navigate('orientation_invitation');
+    assert.equal(learnedPersonFacts(references[0]!,game.state).some(s=>/Civic Forum/.test(s)),false);
+    game.navigate('orientation_with_lucia');
+    assert.equal(learnedPersonFacts(references[0]!,game.state).some(s=>/Civic Forum/.test(s)),true);
+  }
+});
