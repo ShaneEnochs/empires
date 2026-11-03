@@ -100,7 +100,7 @@ test('conversations, eavesdropping and the deck lead only to the terminal harbor
 });
 
 test('Lucia topics keep their distinct callbacks at the harbor', () => {
-  for (const topic of ['lucia_wildlife','lucia_rules','lucia_nerves']) {
+  for (const topic of ['lucia_wildlife','lucia_rules']) {
     const game = beginConversation();
     game.navigate(topic);
     assert.notEqual(game.state.variables.lucia_topic,'none');
@@ -111,11 +111,31 @@ test('Lucia topics keep their distinct callbacks at the harbor', () => {
     const prose = game.visibleParagraphs.map(p=>p.text).join(' ');
     if(topic==='lucia_wildlife')assert.match(prose,/photograph them/);
     if(topic==='lucia_rules')assert.match(prose,/get some answers/);
-    if(topic==='lucia_nerves')assert.match(prose,/sheepish smile/);
   }
 });
 
 test('the published story and People entries use Aurelia', () => {
   assert.match(source,/Aurelia/);
   assert.match(readFileSync('content/aurelian-league.people.json','utf8'),/Aurelia/);
+});
+
+test('each public choice menu contains two or three options', () => {
+  for (const passage of story.passages) {
+    if (passage.choices.length > 0) {
+      assert.ok(passage.choices.length >= 2 && passage.choices.length <= 3,
+        `Passage "${passage.id}" has ${passage.choices.length} options`);
+    }
+  }
+  const conversation = story.passages.find(p => p.id === 'lucia_chat');
+  assert.deepEqual(conversation?.choices.map(choice => choice.destinationId),
+    ['lucia_wildlife','lucia_rules','open_deck']);
+  assert.match(conversation!.paragraphs.map(p=>p.text).join(' '),/I hope my starter likes me/);
+});
+
+test('the League advertisement and Lucia explanation have distinct passage titles', () => {
+  const advertisement = story.passages.find(p => p.id === 'ferry_ad');
+  const explanation = story.passages.find(p => p.id === 'lucia_rules');
+  assert.equal(advertisement?.title,'A Glimpse of the League');
+  assert.equal(explanation?.title,'Eight Laurels');
+  assert.equal(story.passages.filter(p=>p.title==='Eight Laurels').length,1);
 });
