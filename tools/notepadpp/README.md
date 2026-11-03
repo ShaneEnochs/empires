@@ -155,10 +155,22 @@ Windows interactive UDL import/completion verification remains unavailable here.
 
 ## Pokémon companions
 
-The public opening is `content/aurelian-league.story`. Initial declarations support
+The public opening is `content/aurelian-league/chapter-01-crossing.story`. Initial declarations support
 `*pokemon id "Species"`. Use `*add_pokemon id [nickname_variable]` and
 `*remove_pokemon id` as entry effects. The nickname operand must name a global string
 (empty means no nickname); it is copied once when joining. Party holds six, with
 idempotent duplicate adds/absent removes. Conditions support `has_pokemon id` and
 `lacks_pokemon id`. The Party view is read-only. See docs/SCRIPTING.md for validation,
 atomicity, saves and the complete syntax. No evolution or battle mechanics exist.
+
+## Public chapter files
+
+Shared declarations live in content/aurelian-league/globals.story; each chapter
+has a separate .story source. The fixed sources.json order is the shared source
+list. Checking any public chapter through the CLI/task/Notepad++ launcher validates
+them together; standalone private stories keep their original single-file behavior.
+The VS Code extension also validates public siblings together on open/save, using
+open buffers where available and reporting the originating file and line.
+For a playable local preview use Preview public chapter files at /author.html;
+it assembles the same sources/metadata with temporary memory progress. See
+docs/AUTHORING.md for opt-in Pokédex metadata, observations and information cards.

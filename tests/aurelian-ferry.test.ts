@@ -1,3 +1,4 @@
+import { publicStorySource } from './public-story';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -5,7 +6,7 @@ import { parseStory } from '../src/story';
 import { Game } from '../src/game';
 import { parsePeople, validatePeople, encounteredPeople } from '../src/people';
 
-const source = readFileSync('content/aurelian-league.story', 'utf8');
+const source = publicStorySource();
 const story = parseStory(source);
 const people = validatePeople(story, parsePeople(JSON.parse(readFileSync('content/aurelian-league.people.json', 'utf8'))));
 

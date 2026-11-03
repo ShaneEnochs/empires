@@ -1,3 +1,7 @@
+import { aurelianSources } from './aurelian-source';
+import { parseStorySources } from './story-source';
+import publicPeople from '../content/aurelian-league.people.json' with { type: 'json' };
+import publicPokedex from '../content/aurelian-league.pokedex.json' with { type: 'json' };
 import { parsePokedex, validatePokedex } from './pokedex';
 import type { PokedexEntry } from './pokedex';
 import { parsePeople, validatePeople } from './people';
@@ -16,6 +20,8 @@ const title = document.createElement('h1');
 title.textContent = 'Local story preview';
 const note = document.createElement('p');
 note.textContent = 'Files stay in this browser. Save edits in your editor, then select the files again. Preview progress is temporary. Optional People and Pokédex metadata stay local.';
+const previewPublic = document.createElement('button');
+previewPublic.textContent = 'Preview public chapter files';
 const label = document.createElement('label');
 label.textContent = 'Open a .story file';
 const file = document.createElement('input');
@@ -159,6 +165,20 @@ pokedexFile.addEventListener('change', async () => {
 });
 clearPokedex.addEventListener('click', () => { ++selection; pokedex = []; resetPreview('Pokédex'); });
 clearPeople.addEventListener('click', () => { ++selection; people = []; resetPreview(); });
+previewPublic.addEventListener('click', () => {
+  ++selection; reader.replaceChildren(); index.replaceChildren(); detail.replaceChildren();
+  restart.disabled = true; search.disabled = true; search.value = '';
+  try {
+    story = parseStorySources(aurelianSources); filename = 'The Aurelian League (chapter files)';
+    people = parsePeople(publicPeople); pokedex = parsePokedex(publicPokedex);
+    validatePeople(story, people); validatePokedex(story, pokedex);
+    restart.disabled = false; search.disabled = false; renderIndex(); start();
+    status.textContent = `Loaded ${aurelianSources.length} public chapter files: ${story.passages.length} passages. Preview progress is temporary.`;
+  } catch (error) {
+    story = undefined;
+    status.textContent = `Could not open chapter files: ${error instanceof Error ? error.message : String(error)}`;
+  }
+});
 restart.addEventListener('click', start);
 search.addEventListener('input', renderIndex);
-tools.append(title, note, label, peopleLabel, clearPeople, pokedexLabel, clearPokedex, status, restart, searchLabel, index, detail);
+tools.append(title, note, previewPublic, label, peopleLabel, clearPeople, pokedexLabel, clearPokedex, status, restart, searchLabel, index, detail);

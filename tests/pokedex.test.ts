@@ -1,13 +1,14 @@
+import { publicStorySource } from './public-story';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { parsePokedex, validatePokedex, discoveredPokemon } from '../src/pokedex';
+import { parsePokedex, validatePokedex, discoveredPokemon, pokemonLabel, passageLookups } from '../src/pokedex';
 import { parseStory } from '../src/story';
 import { Game } from '../src/game';
 import { GameSession } from '../src/session';
 import { checkpointKey } from '../src/storage';
 
-const publicStory = parseStory(readFileSync('content/aurelian-league.story', 'utf8'));
+const publicStory = parseStory(publicStorySource());
 const publicDex = validatePokedex(publicStory, JSON.parse(readFileSync('content/aurelian-league.pokedex.json', 'utf8')));
 const definition = { id: 'piplup', name: 'Piplup', description: 'A traveling companion.', discoveryEvents: ['seen'], acquisitionEvents: ['acquired'] };
 const source = `*pokemon partner "Piplup"
@@ -130,8 +131,8 @@ test('pre-install sightings never populate the public Pokédex', () => {
   }
   assert.ok(!publicDex.some(entry => ['Lapras', 'Floatzel', 'Magikarp'].includes(entry.name)));
 });
-test('existing revision-5 ferry saves remain valid and are never backfilled during Continue', () => {
-  const identity = { storyId: 'aurelian-league', storyRevision: 5 };
+test('existing revision-8 saves remain valid and are never backfilled during Continue', () => {
+  const identity = { storyId: 'aurelian-league', storyRevision: 8 };
   const memory = new Memory(); const session = new GameSession(publicStory, memory, identity);
   session.newGame(() => true); session.navigate('ferry_windows');
   const old = JSON.parse(memory.raw!); old.currentState.journal = [];
@@ -170,4 +171,115 @@ test('a post-install opt-in lookup is the only public discovery path', () => {
   assert.equal(discoveredPokemon(publicDex,wattrel.state).filter(p=>p.id==='wattrel').length,1);
   assert.ok(wattrel.state.journal.some(e=>e.id==='delayed_restaurant_help'));
   assert.equal(machoke.state.journal.some(e=>e.id==='scanned_wattrel_emergency'),false);
+});
+
+test('numbered species metadata is preserved, copied and frozen', () => {
+  const types = ['Electric','Flying']; const observations = [{eventId:'seen',text:'First scan.'}];
+  const entry = parsePokedex([{...definition,nationalNumber:940,types,category:'Storm Petrel Pokémon',officialSummary:'Coastal bird.',sourceUrl:'https://www.pokemon.com/us/pokedex/wattrel',observations}])[0]!;
+  types.push('Other'); observations[0]!.text='Changed';
+  assert.equal(entry.nationalNumber,940); assert.deepEqual(entry.types,['Electric','Flying']);
+  assert.equal(entry.category,'Storm Petrel Pokémon'); assert.equal(entry.officialSummary,'Coastal bird.');
+  assert.equal(entry.sourceUrl,'https://www.pokemon.com/us/pokedex/wattrel');
+  assert.deepEqual(entry.observations,[{eventId:'seen',text:'First scan.'}]);
+  assert.ok(Object.isFrozen(entry.types)); assert.ok(Object.isFrozen(entry.observations)); assert.ok(Object.isFrozen(entry.observations[0]));
+});
+for(const fields of [
+  {nationalNumber:0},{nationalNumber:-1},{nationalNumber:67.5},{nationalNumber:'0067'},
+  {types:[]},{types:['Water','Water']},{types:['Water',4]},{types:'Water'},
+  {category:''},{officialSummary:' '},{sourceUrl:'javascript:alert(1)'},{sourceUrl:'http://example.com'},
+  {observations:{}},{observations:[{eventId:'invalid id',text:'Note'}]},
+  {observations:[{eventId:'seen',text:''}]},{observations:[{eventId:'seen',text:'One'},{eventId:'seen',text:'Two'}]},
+])test('rejects malformed extended metadata '+JSON.stringify(fields),()=>assert.throws(()=>parsePokedex([{...definition,...fields}])));
+test('observation event references must exist; unseen notes remain private and recorded order wins',()=>{
+  assert.throws(()=>validatePokedex(story,[{...definition,observations:[{eventId:'missing',text:'Unknown'}]}]),/unknown journal event/);
+  const entries=validatePokedex(story,[{...definition,observations:[{eventId:'acquired',text:'Second.'},{eventId:'seen',text:'First.'},{eventId:'failed',text:'Hidden.'}]}]);
+  const game=new Game(story);game.navigate('meet');
+  assert.deepEqual(discoveredPokemon(entries,game.state)[0]!.observations.map(note=>note.text),['First.']);
+  game.navigate('join'); assert.deepEqual(discoveredPokemon(entries,game.state)[0]!.observations.map(note=>note.text),['First.','Second.']);
+});
+test('the installation gate applies only when the story declares dex_installed',()=>{
+  const game=new Game(story);game.navigate('meet');
+  assert.equal(discoveredPokemon(dex,game.state).length,1);
+  assert.deepEqual(discoveredPokemon(dex,{...game.state,variables:{...game.state.variables,dex_installed:false}}),[]);
+  assert.equal(discoveredPokemon(dex,{...game.state,variables:{...game.state.variables,dex_installed:true}}).length,1);
+});
+
+test('multiple deliberate Wattrel scans retain all observations and urgent lookup consequences',()=>{
+  const game=new Game(publicStory);
+  for(const id of ['ferry_cafe','ferry_context','ferry_ad'])game.navigate(id);
+  game.advancePage();game.navigate('name');game.submitText('Ari');
+  for(const id of ['contact_no','pronouns','they','lucia_chat','open_deck','rail','dock_approach'])game.navigate(id);
+  game.navigateChoice(game.visibleChoices[1]!);
+  for(const id of ['lezano_checkin','harbor_lookup','harbor_scan_wattrel','harbor_destination','food_route'])game.navigate(id);
+  game.navigateChoice(game.visibleChoices[2]!);
+  assert.equal(game.state.variables.livia_impression,'distracted');
+  assert.ok(game.state.journal.some(event=>event.id==='delayed_restaurant_help'));
+  game.navigateChoice(game.visibleChoices[0]!);game.navigate('food_scan_wattrel');
+  const entries=discoveredPokemon(publicDex,game.state);
+  assert.equal(entries.length,1);assert.equal(entries[0]!.nationalNumber,940);
+  assert.deepEqual(entries[0]!.observations.map(note=>note.eventId),['scanned_wattrel_harbor','scanned_wattrel_emergency','scanned_wattrel_rest']);
+  assert.equal(game.state.variables.livia_impression,'distracted');assert.equal(game.state.variables.credits,88);
+  assert.ok(game.state.journal.some(event=>event.id==='livia_disappointed'));
+});
+
+test('National numbers use four digits, while legacy entries retain their species names',()=>{
+  for(const [id,number] of [['machoke','0067'],['wingull','0278'],['minccino','0572'],['wattrel','0940']]) {
+    const entry=publicDex.find(entry=>entry.id===id)!;assert.equal(pokemonLabel(entry),'#'+number+' '+entry.name);
+  }
+  assert.equal(pokemonLabel(dex[0]!), 'Piplup');
+});
+test('lookup cards require a committed scan effect in the current passage, including conditional effects',()=>{
+  const s=parseStory(`*var scan false
+*passage start
+*title Start
+Choose.
+*choice
+#Scan -> result [set scan true]
+#Help -> result [set scan false]
+*passage result
+*title Result
+*if scan
+  *journal scanned_test "Looked up."
+  *set scan false
+The scan flag has changed after its guarded event.
+*continue end
+*passage end
+*title End
+Just mentioning the species does not produce another card.`);
+  const entries=validatePokedex(s,[{...definition,discoveryEvents:['scanned_test'],acquisitionEvents:[],observations:[{eventId:'scanned_test',text:'This scan.'}]}]);
+  const skipped=new Game(s);skipped.navigateChoice(skipped.visibleChoices[1]!);
+  assert.deepEqual(passageLookups(entries,skipped.state,skipped.passage),[]);
+  const scanned=new Game(s);scanned.navigateChoice(scanned.visibleChoices[0]!);
+  assert.equal(scanned.state.variables.scan,false);
+  assert.deepEqual(passageLookups(entries,scanned.state,scanned.passage)[0]!.observations.map(note=>note.text),['This scan.']);
+  scanned.navigate('end');assert.deepEqual(passageLookups(entries,scanned.state,scanned.passage),[]);
+});
+
+test('reload and checkpoint recovery retain exactly the recorded scan observations',()=>{
+  const s=parseStory(`*passage start
+*title First Scan
+*journal scanned_first "First lookup."
+A first observation.
+*continue camp
+*passage camp
+*title Checkpoint
+*checkpoint
+Pause.
+*continue later
+*passage later
+*title Later Scan
+*journal scanned_second "Second lookup."
+A later observation.
+*death`);
+  const entries=validatePokedex(s,[{...definition,discoveryEvents:['scanned_first','scanned_second'],acquisitionEvents:[],observations:[{eventId:'scanned_second',text:'Later.'},{eventId:'scanned_first',text:'First.'}]}]);
+  const memory=new Memory(),session=new GameSession(s,memory);
+  session.newGame(()=>true);session.navigate('camp');session.navigate('later');
+  const reopened=new GameSession(s,memory);reopened.continueGame();
+  assert.deepEqual(discoveredPokemon(entries,reopened.game!.state)[0]!.observations.map(note=>note.text),['First.','Later.']);
+  assert.deepEqual(passageLookups(entries,reopened.game!.state,reopened.game!.passage)[0]!.observations.map(note=>note.text),['Later.']);
+  reopened.retryAfterDeath();
+  assert.deepEqual(discoveredPokemon(entries,reopened.game!.state)[0]!.observations.map(note=>note.text),['First.']);
+  assert.equal(reopened.game!.state.journal.some(event=>event.id==='scanned_second'),false);
+  const again=new GameSession(s,memory);again.continueGame();
+  assert.deepEqual(discoveredPokemon(entries,again.game!.state)[0]!.observations.map(note=>note.text),['First.']);
 });

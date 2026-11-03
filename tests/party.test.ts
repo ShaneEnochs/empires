@@ -1,3 +1,4 @@
+import { publicStorySource } from './public-story';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -149,7 +150,7 @@ test('obsolete schema versions are rejected without changing saved bytes',()=>{
  for(const version of [1,2,3]){const memory=new Memory();memory.raw=JSON.stringify({formatVersion:version,storyId:'aurelian-league',storyRevision:1,checkpoint:new Game(story).checkpoint});const raw=memory.raw;assert.equal(loadCheckpoint(memory,story).status,'invalid');assert.equal(memory.raw,raw);assert.equal(memory.writes,0);}
 });
 test('public ferry story starts with an empty party and preserves character choices across reload',()=>{
- const publicStory=parseStory(readFileSync('content/aurelian-league.story','utf8'));
+ const publicStory=parseStory(publicStorySource());
  for(const pronoun of ['he','she','they'])for(const contact of ['contact_yes','contact_no']){
   const storage=new Memory(),session=new GameSession(publicStory,storage);session.newGame(()=>true);
   session.navigate('ferry_windows');session.navigate('ferry_context');session.navigate('ferry_ad');

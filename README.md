@@ -78,7 +78,7 @@ an existing companion. Pokémon are separate from inventory items and trainer sk
 
 `has_pokemon id` and `lacks_pokemon id` work in `*if`, `*show_if`, and choice
 conditions. Definitions, commands, and conditions are validated even in hidden or
-unreachable passages. See the public [opening](content/aurelian-league.story) for
+unreachable passages. See the public [opening](content/aurelian-league/chapter-01-crossing.story) for
 name input and all five pronoun variables plus plural verb agreement.
 
 The engine retains variables, skills, item quantities, journal discovery, People,
@@ -166,23 +166,44 @@ The separately packaged editor extension is never bundled with the player. Verif
 the Actions deployment and the actual site after merging; this task does not merge
 or publish automatically.
 
-## Discoverable Pokédex
+## Chapter authoring and preview
 
-The Pokédex starts empty and lists only explicitly encountered/acquired species.
-`content/aurelian-league.pokedex.json` maps stable species IDs, names/descriptions,
-and `discoveryEvents` / optional `acquisitionEvents` to existing `*journal` IDs.
-Add entries incrementally; no external database or artwork is used. The ferry
-unlocks Minccino, Machoke, and Wingull through its actual sighting scenes. Lucia's
-Lapras necklace and Floatzel anecdotes do not count as encounters.
+The public story is assembled from globals and chapter files under
+`content/aurelian-league/`, in the single explicit order in `sources.json`.
+Globals holds shared declarations; each chapter holds its chapter label and
+passages. The application eagerly assembles all text before the existing parser,
+so cross-chapter navigation shares one complete Story, Game and save. There is
+no runtime chapter loading or new story command. The physical split preserves
+the original revision-8 source and gameplay exactly.
 
-For future companions, author `*add_pokemon individual_id` and a corresponding
-`*journal acquired_species "..."` together, then reference that event in the
-entry's acquisitionEvents. This records Acquired status atomically and keeps it
-after party removal. Repeated sightings yield one entry per species.
+Run `npm run check:stories` or pass any public chapter to check the complete
+ordered story. VS Code diagnostics/tasks and Notepad++ validation use that order;
+assembly parser errors include the originating filename and local line. In the
+development author preview choose **Preview public chapter files** to play the
+same assembled sources with public metadata and private memory saves. Standalone
+single-file drafts remain supported.
 
-See the [complete metadata and encounter guide](docs/AUTHORING.md#adding-discoverable-pokédex-species)
-for JSON examples, validation, event timing, and optional author-preview metadata.
-Discovery derives solely from the journal; no save-schema or format change is
-needed. Public revision 8 remains compatible. Existing saves without the new
-events are not silently backfilled. Checkpoint recovery derives the Pokédex from
-the restored journal, just as People does.
+## Opt-in Pokédex
+
+Registration installs the app (`dex_installed`). Before then the notebook explains
+that it is unavailable; installation alone leaves it empty. Only deliberate
+`scanned_...` journal events unlock public entries. Ferry sightings, Lucia's
+Lapras necklace, and Pokémon mentioned in conversation do not count.
+
+`content/aurelian-league.pokedex.json` contains incremental species definitions,
+National numbers, types, classifications, official-source summaries/links, and
+observations keyed to explicit journal IDs. Native collapsed entries expand by
+mouse, touch or keyboard. Only recorded observations appear, in journal order;
+multiple scans of Wattrel remain one entry. Older private metadata with only the
+original fields still works, without requiring the public installation variable.
+
+Lookup passages also display a text-only app information card, derived from their
+recorded scan effects. It never writes a save or triggers discovery. The restaurant's
+urgent lookup still delays assistance and affects Livia; the UI neither softens nor
+undoes that choice. No runtime database, API, image or external-information fetch
+has been added.
+
+See [the authoring guide](docs/AUTHORING.md) for the source list, metadata fields,
+lookup events and observation examples. Public revision 8 and save formats remain
+unchanged. Continue and recovery retain exactly the scans in their journal state;
+there is no new tracking collection and no automatic backfill of unseen notes.

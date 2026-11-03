@@ -39,14 +39,14 @@ test('authored encounters/acquisitions deduplicate, survive recovery and stay is
   const story = async () => { await page.getByRole('button', { name: 'Story', exact: true }).click(); };
   const proceed = async () => { await page.getByRole('button', { name: 'Continue', exact: true }).click(); };
   await showDex(); await expect(page.locator('#pokedex li')).toHaveCount(0); await story(); await proceed();
-  await showDex(); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Encountered · Prologue']);
+  await showDex(); await page.locator('#pokedex summary').click(); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Encountered · Prologue']);
   await story(); await page.getByRole('radio', { name: 'Look again', exact: true }).check(); await proceed();
   await showDex(); await expect(page.locator('#pokedex li')).toHaveCount(1); await story();
   await page.getByRole('radio', { name: 'Partner', exact: true }).check(); await proceed(); await proceed(); await proceed();
   await page.getByRole('button', { name: 'Party', exact: true }).click(); await expect(page.locator('#party li')).toHaveCount(0);
-  await showDex(); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Acquired · Prologue']);
+  await showDex(); await page.locator('#pokedex summary').click(); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Acquired · Prologue']);
   await story(); await page.getByRole('button', { name: 'Try Again', exact: true }).click();
-  await showDex(); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Acquired · Prologue']);
+  await showDex(); await page.locator('#pokedex summary').click(); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Acquired · Prologue']);
   expect(await page.evaluate(() => localStorage.getItem('pokemon:checkpoint:aurelian-league'))).toBe('untouched public save');
   await page.getByRole('button', { name: 'Restart preview', exact: true }).click(); await page.getByRole('button', { name: 'New Game', exact: true }).click();
   await showDex(); await expect(page.locator('#pokedex li')).toHaveCount(0);
@@ -54,4 +54,16 @@ test('authored encounters/acquisitions deduplicate, survive recovery and stay is
   await expect(page.getByRole('status')).toContainText('unknown journal event'); await expect(page.locator('#app')).toBeEmpty();
   await page.getByRole('button', { name: 'Clear Pokédex file', exact: true }).click(); await page.getByRole('button', { name: 'New Game', exact: true }).click();
   await showDex(); await expect(page.locator('#pokedex li')).toHaveCount(0);
+});
+test('the public chapter preview shares ordered sources and metadata without accessing public saves',async({page})=>{
+ await page.goto('/author.html');await page.evaluate(()=>localStorage.setItem('pokemon:checkpoint:aurelian-league','unchanged'));
+ await page.getByRole('button',{name:'Preview public chapter files',exact:true}).click();
+ await expect(page.getByRole('status')).toContainText('Loaded 3 public chapter files');
+ await page.getByRole('button',{name:'New Game',exact:true}).click();
+ await expect(page.locator('#passage-heading')).toHaveText('Approaching Lezano Aboard the Portia');
+ await page.getByLabel('Find passage by ID or title').fill('food_emergency');
+ await expect(page.getByRole('list',{name:'Passage index'}).getByRole('button')).toHaveText(['food_emergency: A Difficult Rescue']);
+ await page.getByRole('button',{name:'Pokédex',exact:true}).click();
+ await expect(page.locator('#pokedex')).toContainText('Install the Pokédex app at registration');
+ expect(await page.evaluate(()=>localStorage.getItem('pokemon:checkpoint:aurelian-league'))).toBe('unchanged');
 });

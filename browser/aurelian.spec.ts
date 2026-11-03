@@ -88,7 +88,7 @@ for (const width of [320, 1280]) for (const route of routes) {
     await expect(page.getByText(/Pokédex app/)).toBeVisible();
     await proceed(page); // Opt-in harbor lookup
     await page.getByRole('button', { name: 'Pokédex', exact: true }).click();
-    await expect(page.locator('#pokedex')).toContainText("You haven't encountered any Pokémon yet.");
+    await expect(page.locator('#pokedex')).toContainText("No Pokémon recorded yet.");
     await page.getByRole('button', { name: 'Story', exact: true }).click();
     const hotel = route.pronouns === 'He / Him';
     await choose(page, hotel ? 'Look up Machoke in your new Pokédex' : 'Put your phone away and make some plans');

@@ -1419,3 +1419,29 @@ same entry/guard. Mentions, images and jewelry never count. See
 [AUTHORING.md](AUTHORING.md#adding-discoverable-pokédex-species) for the full JSON
 contract, acquisition examples, page timing and recovery/compatibility rules.
 The nonempty `*title` requirement and internal passage ID semantics are unchanged.
+
+## Ordered chapter sources and completed Pokédex presentation
+
+The public story is assembled eagerly from the ordered
+`content/aurelian-league/sources.json` list: globals, Chapter 1 and Chapter 2.
+One complete source still enters the existing parser and one Game/session;
+no dynamic loading or per-chapter state/save exists. The pure story-source helper
+normalizes file boundaries and maps parser diagnostics to a filename/local line.
+CLI checks of any public member validate all sources; editor diagnostics use
+open buffers, and author preview has a public chapter button with memory saves.
+
+The Pokédex respects the optional global dex_installed flag, with legacy fixtures
+without it remaining usable. Only authored lookup records unlock public species.
+Metadata preserves optional National number, types, category, official summary,
+HTTPS source URL and frozen eventId/text observations. Derived entries include
+only journal-recorded notes in journal order. Native details/summary controls start
+collapsed and display this data without changing state or storage.
+
+In-story cards require a scanned_ effect authored in the current passage and its
+committed journal record. They use the shared safe DOM renderer, show only the
+current scan's observations, and never execute effects or re-evaluate guards after
+entry. No new directive is needed. The restaurant delay/Livia consequences remain
+author-controlled and unchanged. See AUTHORING.md for the full contract/examples.
+
+The exact original source is preserved by the physical split. Public revision 8,
+GameState, save formats, identity and checkpoint semantics remain unchanged.

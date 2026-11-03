@@ -3,7 +3,7 @@
 Use UTF-8 `.story` files. Read the full [language reference](SCRIPTING.md) and
 [engine boundaries](ENGINE.md). Declarations come first; effects follow a passage's
 title/checkpoint and precede prose. The public story is
-[content/aurelian-league.story](../content/aurelian-league.story). The examples are
+[the ordered chapter sources](../content/aurelian-league/sources.json). The examples are
 private regression fixtures, not extra canon or public stories.
 
 ## Editing and validation
@@ -120,114 +120,134 @@ and disappear on checkpoint recovery if the relevant events are rolled back.
 Old saves are not silently backfilled with newly authored events. This feature
 does not change the save schema or the current public revision.
 
-## Adding discoverable Pokédex species
+## Chapter files: one complete story
 
-The five primary views are Story, Character, Party, Pokédex, and People. Character
-has selectable Stats (default), Skills, Inventory, and Journal subsections. Journal
-keeps its original chapter grouping. The chapter bar is visible only in Story;
-all information views are read-only and preserve draft text and selected choices.
-Primary navigation stays in one row at 320px with at least 44px touch targets.
-Every passage still needs a nonempty `*title`; the internal `*passage` ID is not a
-replacement for its player-facing heading.
+The public source order is defined once in `content/aurelian-league/sources.json`:
 
-Add species incrementally to `content/aurelian-league.pokedex.json`. The catalog
-loads this file; drafts can select an optional `.pokedex.json` in author preview.
-Clear/replace metadata or Restart preview to begin a fresh private playtest.
+```text
+content/aurelian-league/
+  sources.json
+  globals.story
+  chapter-01-crossing.story
+  chapter-02-orientation.story
+```
+
+Put shared `*var`, `*stat`, `*item`, `*skill` and `*pokemon` definitions in globals.
+Put each chapter's literal `*chapter` label and passages in its chapter file.
+Add future files to the ordered JSON list after the preceding chapter. All sources
+are eagerly imported and assembled before the existing `parseStory` runs. There
+is one Story, Game/session, variable set, party, inventory, journal, Pokédex and
+save identity. Cross-chapter choices/Continue use normal destination IDs; there
+is no import command, runtime chapter request, or separate chapter save.
+
+`npm run check:stories` checks the complete public story plus regression examples.
+Passing **any** public member file also checks the complete ordered story:
+
+```sh
+npm run check:stories -- content/aurelian-league/chapter-02-orientation.story
+```
+
+The VS Code Check Current Story task and Notepad++ saved-file launcher use this
+same behavior. The optional VS Code extension assembles all public siblings on
+open/save, preferring open document buffers to saved text. Parser diagnostics map
+to the originating file and its local line. Standalone private drafts still use
+the normal single-file parser. The public source list is intentionally specific
+to this game, not a general module/import mechanism.
+
+For local playtesting, run `npm run dev`, open `/author.html`, and select **Preview
+public chapter files**. It uses the exact same ordered sources and public People/
+Pokédex metadata in a fresh memory-only session. Save edits in your editor; after
+Vite reloads, choose the button again. Do not upload an individual chapter as a
+complete standalone story. Single-file private draft preview remains available.
+A physical split changes no passages, effects, prose, chapter labels, or revision.
+The public story remains revision 8, with its existing key and save formats.
+
+## Pokédex installation, lookup events and observations
+
+The five primary views remain Story, Character, Party, Pokédex and People. Journal
+is a Character subsection; chapter labels appear only in Story. Views, disclosure
+controls, and information cards are read-only and preserve choices, drafts and
+saved bytes. Entries start collapsed and use native keyboard-accessible details/
+summary controls with at least 44px targets.
+
+The public game declares `*var dex_installed false` and sets it true at registration.
+Until then, Pokédex shows an installation message. Installation starts an empty
+notebook; ferry `saw_...` sightings, dialogue names and jewelry never unlock it.
+Only explicit player lookup choices lead to `scanned_...` journal effects. Private
+stories without `dex_installed` retain their existing usable notebook behavior.
+
+Add species incrementally to `content/aurelian-league.pokedex.json`. Example:
 
 ```json
 [
   {
-    "id": "piplup",
-    "name": "Piplup",
-    "description": "A new traveling companion.",
-    "discoveryEvents": ["saw_piplup"],
-    "acquisitionEvents": ["partnered_piplup"]
+    "id": "wattrel",
+    "name": "Wattrel",
+    "nationalNumber": 940,
+    "types": ["Electric", "Flying"],
+    "category": "Storm Petrel Pokémon",
+    "officialSummary": "A short paraphrase based on an official Pokédex source.",
+    "sourceUrl": "https://www.pokemon.com/us/pokedex/wattrel",
+    "description": "Legacy fallback for private fixtures.",
+    "discoveryEvents": ["scanned_wattrel_harbor", "scanned_wattrel_emergency"],
+    "observations": [
+      {"eventId": "scanned_wattrel_harbor", "text": "You watched Wattrel fly above the harbor."},
+      {"eventId": "scanned_wattrel_emergency", "text": "You researched Wattrel while it needed urgent help."}
+    ]
   }
 ]
 ```
 
-`id` is a unique stable species identifier (`[a-z][a-z0-9_-]*`), separate from
-individual party IDs. Names/descriptions are nonempty literal text. Each entry
-requires `discoveryEvents` (possibly empty); `acquisitionEvents` is optional. At
-least one event across the two lists is required, and every reference must be an
-actual `*journal` event in the selected story. Metadata is validated before play.
-Unknown/duplicate species IDs, malformed fields, duplicate list references and
-unknown event IDs are errors. There is no complete database or undiscovered-entry UI.
+Use unique stable lowercase species IDs, separate from individual party IDs.
+`name`/`description` are required nonempty literal strings. discoveryEvents is
+required (possibly empty); acquisitionEvents is optional. At least one discovery/
+acquisition event is needed. Each reference, including every observation eventId,
+must be a real journal effect in the selected story. Duplicate species IDs,
+duplicate event references within a list, duplicate observation IDs, invalid types
+or empty text fail validation. Metadata arrays/records are copied and frozen.
 
-For the public Aurelian League story, the app is installed at registration using
-`*set dex_installed true` and `*journal installed_pokedex_app`.
-Ferry sightings are still authored as journal entries, but no longer unlock
-Pokédex species. Only deliberate lookup passages with `scanned_...`
-journal IDs appear in the current public Pokédex. Add scan choices after
-app installation and never award discoveries for merely mentioning or
-seeing a species. Each lookup passage gives the player an opportunity to
-save a distinct observation. Urgent scenes may make choosing to scan
-a consequential delay rather than a free action.
+The extra information fields remain optional for legacy fixture compatibility.
+When supplied, nationalNumber is a positive safe integer, displayed with at least
+four digits (Machoke 0067, Wingull 0278, Minccino 0572, Wattrel 0940). types contains
+one or two unique nonempty strings; category/officialSummary are nonempty strings.
+sourceUrl must be an absolute HTTPS URL without credentials. Sources are authored
+and linked, never fetched at runtime. observations is an array of eventId/text
+records. Only notes whose journal IDs are recorded appear, in journal recording
+order, never all notes from the species definition. Multiple scans still produce
+one species entry, and unknown future observations stay hidden. Official summaries
+are displayed instead of scene-specific legacy descriptions when available.
 
-The public JSON currently carries `nationalNumber`, `types`, `category`,
-`officialSummary`, `sourceUrl`, and `observations` metadata alongside
-the legacy required fields. These additional fields are intentionally
-staged for a separate Pokédex presentation/validation update; the current
-`parsePokedex` still displays only the legacy description. Keep each note
-associated with an explicit `eventId`, so multiple scans of one species
-record the correct encounters without duplicate species entries. The
-facts are short paraphrases of published official Pokédex information,
-not extensive reproduced official prose.
-
-For example, a lookup passage may record:
+A lookup passage uses existing commands only:
 
 ```text
 *passage harbor_scan_wattrel
 *title Looking Up Wattrel
 *hide_title
 *journal scanned_wattrel_harbor "You looked up Wattrel at the harbor."
-
-You save a note about the Wattrel you saw.
+You finish your note and put the phone away.
 ```
 
-The full in-story lookup card and collapsible Pokédex UI are *not* implemented
-by these authored events alone. They are separate reader work.
+The reader derives an in-story information card from a `scanned_` journal effect
+in the current passage **and its committed journal record**. A skipped conditional
+scan has no record and no card. Guards are not re-evaluated against post-effect
+variables; the recorded result is authoritative. Cards show number/name, types,
+classification, official summary/source and only observations associated with that
+passage's recorded scans. Merely seeing or mentioning Pokémon, or visiting a later
+non-scan passage, creates no card. Rendering never triggers discovery or a save.
+Reopening a committed lookup passage can show its recorded lookup without replay.
 
-Use explicit journal events at the point an encounter has actually happened:
+For acquisition, pair `*add_pokemon individual_id` with a journal event in the same
+entry/guard and reference that event in acquisitionEvents. Acquired status survives
+party removal because it reads the journal, not current membership. No species
+is silently acquired or researched by the UI.
 
-```text
-*journal saw_piplup "You encountered Piplup."
-```
+Urgent scans are decisions with consequences. In the restaurant, choosing to scan
+before helping records the delay and leaves Livia disappointed; displaying a card
+never repairs or changes those variables/events. Later safe research adds its own
+observation without duplicating Wattrel or erasing the earlier choice.
 
-Different scenes need distinct journal IDs, which may all unlock the same species.
-Never infer an encounter from a name in prose, a picture, a necklace, or somebody's
-account of another Pokémon. The ferry records Minccino and Machoke in its café or window scenes, and Wingull
-in its sightings, **only in the Journal**, not the Pokédex. The Wingull sighting
-on the second page of `ferry_ad` is journaled when continuing into `name`, after
-reading that page; it never unlocks a species without a later explicit scan. Lucia's Lapras necklace and her
-mention of her family's Floatzel do not unlock entries.
-
-For acquisition, put the party effect and its explicit journal event together,
-before narrative, in the same passage (and same conditional guard when needed):
-
-```text
-*add_pokemon starter_piplup starter_nickname
-*journal partnered_piplup "Piplup joined your party."
-```
-
-Map `partnered_piplup` in `acquisitionEvents`. Acquisition alone can unlock a species
-(use `discoveryEvents: []` if appropriate). Failed entry commits neither party nor
-event. Duplicate events/species never create duplicate entries. Acquired status
-persists after a party member leaves because it reads the journal, not current
-party membership. There is no automatic acquisition record for an unannotated
-`*add_pokemon`; authors pair the existing commands explicitly.
-
-Entries show only discovered species in first-encounter order, with Encountered
-or Acquired status, the first recorded chapter, and the authored description.
-Status upgrades when an acquisition event exists. Discovery state is **only** the
-existing journal; there is no second collection, timestamp, database, or save field.
-Continue restores it without entry effects. Try Again derives entries from the
-restored checkpoint journal, retaining events already there and discarding later
-ones, exactly like People discovery. Nothing outside authoritative state survives
-recovery as hidden progress.
-
-The save key, formats 4/5/6, and public story revision 8 stay unchanged. These
-additive event IDs/metadata do not invalidate existing revision-5 records. Older
-records without these events remain undiscovered until a later legitimate event;
-startup/Continue never backfill them or write a save. Do not change existing IDs,
-chapters, variable declarations, or other effects to force a migration.
+The journal remains the sole discovery store. Continue resumes exact recorded
+scans without writing; checkpoints restore exactly their recorded observations,
+retaining earlier scans and rolling back later ones. There is no new mutable
+collection, timestamp, schema, save format or revision change. Existing revision-8
+progress remains valid and is never backfilled with scans that were not recorded.
