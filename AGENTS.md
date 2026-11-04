@@ -16,7 +16,7 @@ name, optionally exchanges contact details with Lucia, and chooses pronouns.
 Only contestants, crew, and League press are aboard; Minccino and Machoke
 assist the crew. Lucia wears a Lapras necklace. The player meets an unnamed
 rival with CHAMP on his jacket on the gangway and checks in at Lezano, receiving
-a badge, a map and 100 credits. Two authored routes visit the Portico Hotel or the Salt and Thyme café, with multi-stage dilemmas and persistent outcomes. At registration the player installs a Pokédex app, and no species is recorded without an explicit scan choice. The reader shows numbered collapsible Pokédex entries and scan-only information cards. The planned starter choices are Charmander, Chikorita, and Piplup, all equally valid. Do not write the orientation itself or starter selection until requested.
+a badge, a map and 100 credits. Two authored routes visit the Portico Hotel or the Salt and Thyme café, with multi-stage dilemmas and persistent outcomes. At registration the player installs a Pokédex app, and no species is recorded without an explicit scan choice. The reader shows numbered collapsible Pokédex entries and scan-only information cards. The approved but not-yet-implemented starter selection has seven equally story-viable candidates: Charmander, Chikorita, Piplup, Scatterbug, Sandile, Tinkatink, and Lillipup. Partner selection is mutual: each can accept or decline based on clearly signaled actions, with a safeguard only if all seven decline. See `docs/STORY_BIBLE.md` and `FUTURE_IDEAS.md`. Do not write the orientation itself or starter selection until requested.
 
 Eight Laurels can be earned without battling; the three highest-ranked contestants
 with all eight qualify for the Triumvirate. Do not invent major characters,
