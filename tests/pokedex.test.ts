@@ -287,12 +287,12 @@ A later observation.
   assert.deepEqual(discoveredPokemon(entries,again.game!.state)[0]!.observations.map(note=>note.text),['First.']);
 });
 
-test('all public species contain substantive trainer notes and no external links', () => {
+test('public species contain descriptions and observations without trainer notes or external links', () => {
   assert.deepEqual(publicDex.map(entry => entry.id).sort(), ['machoke','minccino','wattrel','wingull']);
   for (const entry of publicDex) {
     assert.ok((entry.officialSummary?.length ?? 0) > 150, entry.id + ' needs a descriptive overview');
-    assert.equal(entry.trainerNotes?.length, 3, entry.id + ' needs three trainer tips');
+    assert.equal(entry.trainerNotes, undefined);
+    assert.ok(entry.observations.length > 0);
     assert.equal(Object.hasOwn(entry, 'sourceUrl'), false);
-    for (const note of entry.trainerNotes!) assert.ok(note.length > 50, entry.id + ' has an unhelpful note');
   }
 });

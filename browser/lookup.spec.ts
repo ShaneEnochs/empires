@@ -27,8 +27,8 @@ for(const width of [320,1280])test('explicit lookup card and accessible collapse
  await expect(card).toBeVisible();await expect(card).toContainText('#0067 Machoke');
  await expect(card).toContainText('Fighting');await expect(card).toContainText('Superpower Pokémon');
  await expect(card).toContainText('Machoke has an exceptionally strong');
- await expect(card.locator('.pokemon-trainer-notes li')).toHaveCount(3);
- await expect(card).toContainText('Do not remove or tamper with its power-save belt');
+ await expect(card.locator('.pokemon-trainer-notes li')).toHaveCount(0);
+ await expect(card.getByRole('heading', {name:'Trainer notes',exact:true})).toHaveCount(0);
  await expect(card.getByRole('link')).toHaveCount(0);
  await expect(card.locator('.pokemon-observations li')).toHaveCount(1);
  const raw=await page.evaluate(key=>localStorage.getItem(key),key);
@@ -38,7 +38,7 @@ for(const width of [320,1280])test('explicit lookup card and accessible collapse
  const bounds=await summary.boundingBox();expect(bounds!.height).toBeGreaterThanOrEqual(44);
  await summary.focus();await page.keyboard.press('Enter');await expect(details).toHaveAttribute('open','');
  await expect(details.locator('dd')).toHaveText(['Fighting','Superpower Pokémon']);
- await expect(details.locator('.pokemon-trainer-notes li')).toHaveCount(3);
+ await expect(details.locator('.pokemon-trainer-notes li')).toHaveCount(0);
  await expect(details.getByRole('link')).toHaveCount(0);
  await page.keyboard.press('Space');await expect(details).not.toHaveAttribute('open','');
  expect(await page.evaluate(key=>localStorage.getItem(key),key)).toBe(raw);
@@ -61,7 +61,7 @@ for(const response of ['scan','help'])test('restaurant '+response+' keeps its au
  await choose(page,'Fetch a step stool so she can reach the knot safely');
  await choose(page,'Look up Wattrel now and record what happened');
  await expect(page.locator('.pokedex-card .pokemon-observations li')).toHaveText([/was later freed/]);
- await expect(page.locator('.pokedex-card .pokemon-trainer-notes li')).toHaveCount(3);
+ await expect(page.locator('.pokedex-card .pokemon-trainer-notes li')).toHaveCount(0);
  await expect(page.locator('.pokedex-card').getByRole('link')).toHaveCount(0);
  const raw=await page.evaluate(key=>localStorage.getItem(key),key),saved=JSON.parse(raw!);
  expect(saved.currentState.variables.livia_impression).toBe(response==='scan'?'distracted':'helpful');
