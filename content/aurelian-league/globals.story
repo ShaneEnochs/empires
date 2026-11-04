@@ -19,6 +19,8 @@
 *var victra_case "none"
 *var restaurant_followup "none"
 *var livia_impression "none"
+*item league_bracelet "Silver Aurelian League bracelet"
+*comment Legacy inventory IDs retained for compatibility with older revision-8 saves.
 *item league_badge "Aurelian League contestant badge"
 *item city_map "Map of Lezano"
 *item hotel_assignment "Hotel room assignment"
