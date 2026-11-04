@@ -794,7 +794,7 @@ Possible methods include:
 
 Battles can occur, particularly during certain captures, but are not the primary mechanism of progression.
 
-Pokémon companionship should feel personal.
+Pokémon companionship should feel personal. The League's entrant guide makes consent an ongoing part of that companionship: a Pokémon must choose to join its trainer, and any Pokémon on a team may leave if its trainer mistreats it, even after the partnership is established. This is an approved story rule, not yet an implemented automatic party-departure mechanic. Future scenes should distinguish genuine mistreatment from ordinary disagreements and give clear narrative context if a Pokémon chooses to leave.
 
 New Pokémon should have distinct personalities and, when appropriate, individual character arcs.
 
