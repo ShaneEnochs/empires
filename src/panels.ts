@@ -124,7 +124,7 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
 
   const dex = panel('pokedex', 'Pokédex', select, section => {
     if (!pokedexInstalled(game.state)) {
-      list(section, [], 'Install the Pokédex app at registration to start researching Pokémon.');
+      list(section, [], 'Your League bracelet activates the Pokédex when you register in Lezano.');
       return;
     }
     const discovered = discoveredPokemon(pokedex, game.state);
