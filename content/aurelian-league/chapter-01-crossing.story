@@ -68,9 +68,7 @@ You make your way toward the windows, stepping around bags and apologizing to a 
 
 The ferry makes a gentle turn, causing a paper cup to roll across the floor and bump against someone's shoe. Its owner, a young woman wearing a bright orange jacket, catches it before it can travel any farther. She bends to retrieve it, deposits it in a nearby bin, and brushes a loose strand of brown hair away from her face. When she notices you standing by the window, she follows your gaze toward the coast and comes over.
 
-"Pretty exciting, isn't it?" she says. "I was going to head up to the observation deck, but half the ferry seems to have had the same idea. We can see the harbor perfectly well from here." A small silver Lapras pendant rests against her shirt. She leans closer to the window, then looks toward the café. "I've already eaten everything I brought, and I made the mistake of checking the prices of the breakfast rolls."
-
-She smiles at you. "Sorry, I should introduce myself. I'm Lucia. You're one of the contestants, right?"
+"Pretty exciting, isn't it?" she says. "I was going to head up to the observation deck, but half the ferry seems to have had the same idea. But that's okay. We can see the harbor perfectly well from here." A small silver Lapras pendant rests against her shirt. She leans closer to the window, then looks back at you, smiling. "Sorry, I should introduce myself. I'm Lucia. You're one of the contestants, right?"
 
 *continue name
 
@@ -83,11 +81,11 @@ She smiles at you. "Sorry, I should introduce myself. I'm Lucia. You're one of t
 
 Lucia looks pleased when you confirm it. "I tried introducing myself to someone upstairs earlier, but he turned out to be a journalist. As soon as he found out I was entering the League, he started asking me all sorts of questions. What did I think of my chances? Who did I consider my biggest competition? Did I have a strategy?"
 
-She adjusts the strap of her bag. "He kept asking another question before I'd even finished answering the last one. I got so overwhelmed that I finally made an excuse and left." She glances toward the stairs. "Now I'm worried about what he's going to write. I probably sounded completely clueless, which I suppose I am. But aren't we all at this point?"
+She adjusts the strap of her bag. "He kept asking another question before I'd even finished answering the last one. I got so overwhelmed that I finally made an excuse and left." She glances toward the stairs. "Now I'm worried about what he's going to write. I probably sounded completely clueless, which I suppose I am. I don't think any of us really know what we're getting ourselves into, do we?"
 
-She offers you her hand. "There are a hundred of us, and I don't want to wait until the first challenge to start making friends. What should I call you?"
+She offers you her hand. "There are a hundred of us, and I don't want to wait until the first challenge to start making friends. What's your name?"
 
-*input_text trainer_name "Your first name" -> contact_question
+*input_text trainer_name "First name" -> contact_question
 
 *passage contact_question
 *title A Familiar Face
@@ -122,7 +120,7 @@ You'd rather not exchange numbers just yet. "No problem," Lucia says, putting he
 *hide_title
 *journal lucia_pronouns "Lucia uses she/her pronouns."
 
-Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she and her. What pronouns do you use?"
+Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she / her. What about you?"
 
 *choice
 #He / Him -> he
@@ -179,15 +177,15 @@ Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she an
 *hide_title
 *journal lucia_family "Lucia talked about her family's Floatzel and her hopes for her first Pokémon partner."
 
-"Have you noticed how strange it is to see Pokémon working on the ferry when none of us are allowed to bring our own?" Lucia asks. "I know why the League wants a fresh start, but it's going to take some getting used to. At home, our Floatzel follows me everywhere. He even waits outside the market when I go shopping."
+"Doesn't it feel strange to see all of the Pokémon working on the ferry when none of us are allowed to bring our own?" Lucia asks. "I get why the League wants a fresh start, but it's definitely going to take some getting used to. At home, our Floatzel follows me everywhere. He even waits outside the market when I go shopping."
 
 She tells you how he once dragged her brother's boots into a rock pool because he thought somebody had left them too close to the tide. She's spent years helping her family care for him, but she's never raised a Pokémon herself. "I know how he likes his dinner and when he wants to be left alone. With a new partner, I'll have to learn all of that again." She touches her Lapras pendant. "I hope my starter likes me."
 
-The harbor is getting closer, and Lucia takes one more look at it before turning back to you. "I've been doing all the talking. Is there something you wanted to ask me?"
+The harbor is getting closer, and Lucia takes one more look at it before turning back to you. "Sorry! I've been doing all the talking. Is there anything you wanted to ask me?"
 
 *choice
 #Ask why she decided to enter the League -> lucia_wildlife
-#Ask what she knows about the Laurels -> lucia_rules
+#Ask what she knows about choosing a Pokémon -> lucia_rules
 #Say you'd like to look around before docking -> open_deck
 
 *passage lucia_wildlife
@@ -196,21 +194,25 @@ The harbor is getting closer, and Lucia takes one more look at it before turning
 *set lucia_topic "wildlife"
 *journal lucia_travel "Lucia wants to explore wild Pokémon habitats across Aurelia and send photos to her brother."
 
-"I want to see the Pokémon," Lucia says. "Not only the ones that live near towns. There are wetlands in the north, old forests, and islands where you have to take a boat to get anywhere. If the League gives me a reason to travel through places like that, I'll be happy."
+"Honestly, I'm mostly excited about seeing all the Pokémon," Lucia admits. "I've spent ages reading about the ones that live here, and apparently there are some you can hardly find anywhere else. I'd love to explore the forests, or maybe visit some of those little islands off the coast." She smiles at the thought. "I suppose that's what I'm hoping for most. A chance to see places I'd never have thought to visit otherwise, and meet plenty of Pokémon along the way."
 
-She touches the Lapras pendant at her throat. "My little brother gave me this before I left. He wants pictures of every Water-type I see, especially a Lapras. I told him there was a good chance I'd come home with a hundred photographs of Magikarp instead." She smiles. "I'm planning to send them anyway."
+Lucia reaches up to fiddle with the little Lapras pendant hanging around her neck. "My little brother gave me this before I left. He's absolutely obsessed with Water-type Pokémon, so I promised I'd send him pictures of any I find. He's especially hoping I'll see a Lapras." She laughs softly. "I told him he'll probably end up with a hundred pictures of Magikarp instead, but he didn't seem to mind. I think he's just excited to see what I find."
 
 *continue open_deck
 
+
 *passage lucia_rules
-*title Eight Laurels
+*title Choosing a Partner
 *hide_title
 *set lucia_topic "rules"
-*journal lucia_ranking_questions "Lucia wonders how the League judges acts of compassion and other non-battle challenges."
+*journal lucia_ranking_questions "Lucia showed you the League's rules for choosing Pokémon. A Pokémon must agree to become a trainer's partner, and it can leave if it's mistreated."
 
-Lucia opens the entrant guide on her phone. "It says we have to earn eight Laurels. Not just for battles, either. They're looking for things like courage, compassion, and good judgment. But only the three highest-ranked contestants with all eight Laurels get to the Triumvirate."
+Lucia pulls out her phone and opens the entrant guide. "Oh, have you read this part about choosing our first Pokémon? It says we'll get to spend some time with them before making a decision, but apparently, they have to choose us, too." She looks up at you. "I hadn't really thought about it working both ways. I suppose it makes sense, though. It wouldn't be much fun starting a journey with a Pokémon that didn't actually want to come along."
 
-She scrolls down. "I can understand judging a battle. What I don't understand is how they'll compare everything else. Suppose two people help the same frightened Pokémon, but in completely different ways. Who decides which one did better?" She locks the screen. "I hope they explain that when we arrive."
+She scrolls a little farther, then raises her eyebrows. "Oh, and listen to this! Apparently, any Pokémon we take on our journey is allowed to leave if we're not treating it properly. Even after it's officially joined our team." She pauses to consider that. "I actually like that rule. We're supposed to be looking after them, after all. I'd hate to think a Pokémon was staying with someone who made it miserable."
+
+She puts her phone away, looking thoughtful. "Still, I have to admit I'm a little nervous about the whole choosing thing. What if I meet a Pokémon I absolutely adore, and it takes one look at me and decides it's not interested?" She laughs at the thought. "I've been looking forward to this for ages. I think I'd be a little heartbroken if my favorite Pokémon didn't like me back."
+
 
 *continue open_deck
 
@@ -218,9 +220,9 @@ She scrolls down. "I can understand judging a battle. What I don't understand is
 *title A Little Time to Spare
 *hide_title
 
-Lucia notices the time and heads off to collect the rest of her luggage, promising to look for you at the terminal. You watch her disappear into the crowd before considering what to do with the few minutes you have left.
+Lucia notices the time and lets out a little sigh. "Well, I should probably go grab the rest of my things before everyone starts trying to get off at once." She slips her phone into her pocket and gives you a cheerful smile. "It was really nice meeting you! I'll keep an eye out for you when we get there. Maybe we can find each other again before all the excitement starts." With a little wave, she heads off toward the luggage area, disappearing into the crowd of passengers.
 
-A neatly dressed young man near the timetable is comparing notes with a woman holding the League guide. You could introduce yourself, or stay nearby and listen. There's also the observation deck, if you'd rather take one last look at the coast before docking.
+With Lucia gone, you find yourself wondering what to do with the little time you have left aboard. The lounge is still bustling with conversation, although more and more passengers have begun gathering their belongings in anticipation of arriving at Lezano. Near the ferry's information board, you notice a neatly dressed young man discussing something with a woman who's holding a pamphlet. They both seem fairly absorbed in their conversation, but you could always wander over and introduce yourself. Alternatively, the observation deck might be worth visiting now that the coastline is so close. It would be nice to get a proper look at Lezano before the ferry pulls into port.
 
 *choice
 #Introduce yourself to the two contestants -> group_join
@@ -234,11 +236,13 @@ A neatly dressed young man near the timetable is comparing notes with a woman ho
 *journal met_cassius "You introduced yourself to Cassius, a contestant interested in the League's rankings."
 *journal met_octavia "You met Octavia, a contestant curious about how the League will judge its challenges."
 
-"I'm Cassius," the young man says, moving his notebook so you can see it. "This is Octavia. Tell me if you can make sense of the rankings. Eight Laurels gets you qualified, but the guide doesn't say how they choose the top three."
+"Oh, hello there! I'm Cassius," the young man says, looking up from his notebook with a friendly smile. "And this is Octavia. We've been trying to make sense of the League's ranking system, but I think we've only managed to confuse ourselves even more." He turns his notebook around so you can see the notes he's been taking. "From what I understand, earning all eight Laurels qualifies you for the finals, but only the three highest-ranked contestants actually get to compete. What I can't figure out is how we're supposed to improve our rankings in the first place."
 
-"It says they consider your performance," Octavia replies, "but it doesn't explain what counts as good performance when the challenges aren't all battles." She points to a passage in the guide about compassion. "If someone helps a Pokémon without making a spectacle of it, will anyone even know?"
+"Well, that's because they haven't really explained it," Octavia replies, lowering her copy of the entrant guide. "It says our performance throughout the competition will be taken into account, but what does that actually mean? Some of these challenges are supposed to reward things like kindness and compassion." She taps a finger against the page. "Say you come across an injured Pokémon and stop to help it. Does someone from the League need to be watching for it to count? And what if you help someone when there aren't any cameras around?"
 
-Cassius takes a moment to consider that. "I still want to win," he says, "but I'd rather know what I'm being judged on." The ship's engines change pitch, and people begin gathering their luggage. You exchange farewells, agreeing you might see one another in Lezano.
+"That's what I've been wondering, too," Cassius admits. "I don't mind having to work for my place in the finals. Actually, I'm looking forward to it. But I'd feel a lot better knowing what we're being judged on." He closes his notebook and slips it into his bag. "I suppose we'll have plenty of opportunities to figure it out once we get there. And who knows? Maybe we'll end up helping each other along the way."
+
+Before the conversation can continue, the low rumble of the ferry's engines changes, and a muffled announcement over the speakers asks passengers to begin preparing for arrival. Around you, people start collecting their bags and making their way toward the exits. Cassius offers you a handshake, while Octavia gives you a small smile and wishes you luck. You exchange farewells, with Cassius promising to say hello if your paths cross again in Lezano. Given that you'll all be competing in the same League, you suspect there's a pretty good chance they will.
 
 *continue dock_approach
 
@@ -246,13 +250,17 @@ Cassius takes a moment to consider that. "I still want to win," he says, "but I'
 *title Within Earshot
 *hide_title
 *set ferry_encounter "eavesdrop"
-*journal heard_ranking_doubt "You overheard Cassius and Octavia questioning how the League's rankings will be decided."
 
-You pause beside the timetable, close enough to hear the two contestants without interrupting. "Eight Laurels, then a ranking," the young man says, tapping his notebook. "There has to be a way to work out what's worth the most. We can't plan anything if we don't know."
+*journal heard_ranking_doubt "You overheard two contestants discussing the League's rankings. One wanted a clearer scoring system; the other wondered whether kindness would count when nobody was watching."
 
-"Maybe planning everything isn't the point, Cassius," the woman replies. "Suppose you find a Pokémon that needs help, but stopping would put you behind the others. Does the League reward the person who stops? Or the person who gets to the next Laurel first?"
+You linger near the information board, where a neatly dressed young man is studying something in his notebook. Beside him, a woman has her copy of the League's entrant guide open, and the two seem rather absorbed in their conversation.
 
-Cassius doesn't answer immediately. When he finally starts to speak, an announcement asks everyone to collect their luggage. "I just don't like being surprised," he says, closing his notebook. The woman, Octavia, gives him an amused look as they head toward the stairs.
+"I've read through this thing three times now, and I still can't figure it out," the young man says, tapping his notebook with his pen. "We need eight Laurels to qualify for the Triumvirate, but only the three highest-ranked contestants actually get to compete. There must be some kind of scoring system, but they haven't explained any of it. How are we supposed to know what to focus on?"
+
+"Maybe we're not supposed to," the woman replies. "Think about it. They're supposed to be judging things like kindness and compassion, aren't they? Say you come across an injured Pokémon and stop to help it, but there's nobody from the League around to see. Does that still count? I'd hate to think people might start doing nice things just because they know someone's watching."
+
+"Well, I'm not saying I'd ignore an injured Pokémon just because there weren't any cameras around," the man protests, looking a little embarrassed. "I just think we should know what we're being judged on. I want to do well, and it's hard to prepare when nobody will tell us what to expect." Before the woman can respond, an announcement comes over the ferry's speakers, asking passengers to begin gathering their belongings. The man closes his notebook with a sigh, and the woman gives him an amused smile. "Come on," she says, gathering up her things. "We've got plenty of time to worry about all that once we're there." You hear him mutter something about just wanting to be prepared as the two disappear into the crowd.
+
 
 *continue dock_approach
 
