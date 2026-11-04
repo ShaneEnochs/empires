@@ -48,12 +48,9 @@ for (const width of [320, 1280]) for (const route of routes) {
     await expect(page.locator('.chapter-label')).toHaveText('Chapter 1: The Crossing');
     await choose(page, route.first);
     await expect(page.locator('#passage-heading')).toHaveClass(/visually-hidden/);
-    await proceed(page);
-    await proceed(page);
-    await proceed(page);
-    await proceed(page);
+    for (let i = 0; i < 4; i++) await proceed(page);
 
-    const nameField = page.getByRole('textbox', { name: 'Your first name', exact: true });
+    const nameField = page.getByRole('textbox', { name: 'First name', exact: true });
     await nameField.fill('   ');
     await nameField.press('Enter');
     await expect(page.getByRole('alert')).toBeVisible();
@@ -63,17 +60,18 @@ for (const width of [320, 1280]) for (const route of routes) {
 
     await choose(page, route.contact);
     await proceed(page);
-    await expect(page.getByText(/I use she and her/)).toBeVisible();
+    await expect(page.getByText(/I use she \/ her/)).toBeVisible();
     await choose(page, route.pronouns);
     await proceed(page);
 
     await page.getByRole('button', { name: 'People', exact: true }).click();
     await expect(page.locator('#people')).toContainText('Lucia');
     await page.getByRole('button', { name: 'Story', exact: true }).click();
-    await choose(page, 'Ask what she knows about the Laurels');
+    await choose(page, 'Ask what she knows about choosing a Pokémon');
     await proceed(page);
     await choose(page, route.encounter);
     await proceed(page);
+
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lezano Harbor');
     await expect(page.locator('.chapter-label')).toHaveText('Chapter 2: Orientation');
     await expect(page.getByText(/CHAMP/)).toBeVisible();
@@ -83,15 +81,19 @@ for (const width of [320, 1280]) for (const route of routes) {
     await expect(page.getByText(/Once your feet are finally on solid ground/)).toBeVisible();
     await expect(page.getByText(confront ? /Kinda rude there/ : /You decide he isn't worth the trouble/)).toBeVisible();
     await proceed(page);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lezano Harbor');
-    await expect(page.getByText(/starting balance of 100 credits/)).toBeVisible();
-    await expect(page.getByText(/Pokédex app/)).toBeVisible();
+
+    await expect(page.getByText(/silver bracelet with a polished oval/)).toBeVisible();
+    await proceed(page); // Credits, map, and Pokédex
+    await expect(page.getByText(/starting allowance of one hundred credits/)).toBeVisible();
+    await proceed(page); // Pokémon storage and consent
+    await expect(page.getByText(/a Pokémon has to be willing to join you/)).toBeVisible();
     await proceed(page); // Opt-in harbor lookup
+
     await page.getByRole('button', { name: 'Pokédex', exact: true }).click();
-    await expect(page.locator('#pokedex')).toContainText("No Pokémon recorded yet.");
+    await expect(page.locator('#pokedex')).toContainText('No Pokémon recorded yet.');
     await page.getByRole('button', { name: 'Story', exact: true }).click();
     const hotel = route.pronouns === 'He / Him';
-    await choose(page, hotel ? 'Look up Machoke in your new Pokédex' : 'Put your phone away and make some plans');
+    await choose(page, hotel ? 'Look up Machoke in your Pokédex' : 'Close the hologram and explore the city');
     if (hotel) {
       await page.getByRole('button', { name: 'Pokédex', exact: true }).click();
       await expect(page.locator('#pokedex')).toContainText('Machoke');
@@ -104,34 +106,40 @@ for (const width of [320, 1280]) for (const route of routes) {
     await expect(page.locator('#passage-heading')).toHaveClass(/visually-hidden/);
     const quickScan = route.pronouns === 'They / Them';
     if (hotel) {
+      await choose(page, 'Offer her a few words of reassurance');
+      await proceed(page); // Hotel check-in
       await choose(page, 'Offer to help the contestant find her suitcase');
       await expect(page.getByRole('heading', { level: 1 })).toHaveText('Following a Lead');
       await choose(page, 'Ask the clerk to compare the ferry and hotel delivery lists');
       await proceed(page); // Victra has a lead but no suitcase yet
       await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Last Step');
       await choose(page, 'Go with Victra and help retrieve the suitcase');
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText('A Room at Last');
+      await choose(page, "Ask the attendant to check the ferry's delivery records");
+      await proceed(page); // Inspect the unclaimed suitcase
+      await choose(page, 'Compare the remaining numbers on the tag with her receipt');
+      await proceed(page); // Found at last
+      await proceed(page); // Offer to exchange bracelet contacts
+      await choose(page, 'Exchange contact details with Victra');
+      await proceed(page); // Hotel room passage, first page
+      await proceed(page); // Hotel room passage, second page
       await proceed(page); // Wingull balcony
-      await choose(page, 'Look up Wingull and save a note about your visitor');
-      await proceed(page);
+      await choose(page, 'Look up Wingull and record the encounter');
+      await proceed(page); // Orientation invitation
     } else {
-      await choose(page, quickScan
-        ? 'Look up Wattrel in the Pokédex before getting involved'
-        : 'Help the server clear diners away from the swinging lantern');
+      await choose(page, quickScan ? 'Look up Wattrel in your Pokédex first' : 'Help move the diners away from the lantern');
       await expect(page.getByRole('heading', { level: 1 })).toHaveText('A Difficult Rescue');
-      await choose(page, 'Bring a clean cloth to cover and calm the Wattrel');
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText('A Table by the Water');
-      await choose(page, quickScan
-        ? 'Put your phone away and enjoy your lunch'
-        : 'Look up Wattrel now and record what happened');
+      await choose(page, 'Fetch a clean cloth to help calm Wattrel');
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Freed at Last');
+      await proceed(page); // Lunch costs 12 credits
+      await choose(page, quickScan ? 'Finish your lunch and enjoy the waterfront' : 'Save a Pokédex note about Wattrel');
       if (!quickScan) await proceed(page);
     }
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Plans for the Afternoon');
     const meeting = route.contact === 'Exchange numbers with Lucia';
-    await expect(page.getByRole('radio')).toHaveCount(2);
-    if (meeting) await expect(page.getByText(/Lucia's name appears on the screen/)).toBeVisible();
-    else await expect(page.getByText(/The map marks a direct route/)).toBeVisible();
-    await choose(page, meeting ? 'Agree to meet Lucia by the harbor fountain' : 'Take the scenic route through the shopping streets');
+    await expect(page.getByRole('radio')).toHaveCount(meeting ? 3 : 2);
+    if (meeting) await expect(page.getByText(/Lucia's name appears on the holographic display/)).toBeVisible();
+    else await expect(page.getByText(/The map shows a direct route/)).toBeVisible();
+    await choose(page, meeting ? 'Meet Lucia by the harbor fountain' : 'Take the scenic route through the shopping streets');
     const endingTitle = meeting ? 'Meeting Lucia' : 'A Longer Walk';
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(endingTitle);
     await expect(page.locator('#passage-heading')).toHaveClass(/visually-hidden/);
@@ -147,10 +155,10 @@ for (const width of [320, 1280]) for (const route of routes) {
     expect(save.currentState.variables.restaurant_response).toBe(hotel ? 'none' : quickScan ? 'scan' : 'clear');
     expect(save.currentState.variables.livia_impression).toBe(hotel ? 'none' : quickScan ? 'distracted' : 'helpful');
     expect(save.currentState.variables.rival_response).toBe(confront ? 'confront' : 'ignore');
-    expect(save.currentState.inventory).toEqual({ league_badge: 1, city_map: 1, hotel_assignment: 1 });
+    expect(save.currentState.inventory).toEqual({ league_bracelet: 1 });
     expect(save.currentState.variables.trainer_name).toBe('Rowan 周');
     expect(save.currentState.variables.pronouns).toBe(route.pronouns);
-    expect(save.currentState.variables.lucia_contact).toBe(route.contact === 'Exchange numbers with Lucia');
+    expect(save.currentState.variables.lucia_contact).toBe(meeting);
     expect(save.currentState.party).toEqual([]);
 
     await page.getByRole('button', { name: 'Party', exact: true }).click();
@@ -207,7 +215,7 @@ test('People records Lucia at introduction and reveals only learned details acro
   await expect(panel).not.toContainText('wetlands');
 
   await page.getByRole('button', { name: 'Story', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Your first name', exact: true }).fill('Ari');
+  await page.getByRole('textbox', { name: 'First name', exact: true }).fill('Ari');
   await proceed(page);
   await choose(page, 'Politely decline');
   await proceed(page); // Lucia shares her pronouns
