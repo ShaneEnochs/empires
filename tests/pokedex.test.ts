@@ -154,6 +154,7 @@ test('a post-install opt-in lookup is the only public discovery path', () => {
     game.navigateChoice(game.visibleChoices[1]!);
     assert.equal(discoveredPokemon(publicDex,game.state).length,0);
     game.navigate('lezano_checkin');
+    while (game.canAdvancePage) game.advancePage();
     assert.equal(game.state.variables.dex_installed,true);
     assert.ok(game.state.journal.some(e=>e.id==='installed_pokedex_app'));
     game.navigate('harbor_lookup');
@@ -213,11 +214,13 @@ test('multiple deliberate Wattrel scans retain all observations and urgent looku
   game.advancePage();game.navigate('name');game.submitText('Ari');
   for(const id of ['contact_no','pronouns','they','lucia_chat','open_deck','rail','dock_approach'])game.navigate(id);
   game.navigateChoice(game.visibleChoices[1]!);
-  for(const id of ['lezano_checkin','harbor_lookup','harbor_scan_wattrel','harbor_destination','food_route'])game.navigate(id);
+  game.navigate('lezano_checkin');
+  while (game.canAdvancePage) game.advancePage();
+  for(const id of ['harbor_lookup','harbor_scan_wattrel','harbor_destination','food_route'])game.navigate(id);
   game.navigateChoice(game.visibleChoices[2]!);
   assert.equal(game.state.variables.livia_impression,'distracted');
   assert.ok(game.state.journal.some(event=>event.id==='delayed_restaurant_help'));
-  game.navigateChoice(game.visibleChoices[0]!);game.navigate('food_scan_wattrel');
+  game.navigateChoice(game.visibleChoices[0]!);game.navigate('food_lunch');game.navigate('food_scan_wattrel');
   const entries=discoveredPokemon(publicDex,game.state);
   assert.equal(entries.length,1);assert.equal(entries[0]!.nationalNumber,940);
   assert.deepEqual(entries[0]!.observations.map(note=>note.eventId),['scanned_wattrel_harbor','scanned_wattrel_emergency','scanned_wattrel_rest']);

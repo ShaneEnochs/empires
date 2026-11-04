@@ -170,7 +170,7 @@ test('Lucia appears on introduction and learns facts only from visited scenes', 
   other.navigate('lucia_rules');
   const alternativeFacts = learnedPersonFacts(lucia, other.state).join(' ');
   assert.match(alternativeFacts, /exchanged phone numbers/);
-  assert.match(alternativeFacts, /ranks/);
+  assert.match(alternativeFacts, /willingly choose their trainers/);
   assert.doesNotMatch(alternativeFacts, /wetlands|brother/);
   assert.equal(encounteredPeople(publicPeople, other.state).filter(person => person.id === 'lucia').length, 1);
 });
@@ -185,25 +185,38 @@ test('Victra and Livia facts follow the actual multi-stage subplot outcomes', ()
     game.advancePage();game.navigate('name');game.submitText('Ari');
     for(const id of ['contact_yes','pronouns','they','lucia_chat','open_deck','rail','dock_approach']) game.navigate(id);
     game.navigateChoice(game.visibleChoices[0]!);
-    game.navigate('lezano_checkin');game.navigate('harbor_lookup');game.navigate('harbor_destination');
+    game.navigate('lezano_checkin');while(game.canAdvancePage)game.advancePage();game.navigate('harbor_lookup');game.navigate('harbor_destination');
     game.navigate(destination);
     return game;
   }
   const victra=people.find(p=>p.id==='victra')!,livia=people.find(p=>p.id==='livia')!;
-  for(const final of [0,1]){
-    const game=arrive('hotel_route');
+  for (const accompanied of [true, false]) {
+    const game = arrive('hotel_route');
+    game.navigateChoice(game.visibleChoices[0]!); // reassure
+    game.navigate('hotel_checkin');
     game.navigateChoice(game.visibleChoices[0]!); // offer help
-    assert.equal(encounteredPeople(people,game.state).some(p=>p.id==='victra'),true);
-    game.navigateChoice(game.visibleChoices[final]!); // delivery list or tags
+    assert.equal(encounteredPeople(people, game.state).some(p => p.id === 'victra'), true);
+    game.navigateChoice(game.visibleChoices[accompanied ? 0 : 1]!); // manifest or carts
     game.navigate('hotel_followup');
-    game.navigateChoice(game.visibleChoices[final]!); // accompany or delegate
-    assert.equal(game.state.variables.victra_case,final===0?'recovered':'pending');
-    assert.equal(learnedPersonFacts(victra,game.state).length,1);
-    assert.equal(game.state.journal.some(e=>e.id==='victra_suitcase'),final===0);
-    assert.equal(game.state.journal.some(e=>e.id==='victra_directions'),final===1);
+    game.navigateChoice(game.visibleChoices[accompanied ? 0 : 1]!); // accompany or directions
+    if (accompanied) {
+      game.navigateChoice(game.visibleChoices[0]!); // batch number
+      game.navigate('hotel_annex_case');
+      game.navigateChoice(game.visibleChoices[1]!); // distinctive mark
+      game.navigate('hotel_annex_recovered');
+    }
+    assert.equal(game.state.variables.victra_case, accompanied ? 'recovered' : 'pending');
+    assert.equal(game.state.journal.some(e => e.id === 'victra_suitcase'), accompanied);
+    assert.equal(game.state.journal.some(e => e.id === 'victra_directions'), !accompanied);
+    game.navigate('hotel_victra_contact_offer');
+    game.navigateChoice(game.visibleChoices[accompanied ? 0 : 1]!); // accept / decline
+    assert.equal(game.state.journal.some(e => e.id === 'victra_contact_shared'), accompanied);
+    assert.equal(learnedPersonFacts(victra,game.state).length, accompanied ? 2 : 1);
   }
-  const skipped=arrive('hotel_route');
-  skipped.navigateChoice(skipped.visibleChoices[2]!);
+  const skipped = arrive('hotel_route');
+  skipped.navigateChoice(skipped.visibleChoices[1]!); // quiet flavor choice
+  skipped.navigate('hotel_checkin');
+  skipped.navigateChoice(skipped.visibleChoices[2]!); // leave the staff to investigate
   skipped.navigate('hotel_resolution');
   assert.equal(skipped.state.variables.victra_case,'unknown');
   assert.equal(encounteredPeople(people,skipped.state).some(p=>p.id==='victra'),false);
@@ -213,6 +226,7 @@ test('Victra and Livia facts follow the actual multi-stage subplot outcomes', ()
     game.navigateChoice(game.visibleChoices[action]!);
     assert.equal(game.state.variables.livia_impression,action===2?'distracted':'helpful');
     game.navigateChoice(game.visibleChoices[0]!);
+    game.navigate('food_lunch');
     assert.equal(game.state.variables.credits,88);
     assert.equal(encounteredPeople(people,game.state).some(p=>p.id==='livia'),true);
     const facts=learnedPersonFacts(livia,game.state).join(' ');

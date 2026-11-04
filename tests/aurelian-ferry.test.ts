@@ -41,7 +41,7 @@ test('early choice has two flavor routes, and both include working Pokémon', ()
     assert.equal(copy.canAdvancePage, true);
     copy.advancePage();
     copy.navigate('name');
-    assert.match(copy.currentParagraphs.map(p => p.text).join(' '), /What should I call you\?/);
+    assert.match(copy.currentParagraphs.map(p => p.text).join(' '), /What's your name\?/);
     assert.doesNotMatch(copy.currentParagraphs.map(p => p.text).join(' '), /Just your first name/);
   }
 });
@@ -63,7 +63,7 @@ test('Lucia asks for contact permission before pronouns and accepts either answe
     game.navigate(answer);
     assert.equal(game.state.variables.lucia_contact, answer === 'contact_yes');
     game.navigate('pronouns');
-    assert.match(game.currentParagraphs.map(p => p.text).join(' '), /I use she and her/);
+    assert.match(game.currentParagraphs.map(p => p.text).join(' '), /I use she \/ her/);
     assert.deepEqual(game.visibleChoices.map(choice => choice.label), ['He / Him','She / Her','They / Them']);
   }
 });
@@ -134,8 +134,8 @@ test('the League advertisement and Lucia explanation have distinct passage title
   const advertisement = story.passages.find(p => p.id === 'ferry_ad');
   const explanation = story.passages.find(p => p.id === 'lucia_rules');
   assert.equal(advertisement?.title,'A Glimpse of the League');
-  assert.equal(explanation?.title,'Eight Laurels');
-  assert.equal(story.passages.filter(p=>p.title==='Eight Laurels').length,1);
+  assert.equal(explanation?.title,'Choosing a Partner');
+  assert.equal(story.passages.filter(p=>p.title==='Choosing a Partner').length,1);
 });
 
 test('CHAMP responses are conditional in one shared arrival passage', () => {
@@ -163,31 +163,70 @@ test('CHAMP responses are conditional in one shared arrival passage', () => {
   }
 });
 
-test('registration installs the Pokédex before any opt-in lookup or venue choice', () => {
-  const game=beginConversation();
-  game.navigate('open_deck');game.navigate('rail');game.navigate('dock_approach');
-  game.navigateChoice(game.visibleChoices[0]!);
-  assert.equal(game.state.variables.dex_installed,false);
-  assert.equal(game.state.variables.credits,0);
-  game.navigate('lezano_checkin');
-  assert.equal(game.state.variables.credits,100);
-  assert.equal(game.state.variables.dex_installed,true);
-  assert.deepEqual(game.state.inventory,{league_badge:1,city_map:1,hotel_assignment:1});
-  assert.equal(game.passage.chapter,'Chapter 2: Orientation');
-  const prose=game.visibleParagraphs.map(p=>p.text).join(' ');
-  for(const line of ['four o\'clock this afternoon','serves as your debit card','Pokédex app','choose to look one up']){
-    assert.ok(prose.includes(line),line);
+function advanceAll(game: Game): void {
+  let pages = 0;
+  while (game.canAdvancePage) {
+    game.advancePage();
+    assert.ok(++pages <= 10, 'A passage must have a bounded number of pages');
   }
-  assert.equal(game.passage.continueTo,'harbor_lookup');
-  game.navigate('harbor_lookup');
-  assert.deepEqual(game.visibleChoices.map(c=>c.destinationId),[
-    'harbor_scan_machoke','harbor_scan_wattrel','harbor_destination'
+}
+
+function go(game: Game, destination: string): void {
+  advanceAll(game);
+  game.navigate(destination);
+}
+
+function select(game: Game, index: number): void {
+  advanceAll(game);
+  const choice = game.visibleChoices[index];
+  assert.ok(choice, 'Choice ' + index + ' is available in ' + game.passage.id);
+  game.navigateChoice(choice);
+}
+
+function arriveAt(venue: 'hotel_route' | 'food_route', contact: 'contact_yes' | 'contact_no' = 'contact_yes'): Game {
+  const game = beginConversation('ferry_windows', 'Ari', contact);
+  for (const id of ['open_deck', 'rail', 'dock_approach']) go(game, id);
+  select(game, 0);
+  go(game, 'lezano_checkin');
+  assert.deepEqual(game.state.inventory, { league_bracelet: 1 });
+  assert.equal(game.state.variables.credits, 100);
+  advanceAll(game);
+  go(game, 'harbor_lookup');
+  go(game, 'harbor_destination');
+  go(game, venue);
+  return game;
+}
+
+test('registration activates the bracelet, provides credits, and explains its functions across three pages', () => {
+  const game = beginConversation();
+  for (const id of ['open_deck', 'rail', 'dock_approach']) go(game, id);
+  select(game, 0);
+  assert.equal(game.state.variables.dex_installed, false);
+  go(game, 'lezano_checkin');
+  assert.equal(game.state.variables.dex_installed, true);
+  assert.equal(game.state.variables.credits, 100);
+  assert.deepEqual(game.state.inventory, { league_bracelet: 1 });
+  assert.equal(game.passage.chapter, 'Chapter 2: Orientation');
+  const pages = [game.currentParagraphs.map(p => p.text).join(' ')];
+  while (game.canAdvancePage) {
+    game.advancePage();
+    pages.push(game.currentParagraphs.map(p => p.text).join(' '));
+  }
+  assert.equal(pages.length, 3);
+  assert.match(pages.join(' '), /four o'clock this afternoon/);
+  assert.match(pages.join(' '), /one hundred credits/);
+  assert.match(pages.join(' '), /Pokédex/);
+  assert.match(pages.join(' '), /has to be willing to join/);
+  assert.equal(game.passage.continueTo, 'harbor_lookup');
+  go(game, 'harbor_lookup');
+  assert.deepEqual(game.visibleChoices.map(c => c.destinationId), [
+    'harbor_scan_machoke', 'harbor_scan_wattrel', 'harbor_destination',
   ]);
-  game.navigate('harbor_destination');
-  assert.deepEqual(game.visibleChoices.map(c=>c.destinationId),['hotel_route','food_route']);
+  go(game, 'harbor_destination');
+  assert.deepEqual(game.visibleChoices.map(c => c.destinationId), ['hotel_route', 'food_route']);
 });
 
-test('only opening and harbor passages show visible headings, with numbered chapters', () => {
+test('only the opening and harbor have visible titles and both chapters are linked', () => {
   const visible = story.passages.filter(p => !p.hideTitle).map(p => [p.id, p.title]);
   assert.deepEqual(visible, [
     ['ferry', 'Approaching Lezano Aboard the Portia'],
@@ -196,96 +235,144 @@ test('only opening and harbor passages show visible headings, with numbered chap
     ['lezano_checkin', 'Lezano Harbor'],
   ]);
   assert.equal(story.passages.find(p => p.id === 'ferry')?.chapter, 'Chapter 1: The Crossing');
-  for (const id of ['dock_approach','lezano_arrival','lezano_checkin','hotel_route','food_route','orientation_invitation']) {
+  for (const id of ['dock_approach', 'lezano_arrival', 'lezano_checkin', 'hotel_route', 'food_route', 'orientation_invitation']) {
     assert.equal(story.passages.find(p => p.id === id)?.chapter, 'Chapter 2: Orientation');
   }
 });
 
-test('288 complete authored routes reach valid orientation destinations with persistent outcomes', () => {
-  function play(first:'ferry_cafe'|'ferry_windows',contact:'contact_yes'|'contact_no',
-    pronoun:'he'|'she'|'they',encounter:'group_join'|'eavesdrop'|'rail',rivalIndex:number,
-    location:'hotel_route'|'food_route',actionIndex:number){
-    const game=beginConversation(first,'Alex',contact,pronoun);
-    game.navigate('open_deck');game.navigate(encounter);game.navigate('dock_approach');
-    game.navigateChoice(game.visibleChoices[rivalIndex]!);
-    assert.equal(game.state.variables.rival_response,rivalIndex===0?'confront':'ignore');
-    game.navigate('lezano_checkin');
-    assert.equal(game.state.variables.credits,100);
-    game.navigate('harbor_lookup');
-    if(actionIndex===0){game.navigate('harbor_scan_wattrel');game.navigate('harbor_destination');}
-    else game.navigate('harbor_destination');
-    game.navigate(location);
-    if(location==='hotel_route'){
-      game.navigateChoice(game.visibleChoices[actionIndex===0?0:2]!);
-      if(actionIndex===0){
-        game.navigateChoice(game.visibleChoices[0]!);
-        game.navigate('hotel_followup');
-        game.navigateChoice(game.visibleChoices[0]!);
-        assert.equal(game.state.variables.victra_case,'recovered');
-        assert.ok(encounteredPeople(people,game.state).some(p=>p.id==='victra'));
-      }else{
-        game.navigate('hotel_resolution');
-        assert.equal(game.state.variables.victra_case,'unknown');
-        assert.ok(!encounteredPeople(people,game.state).some(p=>p.id==='victra'));
-      }
-      game.navigate('hotel_wingull');
-      if(actionIndex===0)game.navigate('hotel_scan_wingull');
-      assert.equal(game.state.variables.credits,100);
-      game.navigate('orientation_invitation');
-    }else{
-      game.navigateChoice(game.visibleChoices[actionIndex===0?0:2]!);
-      assert.equal(game.state.variables.livia_impression,actionIndex===0?'helpful':'distracted');
-      game.navigateChoice(game.visibleChoices[actionIndex]!);
-      assert.ok(encounteredPeople(people,game.state).some(p=>p.id==='livia'));
-      assert.equal(game.state.variables.credits,88);
-      if(actionIndex===0)game.navigate('food_scan_wattrel');
-      game.navigate('orientation_invitation');
-    }
-    assert.equal(game.state.variables.lucia_contact,contact==='contact_yes');
-    const options=game.visibleChoices.map(c=>c.destinationId);
-    assert.deepEqual(options,contact==='contact_yes'
-      ? ['orientation_with_lucia','orientation_alone']
-      : ['orientation_alone','orientation_scenic']);
-    assert.equal(game.state.party.length,0);
-    return game;
+test('all harbor lookup options preserve deliberate Pokédex discovery', () => {
+  for (let index = 0; index < 3; index++) {
+    const game = beginConversation();
+    for (const id of ['open_deck', 'rail', 'dock_approach']) go(game, id);
+    select(game, 1);
+    go(game, 'lezano_checkin');
+    go(game, 'harbor_lookup');
+    select(game, index);
+    const expected = index === 0 ? 'scanned_machoke_harbor' : 'scanned_wattrel_harbor';
+    if (index !== 2) {
+      assert.ok(game.state.journal.some(event => event.id === expected));
+      go(game, 'harbor_destination');
+    } else assert.equal(game.passage.id, 'harbor_destination');
+    assert.deepEqual(game.visibleChoices.map(c => c.destinationId), ['hotel_route', 'food_route']);
   }
-  let runs=0;
-  for(const first of ['ferry_cafe','ferry_windows'] as const)
-  for(const contact of ['contact_yes','contact_no'] as const)
-  for(const pronoun of ['he','she','they'] as const)
-  for(const encounter of ['group_join','eavesdrop','rail'] as const)
-  for(const rivalIndex of [0,1])
-  for(const location of ['hotel_route','food_route'] as const)
-  for(const actionIndex of [0,1]){
-    const game=play(first,contact,pronoun,encounter,rivalIndex,location,actionIndex);
-    for(const endpoint of game.visibleChoices.map(c=>c.destinationId)){
-      const copy=play(first,contact,pronoun,encounter,rivalIndex,location,actionIndex);
-      copy.navigate(endpoint);
-      assert.equal(copy.passage.choices.length,0);
-      assert.equal(copy.passage.continueTo,undefined);
-      if(endpoint==='orientation_with_lucia')assert.ok(copy.state.journal.some(e=>e.id==='lucia_orientation_plans'));
-    }
-    runs++;
-  }
-  assert.equal(runs,288);
 });
 
-test('hotel late help changes the first conversation without handing over the suitcase at once', () => {
-  const game=beginConversation();
-  game.navigate('open_deck');game.navigate('rail');game.navigate('dock_approach');
-  game.navigateChoice(game.visibleChoices[0]!);game.navigate('lezano_checkin');
-  game.navigate('harbor_lookup');game.navigate('harbor_destination');game.navigate('hotel_route');
-  game.navigateChoice(game.visibleChoices[1]!);
-  assert.ok(game.state.journal.some(e=>e.id==='scanned_minccino_hotel'));
-  game.navigateChoice(game.visibleChoices[0]!);
-  assert.equal(game.state.variables.hotel_response,'latehelp');
-  assert.equal(game.passage.id,'hotel_investigate');
-  assert.equal(game.state.variables.victra_case,'none');
-  game.navigateChoice(game.visibleChoices[1]!);
-  assert.equal(game.passage.id,'hotel_carts');
-  game.navigate('hotel_followup');
-  game.navigateChoice(game.visibleChoices[1]!);
-  assert.equal(game.state.variables.victra_case,'pending');
-  assert.ok(game.state.journal.some(e=>e.id==='victra_directions'));
-  assert.ok(!game.state.journal.some(e=>e.id==='victra_suitcase'));
+test('every hotel decision can complete: lobby, clues, annex verification, contact, Wingull, orientation', () => {
+  const visited = new Set<string>();
+  let runs = 0;
+  function note(game: Game) { visited.add(game.passage.id); }
+  for (const contact of ['contact_yes', 'contact_no'] as const)
+  for (const flavor of [0, 1])
+  for (const initial of ['help', 'scan_help', 'scan_leave', 'leave'] as const)
+  for (const clue of (initial === 'help' || initial === 'scan_help' ? [0,1] : [0]))
+  for (const accompany of (initial === 'help' || initial === 'scan_help' ? [0,1] : [0]))
+  for (const search of (accompany === 0 && (initial === 'help' || initial === 'scan_help') ? [0,1] : [0]))
+  for (const proof of (accompany === 0 && (initial === 'help' || initial === 'scan_help') ? [0,1] : [0]))
+  for (const exchange of (initial === 'help' || initial === 'scan_help' ? [0,1] : [0]))
+  for (const wingull of [0, 1, 2]) {
+    const game = arriveAt('hotel_route', contact);
+    note(game);
+    select(game, flavor); note(game);
+    go(game, 'hotel_checkin'); note(game);
+    if (initial === 'help') select(game, 0);
+    else if (initial === 'leave') select(game, 2);
+    else {
+      select(game, 1); note(game);
+      select(game, initial === 'scan_help' ? 0 : 1);
+    }
+    note(game);
+    if (initial === 'help' || initial === 'scan_help') {
+      assert.equal(game.passage.id, 'hotel_investigate');
+      select(game, clue); note(game);
+      go(game, 'hotel_followup'); note(game);
+      select(game, accompany); note(game);
+      if (accompany === 0) {
+        assert.equal(game.passage.id, 'hotel_annex');
+        select(game, search); note(game);
+        go(game, 'hotel_annex_case'); note(game);
+        select(game, proof); note(game);
+        go(game, 'hotel_annex_recovered'); note(game);
+        assert.equal(game.state.variables.victra_case, 'recovered');
+        assert.ok(game.state.journal.some(e => e.id === 'victra_suitcase'));
+        assert.equal(game.state.journal.some(e => e.id === 'victra_directions'), false);
+      } else {
+        assert.equal(game.state.variables.victra_case, 'pending');
+        assert.ok(game.state.journal.some(e => e.id === 'victra_directions'));
+        assert.equal(game.state.journal.some(e => e.id === 'victra_suitcase'), false);
+      }
+      go(game, 'hotel_victra_contact_offer'); note(game);
+      select(game, exchange); note(game);
+      assert.equal(game.state.journal.some(e => e.id === 'victra_contact_shared'), exchange === 0);
+      assert.ok(encounteredPeople(people, game.state).some(p => p.id === 'victra'));
+    } else {
+      assert.equal(game.passage.id, 'hotel_staff');
+      assert.equal(game.state.journal.some(e => e.id === 'met_victra'), false);
+    }
+    go(game, 'hotel_resolution'); note(game);
+    assert.equal(game.state.variables.victra_case,
+      initial === 'help' || initial === 'scan_help' ? (accompany === 0 ? 'recovered' : 'pending') : 'unknown');
+    go(game, 'hotel_wingull'); note(game);
+    select(game, wingull); note(game);
+    if (wingull === 0) {
+      assert.ok(game.state.journal.some(e => e.id === 'scanned_wingull_hotel'));
+      go(game, 'orientation_invitation');
+    } else if (wingull === 1) {
+      assert.ok(game.state.journal.some(e => e.id === 'offered_wingull_water'));
+      assert.equal(game.state.journal.some(e => e.id === 'scanned_wingull_hotel'), false);
+      go(game, 'orientation_invitation');
+    } else assert.equal(game.passage.id, 'orientation_invitation');
+    note(game);
+    assert.equal(game.state.variables.credits, 100);
+    assert.equal(game.state.party.length, 0);
+    const endpoints = game.visibleChoices.map(c => c.destinationId);
+    assert.deepEqual(endpoints, contact === 'contact_yes'
+      ? ['orientation_with_lucia', 'orientation_alone', 'orientation_scenic']
+      : ['orientation_alone', 'orientation_scenic']);
+    select(game, runs % endpoints.length);
+    note(game);
+    assert.equal(game.passage.choices.length, 0);
+    assert.equal(game.passage.continueTo, undefined);
+    runs++;
+  }
+  for (const id of [
+    'hotel_route','hotel_wait_reassure','hotel_wait_quiet','hotel_checkin','hotel_investigate',
+    'hotel_minccino','hotel_manifest','hotel_carts','hotel_followup','hotel_annex',
+    'hotel_annex_number','hotel_annex_description','hotel_annex_case','hotel_annex_tag',
+    'hotel_annex_mark','hotel_annex_recovered','hotel_victra_directions',
+    'hotel_victra_contact_offer','hotel_victra_contact_yes','hotel_victra_contact_no',
+    'hotel_staff','hotel_resolution','hotel_wingull','hotel_scan_wingull','hotel_wingull_water',
+    'orientation_invitation','orientation_with_lucia','orientation_alone','orientation_scenic',
+  ]) {
+    assert.ok(visited.has(id), 'Unvisited hotel branch: ' + id);
+  }
+  assert.ok(runs >= 100, 'Exhaustive hotel coverage must sample at least 100 routes');
+});
+
+test('all restaurant decisions resolve with the right credit, Livia, and Pokédex outcomes', () => {
+  let runs = 0;
+  for (const contact of ['contact_yes','contact_no'] as const)
+  for (const initial of [0,1,2])
+  for (const followup of [0,1])
+  for (const lookup of [0,1]) {
+    const game = arriveAt('food_route', contact);
+    select(game, initial);
+    assert.equal(game.state.variables.livia_impression, initial === 2 ? 'distracted' : 'helpful');
+    assert.equal(game.state.journal.some(e => e.id === 'scanned_wattrel_emergency'), initial === 2);
+    select(game, followup);
+    assert.equal(game.state.variables.credits, 100, 'Lunch is not charged before the rescue');
+    assert.ok(game.state.journal.some(e => e.id === 'helped_wattrel'));
+    assert.equal(game.state.journal.some(e => e.id === 'livia_disappointed'), initial === 2);
+    assert.ok(encounteredPeople(people, game.state).some(p => p.id === 'livia'));
+    go(game, 'food_lunch');
+    assert.equal(game.state.variables.credits, 88);
+    select(game, lookup);
+    assert.equal(game.state.journal.some(e => e.id === 'scanned_wattrel_rest'), lookup === 0);
+    if (lookup === 0) go(game, 'orientation_invitation');
+    assert.equal(game.passage.id, 'orientation_invitation');
+    select(game, runs % game.visibleChoices.length);
+    assert.equal(game.passage.choices.length, 0);
+    assert.equal(game.passage.continueTo, undefined);
+    runs++;
+  }
+  assert.equal(runs, 24);
 });

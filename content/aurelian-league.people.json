@@ -104,6 +104,12 @@
         "discoveryEvents": [
           "victra_directions"
         ]
+      },
+      {
+        "text": "You exchanged contact details through your League bracelets.",
+        "discoveryEvents": [
+          "victra_contact_shared"
+        ]
       }
     ]
   },

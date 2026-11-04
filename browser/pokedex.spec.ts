@@ -39,14 +39,14 @@ for (const width of [320, 1280]) test('primary views, nested Character sections 
         expect(await saved(page)).toBe(raw);
       }
     }
-    if (name === 'Pokédex') await expect(page.locator('#pokedex')).toContainText("Install the Pokédex app at registration to start researching Pokémon.");
+    if (name === 'Pokédex') await expect(page.locator('#pokedex')).toContainText("Your League bracelet activates the Pokédex when you register in Lezano.");
     expect(await saved(page)).toBe(raw);
   }
   await view(page, 'Story');
   await expect(page.getByRole('radio', { name: "See what's happening at the café", exact: true })).toBeChecked();
   await proceed(page);
   await view(page, 'Pokédex');
-  await expect(page.locator('#pokedex')).toContainText("Install the Pokédex app at registration to start researching Pokémon.");
+  await expect(page.locator('#pokedex')).toContainText("Your League bracelet activates the Pokédex when you register in Lezano.");
   await expect(page.locator('#pokedex h3')).toHaveCount(0);
   await page.reload(); await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
   const afterEncounter = await saved(page);
@@ -54,7 +54,7 @@ for (const width of [320, 1280]) test('primary views, nested Character sections 
   await expect(page.locator('#pokedex h3')).toHaveCount(0); expect(await saved(page)).toBe(afterEncounter);
   await page.getByRole('button', { name: 'Story', exact: true }).click();
   for (let i = 0; i < 4; i++) await proceed(page);
-  await page.getByRole('textbox', { name: 'Your first name', exact: true }).fill('Draft 周');
+  await page.getByRole('textbox', { name: 'First name', exact: true }).fill('Draft 周');
   const beforeDraft = await saved(page);
   for (const name of primary.slice(1)) {
     await view(page, name);
@@ -62,7 +62,7 @@ for (const width of [320, 1280]) test('primary views, nested Character sections 
     expect(await saved(page)).toBe(beforeDraft);
   }
   await page.getByRole('button', { name: 'Story', exact: true }).click();
-  await expect(page.getByRole('textbox', { name: 'Your first name', exact: true })).toHaveValue('Draft 周');
+  await expect(page.getByRole('textbox', { name: 'First name', exact: true })).toHaveValue('Draft 周');
   await proceed(page); await choose(page, 'Exchange numbers with Lucia'); await proceed(page); await choose(page, 'They / Them'); await proceed(page);
   await view(page, 'Pokédex');
   await expect(page.locator('#pokedex h3')).toHaveCount(0);

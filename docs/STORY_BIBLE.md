@@ -59,7 +59,7 @@ The protagonist should not begin the story as an investigator attempting to expo
 
 The story takes place in an original region within the familiar Pokémon universe.
 
-Existing Pokémon species, moves, abilities, and evolutionary lines are available. The world contains modern technology, Pokémon Centers, Poké Balls, transportation systems, research institutions, and established trainer culture.
+Existing Pokémon species, moves, abilities, and evolutionary lines are available. The world contains modern technology, Pokémon Centers, League-issued silver bracelets, transportation systems, research institutions, and established trainer culture. Traditional Poké Balls are not used in this setting; the bracelet is the means of forming and managing Pokémon partnerships.
 
 Roman influences are primarily architectural, governmental, and cultural. The region is not a literal recreation of ancient Rome.
 
@@ -798,7 +798,7 @@ Pokémon companionship should feel personal. The League's entrant guide makes co
 
 New Pokémon should have distinct personalities and, when appropriate, individual character arcs.
 
-The exact party-size rules, storage system, and Pokémon-management mechanics remain undecided.
+Each League bracelet can hold a team of up to six Pokémon, and only one of a trainer's Pokémon may be out of the bracelet at a time. A Pokémon joins by willingly touching the trainer's bracelet; it must agree to the partnership and can leave if mistreated. There are no Poké Balls or separate storage boxes. The engine currently tracks a party of up to six, but bracelet storage and active-partner switching are narrative rules awaiting dedicated gameplay mechanics.
 
 ---
 
@@ -1037,7 +1037,7 @@ No hidden personality check, combat result, special item, or gender restriction 
 
 ### Final Partner Selection
 
-When ready, the player chooses **one interested Pokémon** and explicitly confirms the partnership. A caretaker verifies that it has willingly chosen the trainer, provides its Poké Ball, and offers an optional nickname. The remaining Pokémon cannot be selected as first partners, though they may return in later story scenes.
+When ready, the player chooses **one interested Pokémon** and explicitly confirms the partnership. A caretaker verifies that it has willingly chosen the trainer, guides it to touch the trainer's silver League bracelet, and offers an optional nickname. The remaining Pokémon cannot be selected as first partners, though they may return in later story scenes.
 
 The detailed choice prompts and suggested state variables are in [FUTURE_IDEAS.md](../../FUTURE_IDEAS.md). No selection implementation has yet been added to the playable story.
 

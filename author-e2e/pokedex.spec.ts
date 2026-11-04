@@ -64,6 +64,6 @@ test('the public chapter preview shares ordered sources and metadata without acc
  await page.getByLabel('Find passage by ID or title').fill('food_emergency');
  await expect(page.getByRole('list',{name:'Passage index'}).getByRole('button')).toHaveText(['food_emergency: A Difficult Rescue']);
  await page.getByRole('button',{name:'Pokédex',exact:true}).click();
- await expect(page.locator('#pokedex')).toContainText('Install the Pokédex app at registration');
+ await expect(page.locator('#pokedex')).toContainText('Your League bracelet activates the Pokédex');
  expect(await page.evaluate(()=>localStorage.getItem('pokemon:checkpoint:aurelian-league'))).toBe('unchanged');
 });

@@ -223,7 +223,7 @@ A lookup passage uses existing commands only:
 *title Looking Up Wattrel
 *hide_title
 *journal scanned_wattrel_harbor "You looked up Wattrel at the harbor."
-You finish your note and put the phone away.
+You finish your note and close the hologram on your League bracelet.
 ```
 
 The reader derives an in-story information card from a `scanned_` journal effect
