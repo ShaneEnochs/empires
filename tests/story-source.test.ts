@@ -6,12 +6,12 @@ import { assembleStorySources, parseStorySources, publicStoryFiles } from '../sr
 import { publicSources } from './public-story';
 import { Game } from '../src/game';
 
-// Captured before the physical split: all revision-8 text, IDs and effects unchanged.
-const originalSourceHash = '1a2c324b7c1a37f6a361ebeb707ada62a7e1c8775a63e278f760bc3d7dbaaebe';
+// Canonical SHA-256 for the assembled, authored revision-8 story after the Chapter 2 review.
+const currentSourceHash = '8d8e0d7fef62f6c3988b0aee9471f39235bd4dbc3d297629b30ba2ca6c36944b';
 test('the fixed ordered chapter list reconstructs exactly the revision-8 source', () => {
   assert.deepEqual(publicStoryFiles.map(path => path.split('/').at(-1)), ['globals.story', 'chapter-01-crossing.story', 'chapter-02-orientation.story']);
   const parts = publicSources();
-  assert.equal(createHash('sha256').update(assembleStorySources(parts)).digest('hex'), originalSourceHash);
+  assert.equal(createHash('sha256').update(assembleStorySources(parts)).digest('hex'), currentSourceHash);
   const story = parseStorySources(parts);
   assert.equal(story.startId, 'ferry');
   assert.equal(story.passages.find(passage => passage.id === 'lezano_checkin')!.chapter, 'Chapter 2: Orientation');
