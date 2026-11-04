@@ -19,9 +19,9 @@ There's still a little time before the ferry reaches Lezano. You could take anot
 *journal saw_minccino_cafe "You saw Minccino clearing tables in the ferry café."
 *journal saw_machoke_cafe "You saw Machoke moving luggage through the café crowd."
 
-The café queue has barely moved since you last checked. A Minccino in a tiny navy apron is helping the staff clear tables, gathering used napkins into a basket and polishing each empty spot with its tail. A crew member sets a fresh tray of rolls on the counter while Minccino tries, without much success, to convince a man to lift his elbows so it can wipe beneath them. The man eventually obliges, earning an approving chirp.
+The café queue has barely moved since you last checked. A small, pale-gray Minccino with large, rounded mouse-like ears is helping the staff clear tables. Wearing a tiny navy apron, the little Pokémon gathers used napkins into a basket and polishes each empty spot with its long, fluffy tail. A crew member sets a fresh tray of rolls on the counter while Minccino tries, without much success, to convince a man to lift his elbows so it can wipe beneath them. The man eventually obliges, earning an approving chirp.
 
-You consider joining the queue, but a Machoke wearing a crew vest comes through the nearby doors with a trolley full of luggage. The people waiting for coffee shuffle aside to let it pass. You follow the cleared path toward the windows instead, deciding breakfast can wait until you're on land.
+You consider joining the queue, but a Machoke wearing a crew vest comes through the nearby doors with a trolley full of luggage. Standing nearly five feet tall, the humanoid Pokémon has blue skin, heavily muscled arms, and a broad chest. A thick belt encircles its waist, and three bony ridges rise from the top of its head. Despite its large build, it carefully maneuvers the trolley through the crowd as the people waiting for coffee shuffle aside to let it pass. You follow the cleared path toward the windows instead, deciding breakfast can wait until you're on land.
 
 *continue ferry_context
 
@@ -32,9 +32,9 @@ You consider joining the queue, but a Machoke wearing a crew vest comes through 
 *journal saw_machoke_windows "You saw Machoke helping the baggage team."
 *journal saw_minccino_windows "You saw Minccino collecting napkins near the windows."
 
-The crowd thins near the far end of the lounge. Through the glass, the sea is bright in the morning sun, and several Wingull are following the ferry's wake. A Machoke in a blue crew vest is helping the baggage team move suitcases away from the doors. When a trolley catches on the edge of a floor mat, Machoke lifts its front wheels clear while a deckhand straightens the mat.
+The crowd thins near the far end of the lounge. Through the glass, the sea is bright in the morning sun, and several Wingull are following the ferry's wake. The seabird Pokémon have white bodies, long, narrow wings tipped with blue, and pointed orange beaks. They glide along the breeze, occasionally dipping toward the water before climbing again. Nearby, a Machoke in a blue crew vest is helping the baggage team move suitcases away from the doors. The muscular, blue-skinned Pokémon stands nearly five feet tall, with a humanoid build and a thick belt around its waist. When a trolley catches on the edge of a floor mat, Machoke lifts its front wheels clear while a deckhand straightens the mat.
 
-Behind you, a Minccino wearing a café apron darts between tables to collect discarded napkins. You step out of its way and claim a little space by the window, where you can finally see the coastline without looking over somebody's shoulder.
+Behind you, a small, pale-gray Minccino wearing a café apron darts between tables to collect discarded napkins. Its large, mouse-like ears twitch as it moves, and its long, fluffy tail occasionally brushes against the legs of the chairs. You step out of its way and claim a little space by the window, where you can finally see the coastline without looking over somebody's shoulder.
 
 *continue ferry_context
 
@@ -64,7 +64,7 @@ Before long, their discussion turns to whether someone could become Champion wit
 
 *page_break
 
-You make your way toward the windows, stepping around bags and apologizing to a man whose newspaper you've nearly knocked out of his hands. Outside, the coastline is finally coming into view. You can make out the pale buildings of Lezano clustered around its harbor, with green hills rising behind them. A few Wingull circle overhead, dipping toward the water before climbing back into the breeze. You've seen photographs of the city, of course, but they're hardly the same as seeing it in person.
+You make your way toward the windows, stepping around bags and apologizing to a man whose newspaper you've nearly knocked out of his hands. Outside, the coastline is finally coming into view. You can make out the pale buildings of Lezano clustered around its harbor, with green hills rising behind them. A few Wingull circle overhead, their long white wings flashing blue along the tips as they dip toward the water before climbing back into the breeze. You've seen photographs of the city, of course, but they're hardly the same as seeing it in person.
 
 The ferry makes a gentle turn, causing a paper cup to roll across the floor and bump against someone's shoe. Its owner, a young woman wearing a bright orange jacket, catches it before it can travel any farther. She bends to retrieve it, deposits it in a nearby bin, and brushes a loose strand of brown hair away from her face. When she notices you standing by the window, she follows your gaze toward the coast and comes over.
 
@@ -178,6 +178,8 @@ Lucia shifts her bag onto her other shoulder. "Oh, before I forget, I use she / 
 *journal lucia_family "Lucia talked about her family's Floatzel and her hopes for her first Pokémon partner."
 
 "Doesn't it feel strange to see all of the Pokémon working on the ferry when none of us are allowed to bring our own?" Lucia asks. "I get why the League wants a fresh start, but it's definitely going to take some getting used to. At home, our Floatzel follows me everywhere. He even waits outside the market when I go shopping."
+
+She pulls out her phone to show you a photograph of an orange, weasel-like Pokémon with a cream-colored belly, a yellow flotation sac around its neck, and two long tails. In the picture, he's sitting outside a shop with his paws resting on a grocery bag, looking rather pleased with himself.
 
 She tells you how he once dragged her brother's boots into a rock pool because he thought somebody had left them too close to the tide. She's spent years helping her family care for him, but she's never raised a Pokémon herself. "I know how he likes his dinner and when he wants to be left alone. With a new partner, I'll have to learn all of that again." She touches her Lapras pendant. "I hope my starter likes me."
 
