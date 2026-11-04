@@ -8,7 +8,7 @@
 
 ### Concept
 
-In Chapter One, after arriving in Lezano and completing League registration, the player visits the starter selection grounds. The field is a pleasant, open area with trees, flowers, a shallow pond, sheltered corners, and places for Pokémon to play. Contestants may meet and observe the Pokémon before choosing a partner.
+In a future chapter after the four-o'clock League orientation in Lezano, the player visits the first-partner selection grounds. The field is a pleasant, open area with trees, flowers, a shallow pond, sheltered corners, and places for Pokémon to play. Contestants may meet and observe the Pokémon before choosing a partner.
 
 There are **seven possible first partners**:
 
