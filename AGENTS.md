@@ -1,5 +1,8 @@
 # Working on The Aurelian League
 
+> **Narrative redesign notice (November 5, 2026):** [docs/STORY_BIBLE.md](docs/STORY_BIBLE.md) version 2.0 is the authoritative **future story canon**: a junior Rocket operative escapes a remote island after discovering transformed-human Pokémon on a cargo ship. The current playable chapters and most implementation constraints below describe the **legacy v1.2 contestant prototype** and remain operationally accurate until explicitly migrated. Do not use the old contestant premise or seven-starter selection as guidance when planning new narrative. Do not treat this documentation change as authorization to rewrite engine code or playable content.
+
+
 This repository is the Pokémon interactive-fiction game The Aurelian League.
 Use the existing checkout; cloud tasks are already isolated. Do not create a Git
 worktree unless requested. Work on a feature branch and prepare PRs against main;
