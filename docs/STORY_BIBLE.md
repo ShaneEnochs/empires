@@ -12,11 +12,11 @@
 **Format:** Choice-based Pokémon interactive fiction  
 **Genre:** Character-driven adventure, mystery, fugitive story, moments of humor and warmth, increasingly serious criminal conspiracy  
 **Setting:** Aurelia, a remote, Roman-inspired island region of the Pokémon world  
-**Protagonist:** A customizable adult, junior Team Rocket operative, not a League contestant
+**Protagonist:** A customizable adult, junior League field warden, not a League contestant. They believe the League is their employer and do not know of its Team Rocket connection at the outset
 
 **Established premise:** Team Rocket controls a small Pokémon League in Aurelia. Publicly it offers Pokémon training and competition to communities that have had little access to an established League. Privately, the League is a front for laundering money, stealing and transporting Pokémon, and supporting illicit research. People have been disappearing across the island. Rocket has learned to transform humans into Pokémon through research based on an unusual Ditto.
 
-The protagonist initially performs routine assignments and does not understand the organization's true operation. An apparently ordinary capture-and-delivery assignment leads them aboard a cargo ship carrying imprisoned experimental subjects. They rescue one Pokémon, accidentally become a fugitive with direct knowledge of the trafficking operation, and eventually learn that their companion was once human.
+The protagonist believes they work directly for the League, performing low-level field-welfare duties such as recovering and relocating Pokémon. They do not know that Team Rocket controls the League; discovering the League's criminal activity aboard a ship comes well before learning who is behind it. An apparently ordinary capture-and-delivery assignment leads them aboard a cargo ship carrying imprisoned experimental subjects. They rescue one Pokémon, accidentally become a fugitive with direct knowledge of the trafficking operation, and eventually learn that their companion was once human.
 
 The protagonist's initial goal is to escape and reach safety. The larger story leads toward helping an independent research institute expose the transformations, stop Rocket's operation, and save those victims who can still be restored.
 
@@ -51,7 +51,8 @@ The independent research institute is expected to be beyond Rocket's local contr
 
 **Established:**
 
-- The Aurelian League is small and remote, intended for trainers who otherwise have limited access to official competition.
+- The Aurelian League is small and remote, intended for trainers who otherwise have limited access to official competition. Its inaugural competitive season is already approximately halfway underway when the story begins. A season-based structure is credible for this region, though the exact length, scheduling, and gym format are open.
+- The protagonist works directly for the League in a low-level Pokémon welfare/field warden role. They and other ordinary employees may genuinely believe their relocation assignments are legitimate; they are not knowingly Team Rocket personnel.
 - Rocket uses the League's legitimacy, money flows, employees, facilities, and transport relationships for criminal purposes.
 - Money laundering and the theft/trafficking of Pokémon are part of the operation.
 - Rocket has also exploited the region and its infrastructure to conduct experiments transforming humans into Pokémon.
@@ -80,15 +81,15 @@ The League is a setting and institutional antagonist, not a progression system f
 
 ## 6. The protagonist
 
-The player character is a **junior Rocket operative** with comparatively little status or knowledge. They have performed questionable work under reassuring explanations about safety, relocation, or conservation. The protagonist is morally implicated but is not required to have knowingly brutalized Pokémon.
+The player character is a **junior League field warden**, with comparatively little status or knowledge of the organization behind their employer. Their duties involve capturing or recovering Pokémon and delivering them for supposedly legitimate conservation and relocation work. The protagonist does **not** know at the beginning that Team Rocket controls the League. Their complicity is unknowing: they have helped carry out harmful assignments without recognizing their purpose. Their specific formal job title may be refined later.
 
 The player can establish their name, pronouns, and attitude through the story. Their internal thoughts and spoken dialogue should be written as genuine characterization, with important emotional stances and moral responses left to player choice.
 
 The protagonist is not a conventional new League entrant. Their development into a caring, competent trainer is part of the journey.
 
-The revelation aboard the ship is the decisive break from Rocket. Their first impulse is to release the imprisoned Pokémon; escaping with only one is the result of an interruption, not a decision that the others are expendable.
+The revelation aboard the ship is the decisive break from the League as the protagonist understands it. The identity of Team Rocket as the force behind the scheme is a **later discovery**, not an opening exposition beat. Their first impulse is to release the imprisoned Pokémon; escaping with only one is the result of an interruption, not a decision that the others are expendable.
 
-Rocket pursues them because they know too much, have taken an experimental subject, and could enable outsiders to prove the operation exists. The protagonist's own involvement may complicate seeking help. We must establish convincing, noncontrived reasons for the particular danger and travel route rather than declaring all authorities corrupt by default.
+The people operating the trafficking scheme pursue them because they know too much, have taken an experimental subject, and could enable outsiders to prove the operation exists. The pursuers' Team Rocket connection is initially concealed from the protagonist. The protagonist's own involvement may complicate seeking help. We must establish convincing, noncontrived reasons for the particular danger and travel route rather than declaring all authorities corrupt by default.
 
 ## 7. Opening sequence: the first capture and the cargo ship
 
@@ -96,25 +97,23 @@ These beats are **established direction**, not final chapter boundaries or finis
 
 ### A. Tall grass: a routine assignment with a comic tone
 
-The protagonist and a **more senior Rocket grunt** try to corner a small Pokémon in the grass. Both repeatedly miss it. The experienced grunt is sure this should be easy; the scene has room for physical comedy, impatience, and contrasting approaches to Pokémon handling.
+The protagonist and a **more senior League field warden** try to corner a small Pokémon in the grass. Both repeatedly miss it. The experienced grunt is sure this should be easy; the scene has room for physical comedy, impatience, and contrasting approaches to Pokémon handling.
 
-The target **may be Chikorita**, which would tie the opening directly to one of the three rescue choices. The exact target species has not been finalized. One proposed explanation is that this Pokémon escaped an experimental facility and the grunts have been told to recapture it for a benign relocation.
+The target **may be Chikorita**, which would tie the opening directly to one of the three rescue choices. The exact target species has not been finalized. One proposed explanation is that this Pokémon escaped an experimental facility and the wardens have been told to recapture it for a benign relocation.
 
 The pair eventually capture it. The player can affect *how* they behave during the assignment without rewriting the fact that the delivery proceeds.
 
 ### B. The dock: the unattended delivery
 
-The Pokémon is brought to a ship. The person responsible for checking in deliveries is distracted while chasing a small escaped Pokémon. They tell the protagonist to leave the delivery on the deck.
+**Both field wardens go to the ship.** The person responsible for checking in Pokémon is distracted while chasing a small escaped Pokémon. The senior warden joins the chase and tells the protagonist to leave their delivery up on the ship's deck.
 
-The protagonist boards, then decides that leaving a Pokémon exposed and unattended is unreasonable. They try to take it to the logical receiving or holding area instead. The deeper cargo hold is discovered through that ordinary action, **not because the protagonist is already searching for a conspiracy**.
-
-The senior grunt's precise whereabouts during delivery remain open.
+After boarding, the protagonist notices a practical sign directing **“Pokémon to Holding Area”**, with an arrow toward the receiving area. Wanting to be helpful and not leave a Pokémon unattended, they follow the sign. The deeper cargo hold is discovered through that ordinary action, **not because the protagonist is already searching for a conspiracy**. The senior warden remains occupied helping the attendant.
 
 ### C. The hold: something is wrong
 
 Belowdecks, the protagonist discovers cages containing numerous frightened, confined Pokémon. The relevant shipment consists of transformed human victims, although neither protagonist nor player understands this at the time. Details such as mismatched documents, an improper destination, or the condition of the captives can establish that the supposed relocation program is a lie.
 
-The discovery should unfold from plausible observations. The protagonist decides to free the Pokémon.
+The discovery should unfold from plausible observations. This is a strong location for **internal reflection choices**: disbelief, anger, fear, guilt, suspicion, or an impulse to look for a benign explanation. The selected internal reaction colors the protagonist's thoughts and later dialogue without preventing the decision to try freeing the Pokémon. The protagonist initially knows the League has deceived them; Team Rocket's involvement remains unknown.
 
 ### D. One cage opens
 
@@ -148,8 +147,9 @@ The remaining two rescue candidates need not vanish from the plot. Their eventua
 
 - People have been reported missing across Aurelia. Their disappearances connect to Rocket's transformation operation.
 - An **independent Pokémon research/conservation group** has been investigating unusual disappearances, experiments, or shipments but has not been able to obtain a living transformed subject as proof.
-- It learns that a junior Rocket operative escaped with a Pokémon taken from the operation and eventually makes contact.
-- The group asks the protagonist to bring the Pokémon to a research institute outside Rocket's control for examination and evidence gathering.
+- It learns that a junior League field warden escaped with a Pokémon taken from the operation and eventually makes contact.
+- The group initially asks to take the rescued Pokémon to a research institute outside the League's control, claiming the examination may help bring down those running the League. Its representative **will not disclose the suspected transformation mechanism**, offering the limited explanation that an examination is needed before they can prove wrongdoing. The protagonist can challenge this evasiveness in substantial dialogue.
+- **The Pokémon refuses to leave the protagonist.** Respecting this, the organization tells the protagonist where to go and offers to misdirect the people pursuing them while they travel. The institute becomes a destination only after the protagonist has struggled to start over and formed relationships through odd jobs.
 - The institute's examination eventually exposes the human-to-Pokémon transformation. By the larger story's resolution, the starter's transformation is permanent.
 - Rocket tries to recover the Pokémon and contain the witness. Pursuit can include investigations, uneasy encounters, personal pressure, and occasional direct confrontations. It should not become a compulsory chase scene every chapter.
 - The larger threat is Rocket's ability to expand, commercialize, or ship experimental subjects beyond the island. Stopping that operation and rescuing as many people as possible gives the story its ultimate objective.
@@ -164,10 +164,10 @@ Aim for approximately **five or six** substantial recurring human characters, pl
 
 **Roles to develop, not assigned names:**
 
-1. **The senior Rocket grunt:** The protagonist's partner in the opening; experienced, familiar, capable of affection or loyalty; not automatically privy to the experiment. A particularly promising recurring pursuer or eventual ally.
+1. **The senior League field warden:** The protagonist's colleague in the opening; experienced and familiar, but not necessarily knowledgeable about the true organization behind the League. The protagonist encounters them again and cannot immediately determine whether to trust them. They **are trustworthy at heart**, though their help is limited, imperfect, and sometimes comically ineffective. Their exact employment and knowledge once the Rocket connection is exposed remain open.
 2. **The research contact:** A representative of the independent group with a personal or professional reason to pursue the disappearances.
 3. **An institute researcher:** A source of credible findings, difficult decisions, and revelations about the transformed Pokémon.
-4. **A person from the island's ordinary community:** Grounds the story in civilian life beyond Rocket and the conspiracy.
+4. **A farmer or other local resident:** The protagonist hides in a barn after fleeing the harbor; the farmer discovers them and opens a conversation about hardship. The player decides how candid to be. An offer of honest work and food/lodging starts the protagonist's new life, and the farmer may remain a significant ally.
 5. **A significant Rocket antagonist:** Someone with actual power over the operation who knows enough to regard the protagonist as dangerous.
 6. **An optional close companion/rival:** Someone whose relationship with the protagonist develops through travel or local encounters.
 
@@ -179,9 +179,9 @@ The high-level progression is established, but exact acts, chapter count, locati
 
 **Opening / rupture:** The comedic capture, delivery, disturbing discovery, choice of partner, and forced escape.
 
-**Flight and new attachments:** The protagonist tries to survive outside Rocket, learns to travel with their partner, encounters ordinary people and Pokémon, and becomes aware of pursuit.
+**Flight and new attachments:** The protagonist hides in a barn and is found by a farmer. Dialogue about hardship lets the player decide how much of their past to reveal. A few **odd jobs** provide meals, beds, basic supplies, new Pokémon encounters, and friendships without a numerical money or wage system. The protagonist learns to travel with their partner while unaware of the League's Rocket connection, and gradually notices pursuit. One local disappearance may later be connected to a Pokémon already living with someone the player knows.
 
-**A destination and a mystery:** The research group offers a reason to travel toward the institute; clues about island disappearances and the companion accumulate.
+**A destination and a mystery:** The research group claims a lab examination could bring down those running the League, but initially declines to reveal its deeper suspicions. The rescued Pokémon refuses to leave the protagonist; the representative gives them a route to the institute and promises to throw their pursuers off the trail. Clues about island disappearances and the companion accumulate.
 
 **The revelation:** Researchers establish that the Pokémon was formerly human and uncover the transformation process and the limits of reversing it.
 
@@ -198,6 +198,7 @@ Do not turn these headings into rigid mandatory chapters. Allow room for quiet t
 - **Relationships.** A hidden 1–20 relationship scale with a neutral starting point near 10 is an approved *design direction*, but particular narrative events and broken promises may also require explicit flags. Numbers should not be displayed to the player.
 - **Pokémon battles.** Battles can occur when dramatically appropriate and should be written as narrative encounters, not as a complete HP/accuracy/damage simulation. Earlier discussion favored selecting one Pokémon for an individual battle and simple level progression per use; specifics must be confirmed when combat is actually implemented.
 - **Catching and equipment.** Conventional Poké Balls are preferred over the previous League-bracelet-only system. Capture mechanics, available types of Balls, and inventory effects are not yet fully specified.
+- **No currency ledger.** The protagonist is practically penniless after escaping, but the game does **not** track credits or require repeated payments. Odd jobs exchange work for shelter, meals, transport assistance, basic Poké Balls, and occasional notable items. Use inventory only for items whose possession meaningfully affects scenes.
 - **Character interface.** Visible Stats and Inventory are probably sufficient alongside story and Pokémon/party information. Journal and Skills can remain underlying engine capabilities or future optional modules without appearing in this game's main UI.
 - **Saves.** During early development, a published game-version mismatch should require a new game rather than migrations or backward compatibility. The versioning mechanism belongs to a later code task.
 - **Future visuals.** Pokémon sprites are deferred; Emerald-era pixel art is a visual reference preference, not a current production requirement. Existing Pokémon imagery has intellectual-property implications that must be considered before public distribution.
@@ -223,13 +224,14 @@ The old playable chapters and their associated characters remain in Git history 
 
 1. **Former identities:** Who were Charmander, Chikorita, and Piplup, and what fragments of their past survive?
 2. **Transformation rules:** What makes the Ditto unique? Can Rocket perform or reverse transformations without it? How long until the process is irreversible, and how can the institute tell?
-3. **Opening logistics:** Which Pokémon is chased in the grass, how it was assigned, where the senior grunt goes, who interrupts the escape, and how the protagonist leaves the harbor.
+3. **Opening logistics:** Which Pokémon is chased in the grass, how it was assigned, who interrupts the hold rescue, and how the protagonist leaves the harbor. The senior warden accompanies the protagonist to the ship and is distracted helping the attendant chase an escaped Pokémon.
 4. **Geography:** Aurelia's island map, the exact Rocket-controlled locations, the institute's location, and the necessary travel route.
-5. **Character functions:** Senior grunt, pursuer, research contact, lead researcher, civilian ally, and major Rocket antagonist.
+5. **Character functions:** Senior League warden, pursuer, research contact, lead researcher, farmer or other civilian ally, and major Rocket antagonist.
 6. **Proof and stakes:** What the institute can establish from one living subject; what additional evidence is required; what imminent shipment or deployment makes intervention urgent.
 7. **Ethical consequences:** How the protagonist and institute handle the companion's autonomy, and what the former person's family learns.
 8. **Outcome variants:** Which independent objectives can succeed or fail without undercutting the central story; what happens to the captive Ditto and the remaining victims.
-9. **Mechanics:** Exact battle/capture representation and which hidden story variables are genuinely necessary.
+9. **Mechanics:** Exact battle/capture representation and which hidden story variables are genuinely necessary. The new story will not use numerical credits.
+10. **The missing-person clue:** Which familiar person's current Pokémon might actually be a reported missing human; how that Pokémon reached the home; and how the later revelation is independently established without relying on coincidence.
 
 ## 15. Working method
 
