@@ -106,7 +106,7 @@ These beats are **established direction**, not final chapter boundaries or finis
 
 ### A. Tall grass: a routine assignment with a comic tone
 
-The protagonist and **Cassius**, a more senior League field warden, try to corner a small Pokémon in the grass. Cassius is a man with five children and responsibility for the junior warden on this assignment. Both repeatedly miss it. The experienced grunt is sure this should be easy; the scene has room for physical comedy, impatience, and contrasting approaches to Pokémon handling.
+The protagonist and **Cassius**, a more senior League field warden, try to corner a small Pokémon in the grass. Cassius is a man with five children and responsibility for the junior warden on this assignment. Both repeatedly miss it. Cassius is sure this should be easy; the scene has room for physical comedy, impatience, and contrasting approaches to Pokémon handling.
 
 The target is **Chikorita** in every playthrough. In a **Chikorita-starter** playthrough, the Chikorita being chased is **Darrow**: he used **Vine Whip to manipulate the lock** of his holding enclosure and escaped the transformation facility before the League wardens were assigned to catch him. In a **Charmander- or Piplup-starter** playthrough, Darrow is the chosen species and **never escaped the facility**; the Chikorita chased by the wardens is a **different captive**. The protagonist does not know the Chikorita's former identity in either case. The wardens have been given a routine, benign explanation for the capture. This is a conditional backstory, not a visible reveal or a requirement for branching the full opening.
 
