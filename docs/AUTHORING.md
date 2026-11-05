@@ -36,7 +36,7 @@ automatic registration or publishing occurs. Normal builds exclude author.html.
 ## Headings and chapter numbering
 
 Author numbered chapter labels as literal `*chapter` directives, for example
-`*chapter Chapter 2: Orientation`. Keep a required `*title` in every
+`*chapter Chapter 2: Arrival`. Keep a required `*title` in every
 passage. Use `*hide_title` immediately after `*title` on transitional
 passages where the large visible heading would interrupt the narrative.
 The heading remains available to screen readers and in author tools; it is
@@ -63,7 +63,7 @@ A seventh companion fails atomically. Party never uses inventory items.
 
 Edit `content/title-page.json` for plain-text brand/title/description/button labels.
 Keep all five fields nonempty strings. The catalog contains only The Aurelian League,
-identity `aurelian-league`, revision 8, key `pokemon:checkpoint:aurelian-league`.
+identity `aurelian-league`, revision 9, key `pokemon:checkpoint:aurelian-league`.
 Display text is not a save identity. The old game's keys are never read or deleted.
 Party-aware saves use format 4, or 5 with reading context; schemas 1–3 are incompatible.
 Continue resumes committed state/page without re-entering. Checkpoints preserve the
@@ -129,7 +129,7 @@ content/aurelian-league/
   sources.json
   globals.story
   chapter-01-crossing.story
-  chapter-02-orientation.story
+  chapter-02-arrival.story
 ```
 
 Put shared `*var`, `*stat`, `*item`, `*skill` and `*pokemon` definitions in globals.
@@ -144,7 +144,7 @@ is no import command, runtime chapter request, or separate chapter save.
 Passing **any** public member file also checks the complete ordered story:
 
 ```sh
-npm run check:stories -- content/aurelian-league/chapter-02-orientation.story
+npm run check:stories -- content/aurelian-league/chapter-02-arrival.story
 ```
 
 The VS Code Check Current Story task and Notepad++ saved-file launcher use this
@@ -159,8 +159,10 @@ public chapter files**. It uses the exact same ordered sources and public People
 Pokédex metadata in a fresh memory-only session. Save edits in your editor; after
 Vite reloads, choose the button again. Do not upload an individual chapter as a
 complete standalone story. Single-file private draft preview remains available.
-A physical split changes no passages, effects, prose, chapter labels, or revision.
-The public story remains revision 8, with its existing key and save formats.
+The original physical split left the story unchanged. The later rename of Chapter 2
+to Arrival changes journal chapter labels, so the public story intentionally advances
+to revision 9. Revision-8 saves are incompatible and are not silently migrated;
+the story ID, storage key, and save formats remain unchanged.
 
 ## Pokédex installation, lookup events and observations
 
@@ -248,5 +250,6 @@ observation without duplicating Wattrel or erasing the earlier choice.
 The journal remains the sole discovery store. Continue resumes exact recorded
 scans without writing; checkpoints restore exactly their recorded observations,
 retaining earlier scans and rolling back later ones. There is no new mutable
-collection, timestamp, schema, save format or revision change. Existing revision-8
-progress remains valid and is never backfilled with scans that were not recorded.
+collection, timestamp, schema, or save-format change. Within the current revision 9,
+progress retains only its recorded scans and is never backfilled with unseen ones.
+Revision-8 progress is incompatible because the authored chapter label changed.

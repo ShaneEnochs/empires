@@ -480,7 +480,7 @@ because existing gate/background snapshots remain compatible.
 ## Browser saving and startup
 
 The application stores one atomic record at `pokemon:checkpoint:aurelian-league`
-for the sole public story (`aurelian-league`, revision 8). Other authored applications
+for the sole public story (`aurelian-league`, revision 9). Other authored applications
 must configure distinct explicit identities. Previous-game keys are never read,
 migrated, or deleted. Unsupported saves stay untouched until confirmed replacement.
 
@@ -1443,5 +1443,8 @@ current scan's observations, and never execute effects or re-evaluate guards aft
 entry. No new directive is needed. The restaurant delay/Livia consequences remain
 author-controlled and unchanged. See AUTHORING.md for the full contract/examples.
 
-The exact original source is preserved by the physical split. Public revision 8,
-GameState, save formats, identity and checkpoint semantics remain unchanged.
+The original physical split preserved its source and semantics. Renaming Chapter 2
+to Arrival then advances the public story to revision 9, because saved journal
+entries require their original chapters to match authored chapter labels.
+Existing revision-8 saves are rejected, not migrated. GameState, save formats,
+story ID, storage key, and checkpoint semantics are unchanged.

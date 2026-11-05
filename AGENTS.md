@@ -9,8 +9,8 @@ never merge automatically or commit directly to main.
 
 Aurelia is a modern Pokémon region influenced by Roman architecture and civic
 institutions. The public game is the sole catalog entry, assembled eagerly from the ordered
-`content/aurelian-league/sources.json` list (globals, Chapter 1 and Chapter 2). Its identity is `aurelian-league`, revision 8. The current playable
-story starts aboard the Portia on its approach to Lezano and currently ends immediately before the four-o'clock orientation.
+`content/aurelian-league/sources.json` list (globals, Chapter 1 and Chapter 2). Its identity is `aurelian-league`, revision 9. The current playable
+story starts aboard the Portia on its approach to Lezano and currently ends immediately before the four-o'clock orientation. Chapter 2 is titled *Arrival*; the orientation event itself has not yet begun. Its chapter-label change intentionally advanced story revision from 8 to 9 because saved journal events validate their chapter labels. Revision-8 saves are incompatible and must not be silently migrated.
 The player starts without Pokémon, makes an early flavor choice, enters a first
 name, optionally exchanges contact details with Lucia, and chooses pronouns.
 Only contestants, crew, and League press are aboard; Minccino and Machoke
@@ -34,7 +34,7 @@ interpreter rewrite, or unrelated abstraction is needed.
 
 - Keep chapter assembly static and ordered; shared declarations go in globals and
   chapter files contain labels/passages. Use the same list for runtime, CLI, editor
-  validation and public preview. Preserve source-local diagnostics and revision 8.
+  validation and public preview. Preserve source-local diagnostics and revision 9.
 - `parseStory` returns immutable Story metadata and passage data. IDs are authored,
   stable and validated, never derived from titles/order/random values. Validate
   the entire story, including hidden/unreachable paths, before play.
@@ -94,7 +94,7 @@ interpreter rewrite, or unrelated abstraction is needed.
 - Pokédex species metadata is incremental and validated against explicit journal
   discovery/acquisition event IDs. Public discoveries must use intentional `scanned_...` events after `dex_installed`, never ferry `saw_...` sightings. Derive entries solely from the current journal,
   never prose names or a separate save field. Authors pair acquisitions with journal
-  events atomically. Keep public revision 8 and save formats unchanged for additive
+  events atomically. Keep public revision 9 and save formats unchanged for additive
   event metadata; never backfill old saves or invent post-checkpoint discoveries. Preserve validated
   optional National numbers/types/official summaries/HTTPS sources and event-bound
   observations. Use native collapsed details and scan-effect-derived narrative cards.

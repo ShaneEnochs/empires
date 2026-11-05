@@ -131,8 +131,8 @@ test('pre-install sightings never populate the public Pokédex', () => {
   }
   assert.ok(!publicDex.some(entry => ['Lapras', 'Floatzel', 'Magikarp'].includes(entry.name)));
 });
-test('existing revision-8 saves remain valid and are never backfilled during Continue', () => {
-  const identity = { storyId: 'aurelian-league', storyRevision: 8 };
+test('existing revision-9 saves remain valid and are never backfilled during Continue', () => {
+  const identity = { storyId: 'aurelian-league', storyRevision: 9 };
   const memory = new Memory(); const session = new GameSession(publicStory, memory, identity);
   session.newGame(() => true); session.navigate('ferry_windows');
   const old = JSON.parse(memory.raw!); old.currentState.journal = [];
@@ -143,6 +143,19 @@ test('existing revision-8 saves remain valid and are never backfilled during Con
   assert.deepEqual(discoveredPokemon(publicDex, reopened.continueGame().state), []);
   assert.equal(memory.raw, raw); assert.equal(memory.writes, writes);
   assert.equal(checkpointKey(identity), 'pokemon:checkpoint:aurelian-league');
+});
+
+test('revision-8 progress is rejected instead of loading incompatible chapter labels', () => {
+  const memory = new Memory();
+  const previous = { storyId: 'aurelian-league', storyRevision: 8 };
+  const oldSession = new GameSession(publicStory, memory, previous);
+  oldSession.newGame(() => true);
+  oldSession.navigate('ferry_windows');
+  const original = memory.raw;
+  const current = new GameSession(publicStory, memory, { storyId: 'aurelian-league', storyRevision: 9 });
+  assert.equal(current.startup.status, 'invalid');
+  assert.match(current.startup.status === 'invalid' ? current.startup.message : '', /incompatible story revision/);
+  assert.equal(memory.raw, original);
 });
 
 test('a post-install opt-in lookup is the only public discovery path', () => {
@@ -164,7 +177,7 @@ test('a post-install opt-in lookup is the only public discovery path', () => {
   assert.deepEqual(discoveredPokemon(publicDex,skipped.state),[]);
   const wattrel = reach(); wattrel.navigate('harbor_scan_wattrel');
   assert.deepEqual(discoveredPokemon(publicDex,wattrel.state).map(p=>p.id),['wattrel']);
-  assert.equal(discoveredPokemon(publicDex,wattrel.state)[0]!.chapter, 'Chapter 2: Orientation');
+  assert.equal(discoveredPokemon(publicDex,wattrel.state)[0]!.chapter, 'Chapter 2: Arrival');
   const machoke = reach(); machoke.navigate('harbor_scan_machoke');
   assert.deepEqual(discoveredPokemon(publicDex,machoke.state).map(p=>p.id),['machoke']);
   wattrel.navigate('harbor_destination'); wattrel.navigate('food_route');

@@ -9,7 +9,7 @@ The playable opening takes place aboard a crowded ferry bound for Lezano.
 An early choice introduces the crew's working Pokémon. Meet Lucia, enter your
 first name, decide whether to exchange contact details, and choose your pronouns
 in conversation. You can learn about the League, speak with other contestants,
-listen in, or spend time on the observation deck. Chapter 1 takes place aboard the Portia. In Chapter 2, the player disembarks at Lezano, encounters the rude contestant wearing CHAMP on his jacket, and receives 100 credits and a silver League bracelet that handles identification, payments, maps, hotel access, Pokédex lookups, and voluntary Pokémon partnerships. Pokémon appear in the Pokédex only after the player deliberately looks one up. The hotel branch has an extended luggage search involving Victra, two ways to investigate her claim, optional assistance at the annex, and a choice to exchange bracelet contacts. The restaurant branch has a time-sensitive Wattrel rescue; choosing to scan instead of helping can damage Livia's initial impression. Lucia can invite the player to walk to the Civic Forum if they exchanged numbers on the ferry. Both branches end before the four-o'clock orientation and starter selection. The seven planned first-partner options are Charmander, Chikorita, Piplup, Scatterbug, Sandile, Tinkatink, and Lillipup. The mutual-choice starter selection is not yet implemented; see [the story bible](docs/STORY_BIBLE.md) and [future ideas](FUTURE_IDEAS.md).
+listen in, or spend time on the observation deck. Chapter 1, The Crossing, takes place aboard the Portia. In Chapter 2, Arrival, the player disembarks at Lezano, encounters the rude contestant wearing CHAMP on his jacket, and receives 100 credits and a silver League bracelet that handles identification, payments, maps, hotel access, Pokédex lookups, and voluntary Pokémon partnerships. Pokémon appear in the Pokédex only after the player deliberately looks one up. The hotel branch has an extended luggage search involving Victra, two ways to investigate her claim, optional assistance at the annex, and a choice to exchange bracelet contacts. The restaurant branch has a time-sensitive Wattrel rescue; choosing to scan instead of helping can damage Livia's initial impression. Lucia can invite the player to walk to the Civic Forum if they exchanged numbers on the ferry. Both branches end before the four-o'clock orientation and starter selection. The seven planned first-partner options are Charmander, Chikorita, Piplup, Scatterbug, Sandile, Tinkatink, and Lillipup. The mutual-choice starter selection is not yet implemented; see [the story bible](docs/STORY_BIBLE.md) and [future ideas](FUTURE_IDEAS.md).
 The engine's party system is implemented, but players cannot acquire Pokémon
 in this chapter. Battles, evolution, levels, storage boxes, rankings, and external
 Pokémon services are not implemented.
@@ -104,7 +104,7 @@ published build. No editor uploads, accounts, APIs, or new runtime dependencies 
 
 ## Saves and recovery
 
-The sole public story has `storyId: aurelian-league`, `storyRevision: 8`, and key
+The sole public story has `storyId: aurelian-league`, `storyRevision: 9`, and key
 `pokemon:checkpoint:aurelian-league`. This fresh namespace never reads, migrates,
 or deletes the former game's browser records.
 
@@ -185,7 +185,7 @@ single-file drafts remain supported.
 
 ## Opt-in Pokédex
 
-Registration installs the app (`dex_installed`). Before then the notebook explains
+Registration activates the Pokédex through the League bracelet (`dex_installed`). Before then the Pokédex panel explains
 that it is unavailable; installation alone leaves it empty. Only deliberate
 `scanned_...` journal events unlock public entries. Ferry sightings, Lucia's
 Lapras necklace, and Pokémon mentioned in conversation do not count.
@@ -204,6 +204,9 @@ undoes that choice. No runtime database, API, image or external-information fetc
 has been added.
 
 See [the authoring guide](docs/AUTHORING.md) for the source list, metadata fields,
-lookup events and observation examples. Public revision 8 and save formats remain
-unchanged. Continue and recovery retain exactly the scans in their journal state;
+lookup events and observation examples. The story now uses revision 9 because
+renaming Chapter 2 to Arrival changes the chapter recorded with journal entries.
+Existing revision-8 saves are incompatible and are not automatically migrated.
+Save formats and the storage key remain unchanged. Within revision 9, Continue
+and recovery retain exactly the scans in their journal state;
 there is no new tracking collection and no automatic backfill of unseen notes.
