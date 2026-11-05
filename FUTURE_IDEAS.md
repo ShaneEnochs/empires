@@ -160,3 +160,14 @@ Version 1.2 of [the story bible](docs/STORY_BIBLE.md) records the same seven fir
 - Exact wording and placement of the selection hub, accepted/rejected indicators, and final confirmation.
 - Whether the caretaker's second-chance event is limited to the all-declined case (current proposal) or can be requested voluntarily.
 - The amount of starter-specific content the author wants to maintain across later chapters.
+
+## 4. Deferred visual assets: Pokémon sprites
+
+**Status:** Future consideration only. Do not add sprite assets or alter the game UI yet.
+
+- Explore existing video-game Pokémon sprites instead of generating Pokémon images when exact character proportions and consistency matter.
+- Preferred visual starting point: the Pokémon Emerald (Generation III) sprite style, especially the compact pixel-art presentation. Emerald sprites cover species introduced in Generations I–III; later species, including Piplup, would need a compatible later-generation sprite or other authorized asset.
+- Possible uses: character selection, the Pokémon party/status screen, Pokédex entries, and illustrative encounters.
+- Compare available sets via the PokéAPI sprites repository and Sprite Finder, but do not assume that publicly accessible Pokémon art is free to republish. Review licensing, Pokémon intellectual-property rights, and distribution risks before selecting assets for a public release.
+- If assets are ultimately approved for use, store them within a dedicated repository image/sprite directory and display pixel art with nearest-neighbor scaling. Avoid external image hotlinks in the published game.
+- No new images or sprite assets are requested as part of these notes.
