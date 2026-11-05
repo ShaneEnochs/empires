@@ -20,8 +20,8 @@
 7. **The Barn.** The protagonist hides in a barn beyond Lezano. An older, rough-edged farmer discovers the trespasser and is initially angry. Conversation about hardship lets the player decide how honestly to explain their circumstances.
 8. **An Honest Day's Work.** The farmer offers or arranges practical work in exchange for a meal and a place to stay. The scene builds trust through actions rather than requiring a wage or credit calculation.
 9. **Getting Acquainted.** The protagonist learns about the starter's needs and disposition. Its above-average intelligence surfaces as something endearing or curious, not yet a clear plot revelation.
-10. **A Second Opportunity.** An odd job in or near **Marnetto** introduces more townspeople and ordinary wild Pokémon. Basic supplies or Poké Balls may be given in thanks; a new Pokémon encounter is possible.
-11. **Someone Is Missing.** The chosen starter becomes unusually affectionate with **one particular local person**, regardless of which species was selected. Asked if they know it, that person says they have never seen one of that species before. They mention a missing loved one. **The starter is that missing human**, though no one knows yet. When it is time to leave, the Pokémon is distinctly reluctant but eventually agrees to follow the protagonist.
+10. **A Second Opportunity.** An odd job in or near **Marletto** introduces more townspeople and ordinary wild Pokémon. Basic supplies or Poké Balls may be given in thanks; a new Pokémon encounter is possible.
+11. **Someone Is Missing.** In Marletto, the chosen starter becomes unusually affectionate toward **a widowed woman and her children**, regardless of starter species. Her husband died, and her **older brother moved in to help raise the children**. He later went out looking for the family's missing **Herdier** and never returned. Unbeknownst to her, Rocket operatives abducted and transformed him: **the starter is her missing brother**. She tells the protagonist she has never seen a Pokémon of that species before. When it is time to leave, the companion is reluctant to part from the family but eventually agrees to follow the protagonist. The connection is not revealed to the player yet.
 12. **An Old Acquaintance.** **Cassius** seeks out the protagonist because the junior employee's disappearance has endangered his unusually well-paid League job, which supports his **five children**. He has long suspected something is wrong but deliberately avoided looking further. He is basically decent and personally trustworthy but morally compromised and of limited immediate help.
 
 ## Act III: The Invitation
@@ -57,8 +57,8 @@ This is the **entire provisional map scope for now**, not a request to design th
 | --- | --- | --- |
 | **Lezano** | Starting port, nearby field assignment, and cargo-ship dock | Name already established |
 | **Old orchard road** | Rural escape route from Lezano toward farms and the barn | Working descriptive name |
-| **Marnetto** | First small farm town: barn, farmer, odd jobs, local people, wild Pokémon encounters | Reused older proposed name; not yet locked |
-| **Inland ridge road** | Route leaving Marnetto toward a destination to be designed later | Working descriptive name |
+| **Marletto** | First small farm town: barn, farmer, odd jobs, a widowed mother and her family, wild Pokémon encounters | **Town name confirmed** |
+| **Inland ridge road** | Route leaving Marletto toward a destination to be designed later | Working descriptive name |
 
 ## Mystery design: work backward from the answer
 
@@ -68,12 +68,12 @@ The mystery is more reliable if the truth and method of proving it are planned f
 | --- | --- | --- |
 | **1. End-state truth** | Rocket exploits an unusual Ditto to transform people into Pokémon; memories fade, dispositions persist, potential increases, and transformation eventually becomes irreversible | Act IV reveal and Act V intervention |
 | **2. What constitutes proof?** | The institute needs more than a suspiciously intelligent Pokémon: a sound identification of the original human and evidence connecting League personnel, shipments, and the experiment | Lab investigation in scenes 18–22; records and evidence recovered in Act V |
-| **3. Personal confirmation** | The selected starter is the same missing person in every starter route, and a loved one remains on the island | Scene 11 affection, missing-person conversation, and difficulty leaving; paid off in scenes 20–21 |
+| **3. Personal confirmation** | The starter, whatever its chosen species, was the widowed Marletto mother's older brother. He helped raise her children after her husband died and vanished while searching for the family Herdier; Rocket abducted him | Scene 11 affectionate recognition and difficulty leaving, plus the woman's account of the disappearance; independently identified in scenes 20–21 |
 | **4. Early anomalies** | Cages and misleading shipment procedures contradict routine relocation; Cassius has avoided asking questions; the companion's behavior is a little unusual | Scenes 1–5 and 9–12 |
 | **5. Misleading but fair interpretations** | At first it seems like illegal Pokémon trafficking, poor husbandry, or unusual breeding rather than human transformation | Protagonist and player should be able to interpret events plausibly before the reveal |
 | **6. Consequence and resolution** | The evidence must allow an actual intervention, not just an exposition scene | Information, relationships, and access determine the shape of the return and rescue |
 
-**Open questions to settle before drafting revealing scenes:** the one former human's identity; their relationship to the person in Marnetto; the exact scientific signature and reliable proof; Rocket's operational timeline; which victims can still be restored; and the timing of the decisive shipment.
+**Open questions to settle before drafting revealing scenes:** the brother's and sister's names and family details; the fate of Herdier; the exact scientific signature and reliable proof; Rocket's operational timeline; which victims can still be restored; and the timing of the decisive shipment.
 
 ## Interactive-fiction approach
 
