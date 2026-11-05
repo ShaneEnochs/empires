@@ -1,5 +1,8 @@
 # The Aurelian League: Future Ideas
 
+> **Archive notice (November 5, 2026):** Sections 1–3 below describe the superseded v1.2 seven-partner League-contestant concept. They are preserved as historical planning material, **not approved canon** for the new Rocket-defector story. Follow [docs/STORY_BIBLE.md](docs/STORY_BIBLE.md) version 2.0 for current narrative direction. Section 4 (deferred Pokémon sprite assets) remains an active future-development note.
+
+
 **Status:** Approved narrative design, not yet implemented  
 **Created:** November 4, 2026  
 **Purpose:** Record future story and gameplay ideas for the Pokémon interactive-fiction project. These notes detail the mutual-selection design recorded in [the story bible](docs/STORY_BIBLE.md), version 1.2. The current playable story ends before orientation; no starter-selection encounter is implemented yet.
