@@ -95,7 +95,7 @@ test('all encounters lead to the two-option gangway choice', () => {
     assert.equal(game.state.variables.ferry_encounter,
       encounter === 'group_join' ? 'conversation' : encounter === 'eavesdrop' ? 'eavesdrop' : 'quiet');
   }
-  assert.ok(story.passages.some(p => p.chapter === 'Chapter 2: Orientation'));
+  assert.ok(story.passages.some(p => p.chapter === 'Chapter 2: Arrival'));
   assert.equal(story.passages.some(p => p.id === 'starters'), false);
 });
 
@@ -206,7 +206,7 @@ test('registration activates the bracelet, provides credits, and explains its fu
   assert.equal(game.state.variables.dex_installed, true);
   assert.equal(game.state.variables.credits, 100);
   assert.deepEqual(game.state.inventory, { league_bracelet: 1 });
-  assert.equal(game.passage.chapter, 'Chapter 2: Orientation');
+  assert.equal(game.passage.chapter, 'Chapter 2: Arrival');
   const pages = [game.currentParagraphs.map(p => p.text).join(' ')];
   while (game.canAdvancePage) {
     game.advancePage();
@@ -236,7 +236,7 @@ test('only the opening and harbor have visible titles and both chapters are link
   ]);
   assert.equal(story.passages.find(p => p.id === 'ferry')?.chapter, 'Chapter 1: The Crossing');
   for (const id of ['dock_approach', 'lezano_arrival', 'lezano_checkin', 'hotel_route', 'food_route', 'orientation_invitation']) {
-    assert.equal(story.passages.find(p => p.id === id)?.chapter, 'Chapter 2: Orientation');
+    assert.equal(story.passages.find(p => p.id === id)?.chapter, 'Chapter 2: Arrival');
   }
 });
 

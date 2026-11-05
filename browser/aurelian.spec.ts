@@ -73,7 +73,7 @@ for (const width of [320, 1280]) for (const route of routes) {
     await proceed(page);
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lezano Harbor');
-    await expect(page.locator('.chapter-label')).toHaveText('Chapter 2: Orientation');
+    await expect(page.locator('.chapter-label')).toHaveText('Chapter 2: Arrival');
     await expect(page.getByText(/CHAMP/)).toBeVisible();
     const confront = route.pronouns === 'He / Him';
     await choose(page, confront ? 'Confront him about his rudeness' : 'Ignore him and keep walking');
@@ -147,7 +147,7 @@ for (const width of [320, 1280]) for (const route of routes) {
 
     const raw = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
     const save = JSON.parse(raw!);
-    expect(save.storyRevision).toBe(8);
+    expect(save.storyRevision).toBe(9);
     expect(save.currentState.variables.credits).toBe(hotel ? 100 : 88);
     expect(save.currentState.variables.dex_installed).toBe(true);
     expect(save.currentState.variables.victra_case).toBe(hotel ? 'recovered' : 'none');

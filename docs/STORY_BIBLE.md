@@ -6,7 +6,7 @@
 
 # 1. PROJECT OVERVIEW
 
-**Source of truth:** This document records approved narrative design. The playable repository content currently includes Chapter 1 (The Crossing) and Chapter 2 (Orientation), which ends *before* the four-o'clock orientation event. The seven-partner mutual-selection scene described below is approved for a later addition; it is **not yet playable**. Where planned scenes are described, they must not be mistaken for existing game content.
+**Source of truth:** This document records approved narrative design. The playable repository content currently includes Chapter 1 (The Crossing) and Chapter 2 (Arrival), which ends *before* the four-o'clock orientation event. The seven-partner mutual-selection scene described below is approved for a later addition; it is **not yet playable**. Where planned scenes are described, they must not be mistaken for existing game content.
 
 **Working Title:** The Aurelian League  
 **Franchise:** Pokémon  
@@ -866,7 +866,7 @@ Romance has not yet been confirmed as a desired mechanic and should remain optio
 
 # 15. OPENING SEQUENCE: FERRY, LEZANO, AND FIRST PARTNER
 
-**Current playable chapters:** Chapter 1, *The Crossing*, and Chapter 2, *Orientation* (which currently ends before the orientation event begins). The partner-selection field is a **future planned scene**, after orientation, not a completed chapter-one event.
+**Current playable chapters:** Chapter 1, *The Crossing*, and Chapter 2, *Arrival* (which currently ends before the orientation event begins). The partner-selection field is a **future planned scene**, after orientation, not a completed chapter-one event.
 
 The opening sequence should emphasize anticipation, meeting other contestants, and eventually choosing the protagonist's first Pokémon.
 

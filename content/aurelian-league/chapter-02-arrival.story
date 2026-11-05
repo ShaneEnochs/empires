@@ -1,4 +1,4 @@
-*chapter Chapter 2: Orientation
+*chapter Chapter 2: Arrival
 
 *passage dock_approach
 *title Lezano Harbor

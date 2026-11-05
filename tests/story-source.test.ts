@@ -6,15 +6,15 @@ import { assembleStorySources, parseStorySources, publicStoryFiles } from '../sr
 import { publicSources } from './public-story';
 import { Game } from '../src/game';
 
-// Canonical SHA-256 for the assembled, authored revision-8 story after the Chapter 2 review.
-const currentSourceHash = '8d8e0d7fef62f6c3988b0aee9471f39235bd4dbc3d297629b30ba2ca6c36944b';
-test('the fixed ordered chapter list reconstructs exactly the revision-8 source', () => {
-  assert.deepEqual(publicStoryFiles.map(path => path.split('/').at(-1)), ['globals.story', 'chapter-01-crossing.story', 'chapter-02-orientation.story']);
+// Canonical SHA-256 for the assembled, authored revision-8 story after renaming Chapter 2 to Arrival.
+const currentSourceHash = '374f8cbdb8d6d1aacbef939c60f80ccb7a0165787edb4fef0d1d66f5ade8befd';
+test('the fixed ordered chapter list reconstructs exactly the revision-9 source', () => {
+  assert.deepEqual(publicStoryFiles.map(path => path.split('/').at(-1)), ['globals.story', 'chapter-01-crossing.story', 'chapter-02-arrival.story']);
   const parts = publicSources();
   assert.equal(createHash('sha256').update(assembleStorySources(parts)).digest('hex'), currentSourceHash);
   const story = parseStorySources(parts);
   assert.equal(story.startId, 'ferry');
-  assert.equal(story.passages.find(passage => passage.id === 'lezano_checkin')!.chapter, 'Chapter 2: Orientation');
+  assert.equal(story.passages.find(passage => passage.id === 'lezano_checkin')!.chapter, 'Chapter 2: Arrival');
 });
 const parts = [
   { path: 'globals.story', text: '*var name "Ari"\n*var count 1\n*item pass "Pass"' },
