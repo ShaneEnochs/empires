@@ -65,7 +65,7 @@ test('the public chapter preview shares ordered sources and metadata without acc
  await expect(page.getByRole('list',{name:'Passage index'}).getByRole('button')).toHaveText(['capture_attempt: A Different Approach']);
  await page.getByRole('button',{name:'Pokédex',exact:true}).click();
  await expect(page.locator('#pokedex')).toContainText('No Pokémon recorded yet.');
- await page.getByRole('button',{name:'People',exact:true}).click();
- await expect(page.locator('#people')).toContainText('Cassius');
+ await expect(page.getByRole('navigation',{name:'Reading views'}).getByRole('button')).toHaveText(['Story','Character','Party','Pokédex']);
+ await expect(page.getByRole('button',{name:'People',exact:true})).toHaveCount(0);
  expect(await page.evaluate(()=>localStorage.getItem('pokemon:checkpoint:aurelian-league'))).toBe('unchanged');
 });
