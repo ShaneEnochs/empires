@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 const docs = readFileSync('docs/SCRIPTING.md', 'utf8');
 const source = docs.split('<!-- pronoun-template -->')[1]!.split('```text\n')[1]!.split('```')[0]!;
-for (const [label, subject, possessive, verb] of [
-  ['He / him', 'He', 'His', 'is'], ['She / her', 'She', 'Her', 'is'], ['They / them', 'They', 'Their', 'are'],
+for (const [label, subject, verb] of [
+  ['He / him', 'He', 'is'], ['She / her', 'She', 'is'], ['They / them', 'They', 'are'],
 ]) test('pronoun template renders safely in isolated preview: ' + label, async ({ page }) => {
   await page.addInitScript(() => {
     for (const method of ['getItem', 'setItem', 'removeItem']) Object.defineProperty(Storage.prototype, method, {
@@ -17,7 +17,6 @@ for (const [label, subject, possessive, verb] of [
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.locator('#story-content')).toContainText(`${subject} ${verb} ready to begin.`);
-  await page.getByRole('button', { name: 'Character', exact: true }).click();
-  await page.getByRole('button', { name: 'Journal', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Journal', exact: true })).toContainText(`${possessive} journey began at the gate.`);
+  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', 'Character', 'Party', 'Pokédex']);
+  await expect(page.getByRole('button', { name: 'Journal', exact: true })).toHaveCount(0);
 });

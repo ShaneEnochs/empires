@@ -56,10 +56,19 @@ test('documented creation template parses and all presets reach the story', () =
   const docs = readFileSync('docs/SCRIPTING.md', 'utf8');
   const template = docs.split('<!-- pronoun-template -->')[1]!.split('```text\n')[1]!.split('```')[0]!;
   const story = parseStory(template);
-  for (const destination of ['he', 'she', 'they']) {
+  for (const [destination, possessive, subject, verb] of [
+    ['he', 'His', 'He', 'is'],
+    ['she', 'Her', 'She', 'is'],
+    ['they', 'Their', 'They', 'are'],
+  ] as const) {
     const storage = { getItem: () => null, setItem: () => {} };
-    const session = new GameSession(story, storage); session.newGame(() => true); session.navigate(destination); session.navigate('arrival');
+    const session = new GameSession(story, storage);
+    session.newGame(() => true);
+    session.navigate(destination);
+    session.navigate('arrival');
     assert.equal(session.game!.state.variables.pronouns_subject, destination);
+    assert.deepEqual(session.game!.state.journal.map(event => event.text), [`${possessive} journey began at the gate.`]);
+    assert.ok(session.game!.currentParagraphs.some(paragraph => paragraph.text.includes(`${subject} ${verb} ready to begin.`)));
   }
 });
 
