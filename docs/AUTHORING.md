@@ -26,7 +26,7 @@ is bounded and never proves every possible route safe.
 ## Private browser preview
 
 Use the local Vite server's `/author.html` page. Select your saved `.story`, optionally
-a `.people.json`, then New Game. The shared reader supports all five views, party,
+a `.people.json`, then New Game. The shared reader supports the four public views, party,
 input, choices, pages and recovery. Files remain in the browser and saves use private
 memory, never public localStorage. Restart preview resets progress. Re-select files
 after edits, even with the same name. The passage index searches IDs/titles and
@@ -61,7 +61,7 @@ A seventh companion fails atomically. Party never uses inventory items.
 
 Edit `content/title-page.json` for plain-text brand/title/description/button labels.
 Keep all five fields nonempty strings. The catalog contains only The Aurelian League,
-identity `aurelian-league`, revision 10, key `pokemon:checkpoint:aurelian-league`.
+identity `aurelian-league`, revision 11, key `pokemon:checkpoint:aurelian-league`.
 Display text is not a save identity. The old game's keys are never read or deleted.
 Party-aware saves use format 4, or 5 with reading context; schemas 1–3 are incompatible.
 Continue resumes committed state/page without re-entering. Checkpoints preserve the
@@ -147,14 +147,16 @@ Pokédex metadata in a fresh memory-only session. Save edits in your editor; aft
 Vite reloads, choose the button again. Do not upload an individual chapter as a
 complete standalone story. Single-file private draft preview remains available.
 The previous contestant-story chapters have been replaced by Chapter 1 of the
-field-warden mystery. Its catalog revision is 10. Revision-9 saves from the old
-story are incompatible and are not silently migrated; the story ID, storage
-key, and save formats remain unchanged.
+field-warden mystery. Its original catalog revision was 10; adding the starting
+field kit and occupation advances it to revision 11. Revision-10 and older saves
+are incompatible and are not silently migrated; the story ID, storage key, and
+save formats remain unchanged.
 
 ## Pokédex installation, lookup events and observations
 
-The five primary views remain Story, Character, Party, Pokédex and People. Journal
-is a Character subsection; chapter labels appear only in Story. Views, disclosure
+The four primary views are Story, Character, Party and Pokédex. Character has
+Stats and Inventory only. People, Journal and Skills stay in engine state and
+metadata without visible buttons. Chapter labels appear only in Story. Views, disclosure
 controls, and information cards are read-only and preserve choices, drafts and
 saved bytes. Entries start collapsed and use native keyboard-accessible details/
 summary controls with at least 44px targets.
@@ -237,6 +239,6 @@ observation without duplicating Wattrel or erasing the earlier choice.
 The journal remains the sole discovery store. Continue resumes exact recorded
 scans without writing; checkpoints restore exactly their recorded observations,
 retaining earlier scans and rolling back later ones. There is no new mutable
-collection, timestamp, schema, or save-format change. Within the current revision 10,
+collection, timestamp, schema, or save-format change. Within the current revision 11,
 progress retains only its recorded scans and is never backfilled with unseen ones.
 Revision-8 progress is incompatible because the authored chapter label changed.

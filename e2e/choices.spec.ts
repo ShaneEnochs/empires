@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { checkpointKey } from '../src/storage';
 import {
   arrival, checkpointRecord, choose, expectCharacter, expectInitialState,
-  expectItems, expectPassage, openPanel, panelNames, reachBriefing, returnToStory, expectStartup, startGame,
+  expectItems, expectPassage, openPanel, panelNames, reachBriefing, recordedState, returnToStory, expectStartup, startGame,
 } from './helpers';
 
 for (const width of [320, 375, 768, 1280]) {
@@ -48,9 +48,7 @@ for (const width of [320, 375, 768, 1280]) {
       expect(await node!.evaluate(element => element === document.querySelectorAll('input[type="radio"]')[1])).toBe(true);
     }
     await expectInitialState(page);
-    await openPanel(page, 'People');
-    await expect(page.getByText('No people recorded yet.', { exact: true })).toBeVisible();
-    await returnToStory(page);
+    await expect(page.getByRole('button', { name: 'People', exact: true })).toHaveCount(0);
     expect(await page.evaluate(() => Reflect.get(window, '__choiceStorageCalls'))).toEqual([]);
     await advance.click();
     await expectPassage(page, 'What You Bring');
@@ -160,9 +158,7 @@ test('failed Continue retains its selection and error, with no effects or save w
   const character = await openPanel(page, 'Character');
   const values = await character.locator('dd').allTextContents();
   await returnToStory(page);
-  const journal = await openPanel(page, 'Journal');
-  const entries = await journal.getByRole('listitem').allTextContents();
-  await returnToStory(page);
+  const entries = (await recordedState(page)).journal.map(event => event.text);
   await page.evaluate(() => {
     let writes = 0;
     Object.defineProperty(window, '__failedContinueWrites', { get: () => writes });
@@ -184,7 +180,7 @@ test('failed Continue retains its selection and error, with no effects or save w
   await returnToStory(page);
   await expectItems(page, 'Journal', entries);
   await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Grain Sack × 3', 'Attested Grain Accounts × 1']);
-  await openPanel(page, 'People');
+  await openPanel(page, 'Pokédex');
   await returnToStory(page);
   await expect(selected).toBeChecked();
   await expect(page.getByRole('alert')).toHaveText(error);

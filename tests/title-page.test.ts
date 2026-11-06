@@ -17,12 +17,17 @@ test('title page validates all required text and preserves plain text', () => {
 test('display metadata is independent of stable save identity', () => {
   const changed = validateTitlePage({ ...titlePage, title: 'Another display title' });
   assert.notEqual(changed.title, titlePage.title);
-  assert.match(readFileSync('src/catalog.ts', 'utf8'), /identity: \{ storyId: 'aurelian-league', storyRevision: 10 \}/);
+  assert.match(readFileSync('src/catalog.ts', 'utf8'), /identity: \{ storyId: 'aurelian-league', storyRevision: 11 \}/);
 });
 
-test('bundled font is one small WOFF2 with its redistribution license', () => {
-  const font = readFileSync('src/fonts/source-serif-4-latin-wght-normal.woff2');
-  assert.equal(font.subarray(0, 4).toString(), 'wOF2');
-  assert.ok(font.length < 60000);
-  assert.match(readFileSync('src/fonts/OFL.txt', 'utf8'), /SIL OPEN FONT LICENSE/);
+test('Public Sans is used for reader and author preview with a system fallback', () => {
+  const css = readFileSync('src/style.css', 'utf8');
+  assert.match(css, /--font-literary: 'Public Sans', system-ui, sans-serif;/);
+  assert.match(css, /--font-ui: 'Public Sans', system-ui, sans-serif;/);
+  assert.doesNotMatch(css, /Source Serif 4/);
+  for (const entrypoint of ['index.html', 'author.html']) {
+    const html = readFileSync(entrypoint, 'utf8');
+    assert.match(html, /fonts.googleapis.com\/css2\?family=Public\+Sans/);
+    assert.match(html, /display=swap/);
+  }
 });

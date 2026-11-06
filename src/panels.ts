@@ -3,8 +3,6 @@ import { discoveredPokemon, pokedexInstalled, pokemonLabel } from './pokedex';
 import type { PokedexEntry } from './pokedex';
 import type { Game } from './game';
 import type { GameState, Story } from './types';
-import { encounteredPeople, learnedPersonFacts } from './people';
-import type { PersonReference } from './people';
 
 /** A fresh presentation of committed variables; no values are cached in UI state. */
 export function characterStats(story: Story, state: GameState): { label: string; value: string }[] {
@@ -56,13 +54,13 @@ function list(section: HTMLElement, entries: readonly string[], emptyText: strin
 }
 
 /** Read-only information views; gameplay actions remain in the shared reader. */
-export function createPanels(story: Story, game: Game, people: readonly PersonReference[], pokedex: readonly PokedexEntry[], select: (title: string) => void) {
+export function createPanels(story: Story, game: Game, pokedex: readonly PokedexEntry[], select: (title: string) => void) {
   const character = panel('character', 'Character', select, section => {
     const navigation = document.createElement('div');
     navigation.className = 'character-navigation';
     navigation.setAttribute('role', 'group');
     navigation.setAttribute('aria-label', 'Character sections');
-    const views = ['Stats', 'Skills', 'Inventory', 'Journal'].map(title => {
+    const views = ['Stats', 'Inventory'].map(title => {
       const id = title.toLowerCase();
       const button = document.createElement('button');
       button.type = 'button';
@@ -77,7 +75,7 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
       heading.tabIndex = -1;
       content.append(heading);
       if (title === 'Stats') {
-        if (story.stats.length === 0) list(content, [], 'No character statistics configured.');
+        if (story.stats.length === 0) list(content, [], 'No character information recorded yet.');
         else {
           const stats = document.createElement('dl');
           for (const { label, value } of characterStats(story, game.state)) {
@@ -87,23 +85,9 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
           }
           content.append(stats);
         }
-      } else if (title === 'Skills') {
-        list(content, game.state.skills.map(id => story.skills.find(skill => skill.id === id)!.name), 'No skills acquired yet.');
       } else if (title === 'Inventory') {
         list(content, Object.entries(game.state.inventory).map(([id, quantity]) =>
           story.items.find(item => item.id === id)!.name + ' × ' + quantity), 'No items in inventory.');
-      } else {
-        if (game.state.journal.length === 0) list(content, [], 'No journal entries yet.');
-        const groups = new Map<string, HTMLUListElement>();
-        for (const entry of game.state.journal) {
-          let items = groups.get(entry.chapter);
-          if (!items) {
-            const chapter = document.createElement('h4'); chapter.textContent = entry.chapter;
-            items = document.createElement('ul'); groups.set(entry.chapter, items);
-            content.append(chapter, items);
-          }
-          const item = document.createElement('li'); item.textContent = entry.text; items.append(item);
-        }
       }
       button.addEventListener('click', () => {
         show(title);
@@ -124,7 +108,7 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
 
   const dex = panel('pokedex', 'Pokédex', select, section => {
     if (!pokedexInstalled(game.state)) {
-      list(section, [], 'Your League bracelet activates the Pokédex when you register in Lezano.');
+      list(section, [], 'Pokédex access is not available yet.');
       return;
     }
     const discovered = discoveredPokemon(pokedex, game.state);
@@ -139,37 +123,6 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
       const details = document.createElement('details');
       const summary = document.createElement('summary'); summary.textContent = pokemonLabel(entry);
       details.append(summary, pokemonInformation(entry)); item.append(details); entries.append(item);
-    }
-    section.append(entries);
-  });
-
-  const reference = panel('people', 'People', select, section => {
-    const discovered = encounteredPeople(people, game.state);
-    if (discovered.length === 0) {
-      list(section, [], 'No people recorded yet.');
-      return;
-    }
-    const entries = document.createElement('ul');
-    for (const person of discovered) {
-      const item = document.createElement('li');
-      const heading = document.createElement('h3');
-      heading.textContent = person.name;
-      const description = document.createElement('p');
-      description.textContent = person.description;
-      item.append(heading, description);
-      const facts = learnedPersonFacts(person, game.state);
-      if (facts.length > 0) {
-        const details = document.createElement('ul');
-        details.className = 'people-facts';
-        details.setAttribute('aria-label', 'What you know about ' + person.name);
-        for (const text of facts) {
-          const fact = document.createElement('li');
-          fact.textContent = text;
-          details.append(fact);
-        }
-        item.append(details);
-      }
-      entries.append(item);
     }
     section.append(entries);
   });
@@ -192,7 +145,7 @@ export function createPanels(story: Story, game: Game, people: readonly PersonRe
       section.append(members);
     }
   });
-  const panels = [character, party, dex, reference];
+  const panels = [character, party, dex];
   return {
     buttons: panels.map(panel => panel.button),
     sections: panels.map(panel => panel.section),

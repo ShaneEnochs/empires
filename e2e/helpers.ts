@@ -6,9 +6,10 @@ import { checkpointKey, STORAGE_KEY } from '../src/storage';
 export const crisisKey = checkpointKey({ storyId: 'harbor-practice', storyRevision: 1 });
 export const cityKey = STORAGE_KEY;
 export const arrival = 'The last ferry reached Bellwether before the river closed.';
-export const panelNames = ['Character', 'Party', 'Pokédex', 'People'] as const;
+export const panelNames = ['Character', 'Party', 'Pokédex'] as const;
 type PanelName = typeof panelNames[number];
-type CharacterSection = 'Stats' | 'Skills' | 'Inventory' | 'Journal';
+type CharacterSection = 'Stats' | 'Inventory';
+type HiddenSection = 'Skills' | 'Journal';
 
 export async function expectPassage(page: Page, title: string): Promise<void> {
   const heading = page.getByRole('heading', { level: 1, name: title, exact: true });
@@ -37,7 +38,7 @@ export async function startGame(page: Page): Promise<void> {
 }
 
 export async function openPanel(page: Page, name: PanelName | CharacterSection): Promise<Locator> {
-  if (name === 'Stats' || name === 'Skills' || name === 'Inventory' || name === 'Journal') {
+  if (name === 'Stats' || name === 'Inventory') {
     const character = await openPanel(page, 'Character');
     const button = character.getByRole('button', { name, exact: true });
     if (await button.getAttribute('aria-pressed') !== 'true') await button.click();
@@ -62,7 +63,26 @@ export async function expectCharacter(page: Page, values: string[]): Promise<voi
   await returnToStory(page);
 }
 
-export async function expectItems(page: Page, name: Exclude<PanelName, 'Character'> | CharacterSection, items: string[]): Promise<void> {
+export async function recordedState(page: Page): Promise<{ journal: { id: string; chapter: string; text: string }[]; skills: string[] }> {
+  const raw = await checkpointRecord(page);
+  if (!raw) throw Error('Expected saved regression progress.');
+  const record = JSON.parse(raw);
+  return record.currentState ?? record.checkpoint.state;
+}
+
+export async function expectItems(page: Page, name: Exclude<PanelName, 'Character'> | CharacterSection | HiddenSection, items: string[]): Promise<void> {
+  if (name === 'Skills' || name === 'Journal') {
+    // The engine still tracks this data, but these tabs are intentionally hidden.
+    const state = await recordedState(page);
+    if (name === 'Journal') expect(state.journal.map(entry => entry.text)).toEqual(items);
+    else {
+      const ids: Record<string, string> = {
+        'Rescue Training': 'commission', 'Channel Knowledge': 'channel_knowledge', Diplomacy: 'diplomacy',
+      };
+      expect(state.skills).toEqual(items.map(item => ids[item]));
+    }
+    return;
+  }
   const panel = await openPanel(page, name);
   await expect(panel.getByRole('listitem')).toHaveText(items);
   await returnToStory(page);

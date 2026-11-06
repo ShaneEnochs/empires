@@ -1,7 +1,7 @@
 # The Aurelian League engine
 
 The sole public story is assembled from content/aurelian-league/sources.json, identity aurelian-league,
-revision 10. Pokémon-themed private examples exercise historical engine features;
+revision 11. Pokémon-themed private examples exercise historical engine features;
 they are not public stories or additional Aurelia lore. See README for the current
 workflow and SCRIPTING.md for all syntax.
 
@@ -312,11 +312,12 @@ Labels remain literal. String, number, and boolean variable behavior is unchange
 This metadata adds no state fields, effects, conditions, formulas, categories,
 or conditional visibility.
 
-`panels.ts` owns the Character, Party, Pokédex and People views. Character contains
-selectable Stats, Skills, Inventory and Journal subsections; Stats is the default.
+`panels.ts` owns the Character, Party and Pokédex panels. Character contains
+selectable Stats and Inventory subsections; Stats is the default. People metadata
+is validated by `reader.ts` and remains journal-derived, but has no visible panel.
 A small private helper shares native button/section setup, heading creation,
 `hidden`, and `aria-pressed`/`aria-controls`/`aria-labelledby` behavior.
-Another helper shares plain text lists; journal chapter grouping/order is retained.
+Another helper shares plain text lists; journal state remains available to story logic.
 This is limited rendering code, with no component registry or screen framework.
 `reader.ts` retains startup, actions, input, errors, notices, and heading focus.
 
@@ -324,7 +325,7 @@ This is limited rendering code, with no component registry or screen framework.
 variables without caching. Character renders it in `dl`/`dt`/`dd` elements using
 `textContent` for labels and values. Booleans become Yes/No; numbers/strings use
 `String(value)` without mutating their values. No configuration shows
-“No character statistics configured.” The shared reader retains transient active-view selection; each presented view reads current
+“No character information recorded yet.” The shared reader retains transient active-view selection; each presented view reads current
 gameplay data. Navigation, submission, Continue Game, and recovery select Story;
 information reflects the latest committed data when presented again.
 Toggles never navigate, execute effects, submit drafts, read/write storage, or
@@ -348,7 +349,7 @@ paragraphs and buttons retain their semantics and keyboard behavior. All display
 content uses `textContent`; heading focus follows navigation.
 
 Stage 8B adds CSS hooks for startup, passage actions, death presentation, and
-the four info panels, plus a labeled `role="group"` wrapper for utility buttons.
+the three info panels, plus a labeled `role="group"` wrapper for utility buttons.
 `style.css` provides a bounded responsive reading column, stacked story actions,
 wrapping utility controls, minimum 44px touch targets, visible focus, and consistent
 panel/form/error/warning styling. Long content wraps naturally; panels have no
@@ -367,24 +368,14 @@ remains, the field is marked `aria-invalid` and associated with a `role="alert"`
 message, and focus returns to it. On success the destination renders and receives
 heading focus. Authored labels, narrative, and errors use `textContent`.
 Draft text exists only in the field until submission. Rendering or toggling
-Character/Journal/People never submits it; view changes do not rebuild the input form.
+Character, Party, or Pokédex never submits it; view changes do not rebuild the input form.
 
-The native Journal button under Character selects an accessible subsection with `aria-pressed`
-and `aria-controls`. Toggling it changes only presentation; it does not navigate,
-rebuild passage choices, or execute effects. The section groups the current flat
-journal under chapter headings, in first-encountered chapter order and recording
-order within each chapter. Later returns to an earlier chapter append to that
-existing group. DOM grouping is derived locally, never a separate state store.
-A selected view reads current state when presented; no entries yields the
-plain empty message. Headings and entries use `textContent` throughout.
+Journal entries and acquired Skills remain in `GameState` for authoring, conditional
+narrative, discovery, saves, and recovery. Their visible Character subsections and
+the People tab are temporarily hidden in the public and author readers. Existing
+parsing, validation, event tracking, and tests for their state remain intact.
 
-The Skills section within Character has a labeled heading. Each render derives display names from
-immutable `Story.skills` using current acquired IDs in acquisition order. There
-is no UI copy of acquired-skill state. Empty lists show “No skills acquired yet.”
-Selecting Character reads current state, including revocations. Viewing either
-Character or Journal never changes gameplay state; skill names use `textContent`.
-
-Inventory follows Skills within Character, with its own labeled heading.
+Inventory follows Stats within Character, with its own labeled heading.
 `Object.entries(game.state.inventory)` determines insertion order and
 quantities; immutable item definitions supply names. Only positive quantities
 exist in committed state. List entries use `textContent` for `Name × quantity`;
@@ -491,7 +482,7 @@ boundary). Try Again re-enters that checkpoint once, discards later changes, and
 saves the recovered current state without moving the checkpoint boundary.
 
 Storage is local to this browser and device; it does not synchronize. The public
-story uses identity `aurelian-league`, revision 10, and key
+story uses identity `aurelian-league`, revision 11, and key
 `pokemon:checkpoint:aurelian-league`. Private fixture identities are separate.
 
 Format 4 stores one atomic JSON record:
@@ -535,7 +526,7 @@ preview clears temporary progress. It never reads or writes public localStorage.
 `src/catalog.ts` is a frozen list of explicit application IDs, titles, descriptions,
 Vite `?raw` source, People definitions, and validated StorySaveIdentity records.
 Initialization checks distinct catalog/save IDs. Only The Aurelian League
-(`aurelian-league`, revision 10) is published. Opening the app parses that entry,
+(`aurelian-league`, revision 11) is published. Opening the app parses that entry,
 constructs its session and presents startup. It reads only that identity's save;
 empty startup never constructs a Game. Continue and confirmed replacement keep
 the existing validation and explicit unsaved-play semantics.
@@ -766,8 +757,7 @@ or merge anything.
 
 ## Compact reading views and deliberate choices (Stages 10B–10C)
 
-Gameplay starts with five responsive controls: Story, Character, Party, Pokédex,
-People. The primary grid keeps one row at 320px. Flat tabs have at least 44px targets, approximately 0.9rem labels,
+Gameplay starts with four responsive controls: Story, Character, Party and Pokédex. The primary grid keeps one row at 320px. Flat tabs have at least 44px targets, approximately 0.9rem labels,
 and exactly one active bottom-border indicator. No tab interaction underlines text.
 An opaque CSS sticky wrapper holds the tabs and a separate compact chapter bar,
 derived from `game.passage.chapter` after each successful action and visible only
@@ -941,7 +931,8 @@ entry. No new directive is needed. The restaurant delay/Livia consequences remai
 author-controlled and unchanged. See AUTHORING.md for the full contract/examples.
 
 The original physical split preserved the then-current source and gameplay.
-The Chapter 1 replacement advances the public story to revision 10.
+The Chapter 1 replacement originally advanced the public story to revision 10.
+The subsequent Public Sans/four-tab/field-kit update advances it to revision 11.
 The story ID, storage key, GameState schema, save formats, and checkpoint semantics
 remain unchanged. Existing revision-8 saves are rejected rather than migrated
 because their recorded chapter labels are incompatible.

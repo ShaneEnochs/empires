@@ -25,7 +25,7 @@ for (const width of [320, 375, 768, 1280]) {
     }
     const navigation = page.getByRole('navigation', { name: 'Reading views' });
     const buttons = navigation.getByRole('button');
-    await expect(buttons).toHaveText(['Story', 'Character', 'Party', 'Pokédex', 'People']);
+    await expect(buttons).toHaveText(['Story', 'Character', 'Party', 'Pokédex']);
     const dimensions = await buttons.evaluateAll(elements => elements.map(element => {
       const rect = element.getBoundingClientRect();
       const style = getComputedStyle(element);

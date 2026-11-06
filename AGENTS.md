@@ -15,11 +15,11 @@ controlled by Team Rocket. The protagonist is a junior League field warden
 and does not know this. The public story consists of shared declarations in
 `globals.story` and **Chapter 1: A Simple Assignment** in
 `chapter-01-simple-assignment.story`, assembled through `sources.json`.
-Its catalog identity is `aurelian-league`, revision **10**.
+Its catalog identity is `aurelian-league`, revision **11**.
 
 Chapter 1 follows a relocation assignment with senior warden Cassius and
 ends after a Chikorita is confined to a carrier. It has six binary choices
-and a starting Cassius relationship of 13. Cassius appears in People; there
+and a starting Cassius relationship of 13. Cassius remains in hidden People metadata; there
 is no Chapter 2, starter selection, trainer name/pronoun input, Pokédex scan,
 battle or owned Pokémon yet. Old revision-9 ferry saves are incompatible.
 
@@ -37,7 +37,7 @@ interpreter rewrite, or unrelated abstraction is needed.
 
 - Keep chapter assembly static and ordered; shared declarations go in globals and
   chapter files contain labels/passages. Use the same list for runtime, CLI, editor
-  validation and public preview. Preserve source-local diagnostics and revision 10.
+  validation and public preview. Preserve source-local diagnostics and revision 11.
 - `parseStory` returns immutable Story metadata and passage data. IDs are authored,
   stable and validated, never derived from titles/order/random values. Validate
   the entire story, including hidden/unreachable paths, before play.
@@ -84,12 +84,13 @@ interpreter rewrite, or unrelated abstraction is needed.
   confirms replacement, constructs successfully, then writes once before activation.
   Failure preserves old bytes/game. Automatic write failures keep committed gameplay
   and display a warning. Storage failure requires explicit unsaved-play consent.
-- Keep Story, Character, Party, Pokédex and People exclusive inline views.
-  Character contains selectable Stats (default), Skills, Inventory and Journal. Preserve
-  the hidden story DOM, draft text/choices/errors and save warnings. Switching views
-  changes no gameplay or storage. Focus the active heading. Use native pressed
-  buttons, 44px targets, a single-row five-tab layout at 320px, sticky navigation and Story-only chapter,
-  clear focus, no animation or nested panel scrolling, and safe wrapping at 320px.
+- Keep Story, Character, Party, and Pokédex exclusive inline views.
+  Character contains selectable Stats (default) and Inventory. Skills, Journal, and
+  People remain available as underlying engine state/metadata, not visible controls.
+  Preserve the hidden story DOM, draft text/choices/errors and save warnings. Switching
+  views changes no gameplay or storage. Focus the active heading. Use native pressed
+  buttons, 44px targets, a single-row four-tab layout at 320px, sticky navigation and
+  Story-only chapter, clear focus, no animation or nested panel scrolling, and no wrapping tab labels.
 - `*hide_title` keeps the required authored title accessible without displaying a large passage heading. Number public chapters and reserve visible headings for significant scene transitions.
 - Choices are native unselected radios; Continue alone commits. Optional `[set global literal]` suffixes on choices apply before destination entry. For two choices sharing a destination, pass the selected Choice object, not just its destination ID. Failed navigation
   preserves selection/error. Render authored formatting with safe DOM nodes; player
@@ -97,7 +98,7 @@ interpreter rewrite, or unrelated abstraction is needed.
 - Pokédex species metadata is incremental and validated against explicit journal
   discovery/acquisition event IDs. Public discoveries must use intentional `scanned_...` events after `dex_installed`, never ferry `saw_...` sightings. Derive entries solely from the current journal,
   never prose names or a separate save field. Authors pair acquisitions with journal
-  events atomically. Keep public revision 10 and save formats unchanged for additive
+  events atomically. Keep public revision 11 and save formats unchanged for additive
   event metadata; never backfill old saves or invent post-checkpoint discoveries. Preserve validated
   optional National numbers/types/official summaries/HTTPS sources and event-bound
   observations. Use native collapsed details and scan-effect-derived narrative cards.
