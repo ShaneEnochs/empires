@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# Cancel older main-branch checks/deployments when a newer commit lands.
+# Without this, a slower older run can finish last and overwrite GitHub Pages.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
