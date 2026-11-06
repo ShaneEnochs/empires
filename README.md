@@ -108,7 +108,7 @@ published build. No editor uploads, accounts, APIs, or new runtime dependencies 
 
 ## Saves and recovery
 
-The sole public story has `storyId: aurelian-league`, `storyRevision: 10`, and key
+The sole public story has `storyId: aurelian-league`, `storyRevision: 12`, and key
 `pokemon:checkpoint:aurelian-league`. This fresh namespace never reads, migrates,
 or deletes the former game's browser records.
 
@@ -188,12 +188,14 @@ single-file drafts remain supported.
 
 ## People and Pokédex metadata
 
-Chapter 1 does not introduce Pokédex scans, so its public Pokédex metadata is
-currently empty. Cassius is recorded as a known person when the opening begins.
+Chapter 1 automatically records Chikorita as Encountered in the Pokédex when the
+opening begins, using an authored journal event and species metadata. It does not
+join the Party. Cassius is recorded as a known person at the same point.
 Later chapters can add discovery and scan events using the engine's existing
 journal-driven metadata system.
 
-Revision 10 deliberately invalidates saves from the ferry storyline (revision 9).
+Revision 12 adds the opening Chikorita encounter and deliberately invalidates
+revision-11 and older saves, so Continue never has to backfill a missing event.
 The browser storage key remains `pokemon:checkpoint:aurelian-league`. A confirmed
 New Game replaces incompatible progress; the app never silently migrates or
 deletes the old save.

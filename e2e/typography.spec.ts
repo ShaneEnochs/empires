@@ -7,7 +7,8 @@ for (const width of [320, 375, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     await expect(page.locator('link[rel="stylesheet"][href*="fonts.googleapis.com/css2"]')).toHaveAttribute('href', /family=Public\+Sans/);
-    await expect(page.locator('.brand')).toHaveText(titlePage.brand);
+    await expect(page.locator('.title-screen .brand')).toHaveCount(0);
+    await expect(page.getByRole('heading')).toHaveCount(1);
     await expect(page.locator('h1')).toHaveText(titlePage.title);
     await expect(page.locator('.startup-description')).toHaveText(titlePage.description);
     await startGame(page);

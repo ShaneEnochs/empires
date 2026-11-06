@@ -61,7 +61,7 @@ A seventh companion fails atomically. Party never uses inventory items.
 
 Edit `content/title-page.json` for plain-text brand/title/description/button labels.
 Keep all five fields nonempty strings. The catalog contains only The Aurelian League,
-identity `aurelian-league`, revision 11, key `pokemon:checkpoint:aurelian-league`.
+identity `aurelian-league`, revision 12, key `pokemon:checkpoint:aurelian-league`.
 Display text is not a save identity. The old game's keys are never read or deleted.
 Party-aware saves use format 4, or 5 with reading context; schemas 1–3 are incompatible.
 Continue resumes committed state/page without re-entering. Checkpoints preserve the
@@ -148,7 +148,8 @@ Vite reloads, choose the button again. Do not upload an individual chapter as a
 complete standalone story. Single-file private draft preview remains available.
 The previous contestant-story chapters have been replaced by Chapter 1 of the
 field-warden mystery. Its original catalog revision was 10; adding the starting
-field kit and occupation advances it to revision 11. Revision-10 and older saves
+field kit and occupation advanced it to revision 11. The opening Chikorita encounter
+advances it to revision 12. Revision-11 and older saves
 are incompatible and are not silently migrated; the story ID, storage key, and
 save formats remain unchanged.
 
@@ -161,11 +162,38 @@ controls, and information cards are read-only and preserve choices, drafts and
 saved bytes. Entries start collapsed and use native keyboard-accessible details/
 summary controls with at least 44px targets.
 
-The current public Chapter 1 does not declare `dex_installed` or author any
-Pokédex scans, so the public metadata is empty. The Pokédex view contains no
-recorded species. Future chapters may opt in to `dex_installed` and add
-`scanned_...` journal events. Private stories without `dex_installed` retain
-their existing usable notebook behavior.
+### Automatic encounter registration
+
+Chapter 1 records `encountered_chikorita_orchard` in its opening passage. Chikorita
+therefore appears in the Pokédex immediately on New Game, as Encountered, without
+joining the Party. The story does not declare `dex_installed`, so the notebook is
+available from the start.
+
+To register another species automatically, add its metadata to
+`content/aurelian-league.pokedex.json` and put an existing `*journal` effect in
+the passage where the protagonist actually encounters it, after the title and
+before prose:
+
+```text
+*journal encountered_chikorita_orchard "You encountered Chikorita during the relocation assignment outside Lezano."
+```
+
+Reference that exact event ID in the species' `discoveryEvents` array. Use a
+unique event ID at each encounter passage; multiple IDs can map to the same
+species. An event fires only when that passage/guard executes successfully.
+Revisiting an event or encountering the species elsewhere still produces one
+entry. Species without metadata never produce placeholders, and prose mentions
+alone never discover anything. Do not add `*add_pokemon` for encounters: that
+command is reserved for actual companions.
+
+The existing journal is the only discovery state. Save/Continue preserves it
+without replaying effects; checkpoint recovery retains earlier events and removes
+later ones. Taking another branch cannot discover species on an unvisited branch.
+No encounter registry, parser command, or save-format change is needed.
+
+Encounter events do not display in-story scan cards. Reserve `scanned_...` for
+explicit lookup passages, documented below. If a future story declares
+`dex_installed`, the existing installation gate still applies.
 
 Add species incrementally to `content/aurelian-league.pokedex.json`. Example:
 
@@ -239,6 +267,7 @@ observation without duplicating Wattrel or erasing the earlier choice.
 The journal remains the sole discovery store. Continue resumes exact recorded
 scans without writing; checkpoints restore exactly their recorded observations,
 retaining earlier scans and rolling back later ones. There is no new mutable
-collection, timestamp, schema, or save-format change. Within the current revision 11,
-progress retains only its recorded scans and is never backfilled with unseen ones.
+collection, timestamp, schema, or save-format change. Revision 12 adds the initial
+Chikorita encounter event, so revision-11 and older saves require a confirmed New
+Game rather than continuing without that event. Saves are never backfilled.
 Revision-8 progress is incompatible because the authored chapter label changed.

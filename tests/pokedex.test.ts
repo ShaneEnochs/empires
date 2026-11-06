@@ -118,21 +118,27 @@ test('a failed entry cannot record a discovery', () => {
   assert.throws(() => game.navigate('fail'), /insufficient inventory/);
   assert.equal(game.state, before); assert.deepEqual(discoveredPokemon(failedDex, game.state), []);
 });
-test('the current public opening has no Pokédex scans or species records', () => {
+test('the public opening discovers only Chikorita without adopting it or requiring a scan', () => {
   const game = new Game(publicStory);
-  assert.deepEqual(publicDex, []);
-  assert.deepEqual(discoveredPokemon(publicDex, game.state), []);
+  assert.deepEqual(publicDex.map(entry => [entry.id, entry.nationalNumber, entry.types]), [['chikorita', 152, ['Grass']]]);
+  assert.deepEqual(discoveredPokemon(publicDex, game.state).map(entry => [entry.id, entry.status]), [['chikorita', 'Encountered']]);
   assert.equal(game.state.variables.dex_installed, undefined);
-  assert.equal(game.state.journal.length, 1);
-  assert.equal(game.state.journal[0]!.id, 'met_cassius');
+  assert.deepEqual(game.state.party, []);
+  assert.deepEqual(game.state.journal.map(event => event.id), ['met_cassius', 'encountered_chikorita_orchard']);
+  game.restoreCheckpoint(); // Initial entry is replayed exactly once.
+  assert.equal(discoveredPokemon(publicDex, game.state).length, 1);
+  assert.equal(game.state.journal.filter(event => event.id === 'encountered_chikorita_orchard').length, 1);
 });
-test('revision-9 saved progress remains intact but cannot load under revision 10', () => {
+test('revision-11 saved progress remains intact but cannot load under revision 12', () => {
   const memory = new Memory();
-  const previous = { storyId: 'aurelian-league', storyRevision: 9 };
+  const previous = { storyId: 'aurelian-league', storyRevision: 11 };
   const oldSession = new GameSession(publicStory, memory, previous);
   assert.equal(oldSession.newGame(() => true), 'started');
+  const save = JSON.parse(memory.raw!);
+  save.currentState.journal = save.currentState.journal.filter((event: { id: string }) => event.id !== 'encountered_chikorita_orchard');
+  memory.raw = JSON.stringify(save);
   const raw = memory.raw;
-  const next = new GameSession(publicStory, memory, { storyId: 'aurelian-league', storyRevision: 10 });
+  const next = new GameSession(publicStory, memory, { storyId: 'aurelian-league', storyRevision: 12 });
   assert.equal(next.startup.status, 'invalid');
   assert.match(next.startup.status === 'invalid' ? next.startup.message : '', /incompatible story revision/);
   assert.equal(memory.raw, raw);
@@ -234,8 +240,48 @@ A later observation.
   assert.deepEqual(discoveredPokemon(entries,again.game!.state)[0]!.observations.map(note=>note.text),['First.']);
 });
 
-test('public metadata intentionally starts empty until a scan is authored', () => {
-  assert.deepEqual(publicDex, []);
+test('public encounters do not create in-story scan cards', () => {
+  const game = new Game(publicStory);
+  assert.deepEqual(passageLookups(publicDex, game.state, game.passage), []);
   assert.ok(publicStory.passages.every(passage => passage.effects.every(effect =>
     effect.kind !== 'journal' || !effect.id.startsWith('scanned_'))));
+});
+
+test('encounters register only configured species on the visited branch and recovery removes later discoveries', () => {
+  const story = parseStory(`*passage start
+*title Crossroads
+Choose a route.
+*choice
+#Meadow -> meadow
+#Coast -> coast
+*passage meadow
+*title Meadow
+*journal encountered_chikorita "Met Chikorita."
+*journal encountered_unknown "Met a species with no metadata."
+Chikorita is here.
+*continue again
+*passage again
+*title Another Encounter
+*journal encountered_chikorita_again "Met another Chikorita."
+Another Chikorita is here.
+*death
+*passage coast
+*title Coast
+*journal encountered_piplup "Met Piplup."
+Piplup is here.
+*death`);
+  const entries = validatePokedex(story, [
+    { ...publicDex[0]!, discoveryEvents: ['encountered_chikorita', 'encountered_chikorita_again'] },
+    { ...definition, discoveryEvents: ['encountered_piplup'], acquisitionEvents: [] },
+  ]);
+  const memory = new Memory(), session = new GameSession(story, memory);
+  session.newGame(() => true); session.navigate('meadow'); session.navigate('again');
+  assert.deepEqual(discoveredPokemon(entries, session.game!.state).map(entry => entry.id), ['chikorita']);
+  assert.deepEqual(session.game!.state.party, []);
+  const reopened = new GameSession(story, memory); reopened.continueGame();
+  assert.deepEqual(discoveredPokemon(entries, reopened.game!.state).map(entry => entry.id), ['chikorita']);
+  reopened.retryAfterDeath();
+  assert.deepEqual(discoveredPokemon(entries, reopened.game!.state), []);
+  reopened.navigate('coast');
+  assert.deepEqual(discoveredPokemon(entries, reopened.game!.state).map(entry => entry.id), ['piplup']);
 });

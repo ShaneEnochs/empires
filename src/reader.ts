@@ -130,7 +130,7 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
     const heading = document.createElement('h1');
     heading.textContent = entry.title;
     heading.tabIndex = -1;
-    root.replaceChildren(appHeader(entry.titlePage?.brand), heading);
+    root.replaceChildren(heading);
     if (entry.description) {
       const description = document.createElement('p');
       description.className = 'startup-description'; description.textContent = entry.description;

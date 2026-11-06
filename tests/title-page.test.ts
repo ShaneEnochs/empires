@@ -17,7 +17,7 @@ test('title page validates all required text and preserves plain text', () => {
 test('display metadata is independent of stable save identity', () => {
   const changed = validateTitlePage({ ...titlePage, title: 'Another display title' });
   assert.notEqual(changed.title, titlePage.title);
-  assert.match(readFileSync('src/catalog.ts', 'utf8'), /identity: \{ storyId: 'aurelian-league', storyRevision: 11 \}/);
+  assert.match(readFileSync('src/catalog.ts', 'utf8'), /identity: \{ storyId: 'aurelian-league', storyRevision: 12 \}/);
 });
 
 test('Public Sans is used for reader and author preview with a system fallback', () => {
