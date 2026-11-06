@@ -25,8 +25,7 @@ for (const width of [320, 1280]) for (const alternate of [false, true]) {
     await choose(page, alternate ? 'Tell him the report should be accurate.' : "Assure Cassius you won't mention the bread.");
     await next(page); // Finish the family conversation.
     await choose(page, alternate ? 'Go after the Chikorita before it gets away.' : 'Help Cassius get his jacket free.');
-    await next(page); // Approach the trough.
-    await next(page); // Cassius catches up.
+    await next(page); // Cassius catches up at the trough.
     await choose(page, alternate ? "Ask why the Chikorita doesn't seem particularly afraid of either of you." : "Ask whether it's safe for the Chikorita to drink from such a rusty pipe.");
     await choose(page, alternate ? 'Sit down near the Chikorita and try to earn its trust.' : 'Gather some fresh clover and try to coax the Chikorita closer.');
     await next(page); // Finish the capture scene.
