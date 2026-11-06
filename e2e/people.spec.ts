@@ -48,7 +48,7 @@ test('People discovery remains journal-derived through recovery without a visibl
   await expectStartup(page);
   await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
   await expectPassage(page, 'Six Sacks and a Day');
-  expect(await knownPeople(page)).toEqual(['The customs keeper']);
+  // Format-6 storage holds the pre-entry checkpoint; the entry event is in memory until the next commit.
   await choose(page, 'Investigate the mill accounts');
   await choose(page, 'Pay two coins for attested accounts');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();

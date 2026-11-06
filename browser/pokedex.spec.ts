@@ -6,26 +6,27 @@ for (const width of [320,1280]) test('public views remain inert and readable at 
   const key='pokemon:checkpoint:aurelian-league';
   const original=await page.evaluate(k=>localStorage.getItem(k),key);
   const tabs=page.getByRole('navigation',{name:'Reading views'}).getByRole('button');
-  await expect(tabs).toHaveText(['Story','Character','Party','Pokédex','People']);
+  await expect(tabs).toHaveText(['Story','Character','Party','Pokédex']);
   const geometry=await tabs.evaluateAll(buttons=>buttons.map(button=>({y:button.getBoundingClientRect().y,width:button.getBoundingClientRect().width,height:button.getBoundingClientRect().height})));
   for(const box of geometry){expect(box.y).toBe(geometry[0]!.y);expect(box.width).toBeGreaterThanOrEqual(44);expect(box.height).toBeGreaterThanOrEqual(44);}
   await page.getByRole('radio',{name:'Remain quiet and watch.',exact:true}).check();
-  for(const name of ['Character','Party','Pokédex','People']){
+  for(const name of ['Character','Party','Pokédex']){
     await page.getByRole('button',{name,exact:true}).click();
     await expect(page.locator('.chapter-label')).toBeHidden();
     if(name==='Character'){
       const group=page.getByRole('group',{name:'Character sections'});
-      await expect(group.getByRole('button')).toHaveText(['Stats','Skills','Inventory','Journal']);
-      await expect(page.locator('#character')).toContainText('No character statistics configured.');
-      for(const section of ['Skills','Inventory','Journal']){
-        await group.getByRole('button',{name:section,exact:true}).click();
-        await expect(page.getByRole('heading',{name:section,level:3,exact:true})).toBeFocused();
-        if(section==='Journal') await expect(page.locator('#character')).toContainText('Cassius');
-      }
+      await expect(group.getByRole('button')).toHaveText(['Stats','Inventory']);
+      await expect(page.locator('#character')).toContainText('Junior League field warden');
+      await group.getByRole('button',{name:'Inventory',exact:true}).click();
+      await expect(page.getByRole('heading',{name:'Inventory',level:3,exact:true})).toBeFocused();
+      await expect(page.locator('#character-inventory').getByRole('listitem')).toHaveText([
+        'Canvas shoulder bag × 1', 'Protective gloves × 1', 'Approved Pokémon treats (packet) × 1',
+        'First-aid kit × 1', 'Handheld identification scanner × 1', 'Collection net × 1', 'Collapsible carrier × 1',
+      ]);
+      for(const hidden of ['Skills','Journal','People']) await expect(page.getByRole('button',{name:hidden,exact:true})).toHaveCount(0);
     }
     if(name==='Party') await expect(page.locator('#party')).toContainText("You haven't partnered with any Pokémon yet.");
     if(name==='Pokédex') await expect(page.locator('#pokedex')).toContainText('No Pokémon recorded yet.');
-    if(name==='People') await expect(page.locator('#people')).toContainText('Cassius');
     expect(await page.evaluate(k=>localStorage.getItem(k),key)).toBe(original);
   }
   await page.getByRole('button',{name:'Story',exact:true}).click();
