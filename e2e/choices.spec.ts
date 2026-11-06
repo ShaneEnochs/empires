@@ -47,9 +47,10 @@ for (const width of [320, 375, 768, 1280]) {
       await expect(advance).toBeEnabled();
       expect(await node!.evaluate(element => element === document.querySelectorAll('input[type="radio"]')[1])).toBe(true);
     }
+    // Inspect storage calls before verifying hidden state through the saved envelope.
+    expect(await page.evaluate(() => Reflect.get(window, '__choiceStorageCalls'))).toEqual([]);
     await expectInitialState(page);
     await expect(page.getByRole('button', { name: 'People', exact: true })).toHaveCount(0);
-    expect(await page.evaluate(() => Reflect.get(window, '__choiceStorageCalls'))).toEqual([]);
     await advance.click();
     await expectPassage(page, 'What You Bring');
     await expect(page.locator('input[type="radio"]:checked')).toHaveCount(0);
