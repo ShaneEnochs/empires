@@ -76,7 +76,7 @@ test('saved page and relationship resume without replaying effects', () => {
   session.advancePage();
   const oldState = session.game!.state;
   const oldPage = session.game!.currentParagraphs.map(p => p.text);
-  const resumedSession = new GameSession(story, storage, storyCatalog[0]!.identity);
+  const resumedSession = new GameSession(story, storage, { storyId: 'aurelian-league', storyRevision: 10 });
   assert.equal(resumedSession.startup.status, 'ready');
   const resumed = resumedSession.continueGame();
   assert.deepEqual(resumed.state, oldState);
