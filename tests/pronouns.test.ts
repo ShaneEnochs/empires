@@ -68,7 +68,7 @@ test('documented creation template parses and all presets reach the story', () =
     session.navigate('arrival');
     assert.equal(session.game!.state.variables.pronouns_subject, destination);
     assert.deepEqual(session.game!.state.journal.map(event => event.text), [`${possessive} journey began at the gate.`]);
-    assert.ok(session.game!.currentParagraphs.some(paragraph => paragraph.text.includes(`${subject} ${verb} ready to begin.`)));
+    assert.ok(session.game!.visibleParagraphs.some(paragraph => interpolate(paragraph.text, session.game!.state.variables).includes(`${subject} ${verb} ready to begin.`)));
   }
 });
 
