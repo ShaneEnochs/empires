@@ -36,19 +36,17 @@ automatic registration or publishing occurs. Normal builds exclude author.html.
 ## Headings and chapter numbering
 
 Author numbered chapter labels as literal `*chapter` directives, for example
-`*chapter Chapter 2: Arrival`. Keep a required `*title` in every
+`*chapter Chapter 1: A Simple Assignment`. Keep a required `*title` in every
 passage. Use `*hide_title` immediately after `*title` on transitional
 passages where the large visible heading would interrupt the narrative.
 The heading remains available to screen readers and in author tools; it is
-only visually hidden. The public ferry shows its opening title, and Lezano
-Harbor keeps one consistent visible title through registration. Hotel,
-restaurant, and onward-planning passages hide their individual titles.
+only visually hidden. The public opening displays *A Simple Assignment*. Its smaller transition
+passages hide their headings.
 
 ## Trainer creation and companions
 
 Use a global `trainer_name` string with `*input_text`; use choices and ordinary sets
-for the five pronoun strings plus a plural-verb boolean. The public opening shows
-all three presets. Character displays values selected with `*stat`; there is no
+for the five pronoun strings plus a plural-verb boolean. The current Chapter 1 has not yet introduced name or pronoun selection. Character displays values selected with `*stat`; there is no
 independent gender/background/class subsystem.
 
 Declare individuals with `*pokemon starter_piplup "Piplup"`. Join with
@@ -63,7 +61,7 @@ A seventh companion fails atomically. Party never uses inventory items.
 
 Edit `content/title-page.json` for plain-text brand/title/description/button labels.
 Keep all five fields nonempty strings. The catalog contains only The Aurelian League,
-identity `aurelian-league`, revision 9, key `pokemon:checkpoint:aurelian-league`.
+identity `aurelian-league`, revision 10, key `pokemon:checkpoint:aurelian-league`.
 Display text is not a save identity. The old game's keys are never read or deleted.
 Party-aware saves use format 4, or 5 with reading context; schemas 1–3 are incompatible.
 Continue resumes committed state/page without re-entering. Checkpoints preserve the
@@ -84,34 +82,24 @@ Use `content/aurelian-league.people.json` for public People entries, or an optio
 `description`, and `discoveryEvents`. The entry appears only after one of those
 journal events occurs. To add facts learned later, include optional `facts` entries:
 
+Current public example:
+
 ```json
 [
   {
-    "id": "lucia",
-    "name": "Lucia",
-    "description": "A League contestant in an orange jacket.",
-    "discoveryEvents": ["met_lucia"],
-    "facts": [
-      {
-        "text": "Her family keeps a Floatzel.",
-        "discoveryEvents": ["lucia_family"]
-      },
-      {
-        "text": "Her brother gave her a Lapras necklace.",
-        "discoveryEvents": ["lucia_travel"]
-      }
-    ]
+    "id": "cassius",
+    "name": "Cassius",
+    "description": "The senior field warden supervising your assignment.",
+    "discoveryEvents": ["met_cassius"]
   }
 ]
 ```
 
-Put the corresponding `*journal` commands in passages where the player
-actually learns those details. For Lucia, `met_lucia` occurs at the first
-introduction/name-input passage, `lucia_family` during the longer conversation,
-and `lucia_travel` only if the player asks about her motivation. Avoid placing
-future or optional information in the always-visible description. Each fact must
-have nonempty text and one or more unique, valid journal IDs, all defined in the
-selected story. Invalid or unknown event references fail validation.
+The opening records `*journal met_cassius "..."` so Cassius becomes visible in
+People immediately. Optional `facts` entries can be added in later chapters
+when the story records corresponding new journal events. Keep introductory
+descriptions limited to what the player already knows. All referenced event IDs
+must exist in the assembled story; unknown references fail validation.
 
 Facts appear as separate entries beneath the character's name and are derived
 exclusively from recorded journal events, without another save collection. They
@@ -128,8 +116,7 @@ The public source order is defined once in `content/aurelian-league/sources.json
 content/aurelian-league/
   sources.json
   globals.story
-  chapter-01-crossing.story
-  chapter-02-arrival.story
+  chapter-01-simple-assignment.story
 ```
 
 Put shared `*var`, `*stat`, `*item`, `*skill` and `*pokemon` definitions in globals.
@@ -144,7 +131,7 @@ is no import command, runtime chapter request, or separate chapter save.
 Passing **any** public member file also checks the complete ordered story:
 
 ```sh
-npm run check:stories -- content/aurelian-league/chapter-02-arrival.story
+npm run check:stories -- content/aurelian-league/chapter-01-simple-assignment.story
 ```
 
 The VS Code Check Current Story task and Notepad++ saved-file launcher use this
@@ -159,10 +146,10 @@ public chapter files**. It uses the exact same ordered sources and public People
 Pokédex metadata in a fresh memory-only session. Save edits in your editor; after
 Vite reloads, choose the button again. Do not upload an individual chapter as a
 complete standalone story. Single-file private draft preview remains available.
-The original physical split left the story unchanged. The later rename of Chapter 2
-to Arrival changes journal chapter labels, so the public story intentionally advances
-to revision 9. Revision-8 saves are incompatible and are not silently migrated;
-the story ID, storage key, and save formats remain unchanged.
+The previous contestant-story chapters have been replaced by Chapter 1 of the
+field-warden mystery. Its catalog revision is 10. Revision-9 saves from the old
+story are incompatible and are not silently migrated; the story ID, storage
+key, and save formats remain unchanged.
 
 ## Pokédex installation, lookup events and observations
 
@@ -172,11 +159,11 @@ controls, and information cards are read-only and preserve choices, drafts and
 saved bytes. Entries start collapsed and use native keyboard-accessible details/
 summary controls with at least 44px targets.
 
-The public game declares `*var dex_installed false` and sets it true at registration.
-Until then, Pokédex shows an installation message. Installation starts an empty
-notebook; ferry `saw_...` sightings, dialogue names and jewelry never unlock it.
-Only explicit player lookup choices lead to `scanned_...` journal effects. Private
-stories without `dex_installed` retain their existing usable notebook behavior.
+The current public Chapter 1 does not declare `dex_installed` or author any
+Pokédex scans, so the public metadata is empty. The Pokédex view contains no
+recorded species. Future chapters may opt in to `dex_installed` and add
+`scanned_...` journal events. Private stories without `dex_installed` retain
+their existing usable notebook behavior.
 
 Add species incrementally to `content/aurelian-league.pokedex.json`. Example:
 
@@ -250,6 +237,6 @@ observation without duplicating Wattrel or erasing the earlier choice.
 The journal remains the sole discovery store. Continue resumes exact recorded
 scans without writing; checkpoints restore exactly their recorded observations,
 retaining earlier scans and rolling back later ones. There is no new mutable
-collection, timestamp, schema, or save-format change. Within the current revision 9,
+collection, timestamp, schema, or save-format change. Within the current revision 10,
 progress retains only its recorded scans and is never backfilled with unseen ones.
 Revision-8 progress is incompatible because the authored chapter label changed.

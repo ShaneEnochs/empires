@@ -149,24 +149,20 @@ test('preflight reports a full-party transition failure through the real engine'
 test('obsolete schema versions are rejected without changing saved bytes',()=>{
  for(const version of [1,2,3]){const memory=new Memory();memory.raw=JSON.stringify({formatVersion:version,storyId:'aurelian-league',storyRevision:1,checkpoint:new Game(story).checkpoint});const raw=memory.raw;assert.equal(loadCheckpoint(memory,story).status,'invalid');assert.equal(memory.raw,raw);assert.equal(memory.writes,0);}
 });
-test('public ferry story starts with an empty party and preserves character choices across reload',()=>{
- const publicStory=parseStory(publicStorySource());
- for(const pronoun of ['he','she','they'])for(const contact of ['contact_yes','contact_no']){
-  const storage=new Memory(),session=new GameSession(publicStory,storage);session.newGame(()=>true);
-  session.navigate('ferry_windows');session.navigate('ferry_context');session.navigate('ferry_ad');
-  session.advancePage();session.navigate('name');session.submitText('  Ari  ');
-  session.navigate(contact);session.navigate('pronouns');session.navigate(pronoun);session.navigate('lucia_chat');
-  session.navigate('open_deck');session.navigate('rail');session.navigate('dock_approach');
-  const state=session.game!.state;
-  assert.deepEqual(state.party,[]);
-  assert.equal(state.variables.trainer_name,'Ari');
-  assert.equal(state.variables.pronouns_subject,pronoun);
-  assert.equal(state.variables.use_plural_verbs,pronoun==='they');
-  assert.equal(state.variables.lucia_contact,contact==='contact_yes');
-  const reopen=new GameSession(publicStory,storage);
-  assert.deepEqual(reopen.continueGame().state,state);
-  assert.equal(reopen.game!.passage.id,'dock_approach');
- }
+test('public opening keeps the party empty and relationship choice survives save/reload',()=>{
+  const publicStory=parseStory(publicStorySource());
+  for(const index of [0,1]){
+    const storage=new Memory(),session=new GameSession(publicStory,storage);
+    assert.equal(session.newGame(()=>true),'started');
+    assert.deepEqual(session.game!.state.party,[]);
+    session.navigateChoice(session.game!.visibleChoices[index]!);
+    const expected=session.game!.state;
+    assert.equal(expected.variables.cassius_relationship, index===0?14:13);
+    assert.deepEqual(expected.party,[]);
+    const reopened=new GameSession(publicStory,storage);
+    assert.deepEqual(reopened.continueGame().state,expected);
+    assert.equal(reopened.game!.passage.id,'ditch_attempt');
+  }
 });
 test('page saves and a checkpoint already containing Pokémon preserve order/nicknames through reload and recovery',()=>{
  const paged=parseStory(`${definitions}
