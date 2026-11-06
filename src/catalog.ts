@@ -26,7 +26,7 @@ export const storyCatalog: readonly CatalogStory[] = Object.freeze([
     title: titlePage.title,
     description: titlePage.description,
     source: aurelianLeagueSource,
-    identity: { storyId: 'aurelian-league', storyRevision: 9 },
+    identity: { storyId: 'aurelian-league', storyRevision: 10 },
     people: parsePeople(aurelianPeople),
     pokedex: parsePokedex(aurelianPokedex),
   },

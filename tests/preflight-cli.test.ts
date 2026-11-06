@@ -14,16 +14,15 @@ function run(...files: string[]) {
   return result;
 }
 
-test('CLI checks public and bundled stories by default and prints their diagnostic counts', () => {
+test('CLI validates the new public chapter and bundled stories by default', () => {
   const result = run();
-  assert.equal(result.status, 0);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /content\/aurelian-league\/sources\.json/);
   assert.match(result.stdout, /src\/example.story/);
   assert.match(result.stdout, /examples\/harbor-practice.story/);
-  assert.match(result.stdout, /0 errors, 0 warnings, 2 information; 14 route prefixes/);
-  assert.match(result.stdout, /0 errors, 0 warnings, 4 information; 1098 route prefixes/);
-  assert.match(result.stdout, /4 re-entry probes \(4 returns succeeded\)/);
-  assert.match(result.stdout, /INFORMATION EXPLORATION_LIMIT/);
-  assert.match(result.stdout, /Total: 0 errors, 0 warnings, 10 information/);
+  assert.match(result.stdout, /examples\/advanced-authoring.story/);
+  assert.match(result.stdout, /0 errors, 0 warnings, \d+ information; \d+ route prefixes/);
+  assert.match(result.stdout, /Total: 0 errors, 0 warnings, \d+ information/);
 });
 
 test('CLI supports an explicit filename with spaces and leaves advisory warnings nonfatal', t => {

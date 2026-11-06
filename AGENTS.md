@@ -10,23 +10,23 @@ never merge automatically or commit directly to main.
 
 ## Product and scope
 
-Aurelia is a modern Pokémon region influenced by Roman architecture and civic
-institutions. The public game is the sole catalog entry, assembled eagerly from the ordered
-`content/aurelian-league/sources.json` list (globals, Chapter 1 and Chapter 2). Its identity is `aurelian-league`, revision 9. The current playable
-story starts aboard the Portia on its approach to Lezano and currently ends immediately before the four-o'clock orientation. Chapter 2 is titled *Arrival*; the orientation event itself has not yet begun. Its chapter-label change intentionally advanced story revision from 8 to 9 because saved journal events validate their chapter labels. Revision-8 saves are incompatible and must not be silently migrated.
-The player starts without Pokémon, makes an early flavor choice, enters a first
-name, optionally exchanges contact details with Lucia, and chooses pronouns.
-Only contestants, crew, and League press are aboard; Minccino and Machoke
-assist the crew. Lucia wears a Lapras necklace. The player meets an unnamed
-rival with CHAMP on his jacket on the gangway and checks in at Lezano, receiving
-a silver League bracelet and 100 credits. The bracelet handles identification, payment, maps, hotel access, Pokédex lookup, and consensual Pokémon partnerships; there are no Poké Balls, and at most one partner may be out at a time. Two authored routes visit the Portico Hotel or the Salt and Thyme café, with multi-stage dilemmas and persistent outcomes. The Pokédex is activated through the bracelet, and no species is recorded without an explicit scan choice. The reader shows numbered collapsible Pokédex entries and scan-only information cards. The approved but not-yet-implemented starter selection has seven equally story-viable candidates: Charmander, Chikorita, Piplup, Scatterbug, Sandile, Tinkatink, and Lillipup. Partner selection is mutual: each can accept or decline based on clearly signaled actions, with a safeguard only if all seven decline. See `docs/STORY_BIBLE.md` and `FUTURE_IDEAS.md`. Do not write the orientation itself or starter selection until requested.
+Aurelia is a Roman-influenced Pokémon region whose League is secretly
+controlled by Team Rocket. The protagonist is a junior League field warden
+and does not know this. The public story consists of shared declarations in
+`globals.story` and **Chapter 1: A Simple Assignment** in
+`chapter-01-simple-assignment.story`, assembled through `sources.json`.
+Its catalog identity is `aurelian-league`, revision **10**.
 
-Eight Laurels can be earned without battling; the three highest-ranked contestants
-with all eight qualify for the Triumvirate. Do not invent major characters,
-challenges, mystery explanations, or the full chapter unless explicitly requested.
-Do not add evolution, battles, levels/XP, moves/abilities, HP, storage boxes,
-trading, sprites, a complete Pokémon database, shops/crafting, random encounters, relationship
-systems, character backgrounds/classes, or Laurel/ranking calculations.
+Chapter 1 follows a relocation assignment with senior warden Cassius and
+ends after a Chikorita is confined to a carrier. It has six binary choices
+and a starting Cassius relationship of 13. Cassius appears in People; there
+is no Chapter 2, starter selection, trainer name/pronoun input, Pokédex scan,
+battle or owned Pokémon yet. Old revision-9 ferry saves are incompatible.
+
+Use [docs/STORY_BIBLE.md](docs/STORY_BIBLE.md) and
+[docs/STORY_OUTLINE.md](docs/STORY_OUTLINE.md) for the mystery and future
+scenes. Do not restore the old contestant protagonist or seven-starter
+ferry premise without a separate request.
 
 ## Architecture and permanent rules
 
@@ -37,7 +37,7 @@ interpreter rewrite, or unrelated abstraction is needed.
 
 - Keep chapter assembly static and ordered; shared declarations go in globals and
   chapter files contain labels/passages. Use the same list for runtime, CLI, editor
-  validation and public preview. Preserve source-local diagnostics and revision 9.
+  validation and public preview. Preserve source-local diagnostics and revision 10.
 - `parseStory` returns immutable Story metadata and passage data. IDs are authored,
   stable and validated, never derived from titles/order/random values. Validate
   the entire story, including hidden/unreachable paths, before play.
@@ -97,7 +97,7 @@ interpreter rewrite, or unrelated abstraction is needed.
 - Pokédex species metadata is incremental and validated against explicit journal
   discovery/acquisition event IDs. Public discoveries must use intentional `scanned_...` events after `dex_installed`, never ferry `saw_...` sightings. Derive entries solely from the current journal,
   never prose names or a separate save field. Authors pair acquisitions with journal
-  events atomically. Keep public revision 9 and save formats unchanged for additive
+  events atomically. Keep public revision 10 and save formats unchanged for additive
   event metadata; never backfill old saves or invent post-checkpoint discoveries. Preserve validated
   optional National numbers/types/official summaries/HTTPS sources and event-bound
   observations. Use native collapsed details and scan-effect-derived narrative cards.
