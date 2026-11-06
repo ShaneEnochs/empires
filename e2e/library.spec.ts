@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test';
 import {
   checkpointRecord, confirmNewGame, expectCharacter as crisisCharacter,
   expectItems, expectPassage, openPanel, panelNames, expectStartup, startGame as startCrisis,
-  returnToStory, choose, crisisKey, cityKey, reachBriefing as nameAndBriefing, centerWithEvidence,
+  returnToStory, choose, crisisKey, cityKey, recordedState, reachBriefing as nameAndBriefing, centerWithEvidence,
 } from './helpers';
 
 // An exact revision-1 Center Visit initial save, retained as opaque legacy browser data.
@@ -150,11 +150,10 @@ test('Harbor Practice naming, selected metadata, conditional choices, and spendi
   await crisisCharacter(page, [name, '5', '4', 'Civic compact']);
   await expectItems(page, 'Inventory', ['Dispatch Coin × 2', 'Grain Sack × 2', 'Attested Grain Accounts × 1']);
   await expect(page.getByText('The board writes ' + name + ' into the agreement as its guarantor. Its next argument will happen across a table, with the accounts open.', { exact: true })).toBeVisible();
-  const journal = await openPanel(page, 'Journal');
-  await expect(journal.getByRole('heading', { level: 4 })).toHaveText(['The Writ', 'The River', 'Night Center']);
-  await expect(journal.getByRole('listitem')).toHaveCount(8);
-  await expect(journal.getByRole('listitem').last()).toHaveText(name + ' secured a civic compact and committed six sacks to public kitchens.');
-  await returnToStory(page);
+  const journal = (await recordedState(page)).journal;
+  expect([...new Set(journal.map(entry => entry.chapter))]).toEqual(['The Writ', 'The River', 'Night Center']);
+  expect(journal).toHaveLength(8);
+  expect(journal.at(-1)!.text).toBe(name + ' secured a civic compact and committed six sacks to public kitchens.');
   await expect(page.getByRole('navigation', { name: 'Passage actions' }).getByRole('button')).toHaveCount(0);
   await expect(page.locator('main b, main img, main script')).toHaveCount(0);
   expect(JSON.parse((await checkpointRecord(page, crisisKey))!).checkpoint).toEqual(JSON.parse(saved!).checkpoint);
@@ -175,9 +174,7 @@ for (const checkpoint of ['briefing', 'night_center']) {
       ? ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']
       : ['Dispatch Coin × 2', 'Grain Sack × 8', 'Attested Grain Accounts × 1'];
     const heading = checkpoint === 'briefing' ? 'Six Sacks and a Day' : 'When the Seal Expires';
-    const journal = await openPanel(page, 'Journal');
-    const expectedJournal = await journal.getByRole('listitem').allTextContents();
-    await returnToStory(page);
+    const expectedJournal = (await recordedState(page)).journal.map(entry => entry.text);
     for (let cycle = 0; cycle < 2; cycle++) {
       if (checkpoint === 'briefing') {
         await action(page, 'Investigate the mill accounts', 'The Mill Yard');

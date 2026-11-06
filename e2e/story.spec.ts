@@ -2,7 +2,7 @@ import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import {
   choose, checkpointRecord, chooseName, expectCharacter, expectItems, expectPassage,
-  openPanel, panelNames, startGame, returnToStory,
+  openPanel, panelNames, recordedState, startGame, returnToStory,
 } from './helpers';
 
 for (const ending of ['guard', 'refuge'] as const) {
@@ -75,8 +75,7 @@ test('name drafts survive inspection; Enter accepts trimmed Unicode and HTML-lik
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expectPassage(page, 'Six Sacks and a Day');
   await expectCharacter(page, [name, '4', '0', 'Undecided']);
-  const journal = await openPanel(page, 'Journal');
-  await expect(journal.getByRole('listitem').nth(1)).toHaveText(name + ' brought the negotiating habits of the Pokémon care center.');
+  expect((await recordedState(page)).journal[1]?.text).toBe(name + ' brought the negotiating habits of the Pokémon care center.');
 });
 
 test('invalid text retains the field, focus, and error without navigation or saving', async ({ page }) => {
