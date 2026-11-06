@@ -88,7 +88,6 @@ export function createPanels(story: Story, game: Game, pokedex: readonly Pokedex
       } else if (title === 'Inventory') {
         list(content, Object.entries(game.state.inventory).map(([id, quantity]) =>
           story.items.find(item => item.id === id)!.name + ' × ' + quantity), 'No items in inventory.');
-
       }
       button.addEventListener('click', () => {
         show(title);
@@ -109,7 +108,7 @@ export function createPanels(story: Story, game: Game, pokedex: readonly Pokedex
 
   const dex = panel('pokedex', 'Pokédex', select, section => {
     if (!pokedexInstalled(game.state)) {
-      list(section, [], 'Your League bracelet activates the Pokédex when you register in Lezano.');
+      list(section, [], 'Pokédex access is not available yet.');
       return;
     }
     const discovered = discoveredPokemon(pokedex, game.state);

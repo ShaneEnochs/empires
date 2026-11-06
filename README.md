@@ -12,8 +12,8 @@ capture. The chapter ends with the Chikorita in a carrier. Chapter 2 is not
 written or linked yet.
 
 The engine's party, inventory, journal, People and Pokédex systems remain available
-for future chapters. The current chapter has no starter selection, owned Pokémon,
-Pokédex scan or trainer-name input. See the [story bible](docs/STORY_BIBLE.md)
+for future chapters. Chapter 1 starts with a field collection kit in Inventory;
+it has no starter selection, owned Pokémon, Pokédex scan or trainer-name input. See the [story bible](docs/STORY_BIBLE.md)
 and [working outline](docs/STORY_OUTLINE.md) for the new direction.
 
 ## Install, run, and play
@@ -29,14 +29,16 @@ Vite prints the local address. Select New Game, read each passage, and use Conti
 Choice menus require selecting an option before Continue. Text input accepts 1–80
 Unicode code points, trims outer whitespace, and rejects controls and line breaks.
 
-The read-only primary views are Story, Character, Party, Pokédex, and People.
-Character defaults to Stats (only explicitly authored statistics),
-with selectable Skills, Inventory, and Journal subsections. Journal groups events
-by chapter. The chapter bar is visible only in Story, and `*hide_title` suppresses secondary passage headings visually without removing their accessible labels. Party shows up to
-six companions in joining order, as `Pip (Piplup)` or `Piplup`. It has no management
-buttons. People lists characters when met and adds personal details as those
-conversations occur, without revealing facts from unvisited story branches.
-Tabs retain one row at narrow widths with 44px touch targets. Opening information
+The four read-only primary views are Story, Character, Party, and Pokédex.
+Character contains Stats (default) and Inventory. Chapter 1 shows the junior
+field-warden occupation and the seven components of the assigned field kit.
+Skills, Journal, and People remain validated and tracked by the engine but are
+not exposed as navigation tabs or Character sections. The chapter bar appears only
+in Story, and `*hide_title` suppresses secondary passage headings visually without
+removing their accessible labels. Party shows up to six companions in joining
+order, as `Pip (Piplup)` or `Piplup`, with no management buttons.
+Public Sans loads via the Google Fonts CDN, with system sans-serif fallback.
+Tabs stay on one row at narrow widths with 44px touch targets. Opening information
 never advances the story, submits a draft, or saves.
 
 ## Writing stories
