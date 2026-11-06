@@ -66,7 +66,8 @@ export async function expectCharacter(page: Page, values: string[]): Promise<voi
 export async function recordedState(page: Page): Promise<{ journal: { id: string; chapter: string; text: string }[]; skills: string[] }> {
   const raw = await checkpointRecord(page);
   if (!raw) throw Error('Expected saved regression progress.');
-  return JSON.parse(raw).currentState;
+  const record = JSON.parse(raw);
+  return record.currentState ?? record.checkpoint.state;
 }
 
 export async function expectItems(page: Page, name: Exclude<PanelName, 'Character'> | CharacterSection | HiddenSection, items: string[]): Promise<void> {

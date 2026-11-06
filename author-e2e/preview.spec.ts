@@ -59,18 +59,15 @@ test('local upload uses the shared reader, index, restart and isolated checkpoin
   await page.getByRole('button', { name: 'fatal: Fallen', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Passage reference' })).toContainText('Chapter: Arrival. Destinations: None.');
   await expect(page.locator('#passage-heading')).toHaveText('Camp');
-  for (const view of ['Character', 'Journal', 'People']) {
-    if (view === 'Journal') await page.getByRole('button', { name: 'Character', exact: true }).click();
-    await page.getByRole('button', { name: view, exact: true }).click();
-    if (view === 'Character') {
-      await expect(page.getByRole('region', { name: 'Character', exact: true })).toContainText('Ada');
-      await page.getByRole('button', { name: 'Inventory', exact: true }).click();
-      await expect(page.getByRole('region', { name: 'Inventory', exact: true })).toContainText('Token × 1');
-      await page.getByRole('button', { name: 'Skills', exact: true }).click();
-      await expect(page.getByRole('region', { name: 'Skills', exact: true })).toContainText('Listening');
-    }
-    if (view === 'Journal') await expect(page.getByRole('region', { name: 'Journal', exact: true })).toContainText('Arrived at camp.');
-    if (view === 'People') await expect(page.getByRole('region', { name: 'People', exact: true })).toContainText('No people recorded yet.');
+  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', 'Character', 'Party', 'Pokédex']);
+  await page.getByRole('button', { name: 'Character', exact: true }).click();
+  const character = page.getByRole('region', { name: 'Character', exact: true });
+  await expect(character.getByRole('group', { name: 'Character sections' }).getByRole('button')).toHaveText(['Stats', 'Inventory']);
+  await expect(character).toContainText('Ada');
+  await page.getByRole('button', { name: 'Inventory', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Inventory', exact: true })).toContainText('Token × 1');
+  for (const hidden of ['Skills', 'Journal', 'People']) {
+    await expect(page.getByRole('button', { name: hidden, exact: true })).toHaveCount(0);
   }
   await page.getByRole('button', { name: 'Story', exact: true }).click();
   await expect(page.getByRole('radio', { name: 'Hidden option', exact: true })).toHaveCount(0);

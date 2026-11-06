@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 const story = readFileSync('tools/notepadpp/starter.story');
 const metadata = readFileSync('tools/notepadpp/starter.people.json', 'utf8');
 
-test('optional People files validate, replace, discover and recover without public storage', async ({ page }) => {
+test('optional People files validate, replace and recover while their tab is hidden', async ({ page }) => {
   await page.addInitScript(() => {
     for (const method of ['getItem', 'setItem', 'removeItem']) Object.defineProperty(Storage.prototype, method, {
       value() { throw new Error('Preview must not access public storage'); },
@@ -16,16 +16,12 @@ test('optional People files validate, replace, discover and recover without publ
   await page.getByLabel('Open a .story file').setInputFiles({ name: 'draft.story', mimeType: 'text/plain', buffer: story });
   const start = () => page.getByRole('button', { name: 'New Game', exact: true }).click();
   await start();
-  await page.getByRole('button', { name: 'People', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'People', exact: true })).toContainText('No people recorded yet.');
-  await page.getByRole('button', { name: 'Story', exact: true }).click();
+  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', 'Character', 'Party', 'Pokédex']);
   await page.getByRole('radio', { name: 'Listen to the ferryman', exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByRole('button', { name: 'People', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'People', exact: true })).toContainText('The ferryman');
+  await expect(page.getByRole('button', { name: 'People', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Restart preview', exact: true }).click(); await start();
-  await page.getByRole('button', { name: 'People', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'People', exact: true })).toContainText('No people recorded yet.');
+  await expect(page.getByRole('button', { name: 'People', exact: true })).toHaveCount(0);
   for (const [text, error] of [ ['{', 'Could not open People'],
     ['{}', 'JSON array'], [JSON.stringify([JSON.parse(metadata)[0], JSON.parse(metadata)[0]]), 'duplicate'],
     [metadata.replace('met_ferryman', 'unknown_event'), 'unknown journal event'] ]) {
@@ -36,11 +32,9 @@ test('optional People files validate, replace, discover and recover without publ
   await upload(metadata.replace('The ferryman', 'A revised ferryman')); await start();
   await page.getByRole('radio', { name: 'Listen to the ferryman', exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByRole('button', { name: 'People', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'People', exact: true })).toContainText('A revised ferryman');
+  await expect(page.getByRole('button', { name: 'People', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Clear People file', exact: true }).click(); await start();
-  await page.getByRole('button', { name: 'People', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'People', exact: true })).toContainText('No people recorded yet.');
+  await expect(page.getByRole('button', { name: 'People', exact: true })).toHaveCount(0);
 });
 
 test('Notepad++ XML files are well-formed and expose language and completions', async ({ page }) => {

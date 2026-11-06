@@ -1,7 +1,7 @@
 import { titlePage } from './fixtures/title-page';
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { choose, crisisKey, expectPassage, openPanel, returnToStory, expectStartup, startGame, recordedState } from './helpers';
+import { choose, crisisKey, expectPassage, openPanel, expectStartup, startGame, recordedState } from './helpers';
 
 // People metadata remains validated and journal-derived even with its tab hidden.
 const people: { name: string; discoveryEvents: string[] }[] =
@@ -27,7 +27,7 @@ test('Character exposes only Stats and Inventory while other data remains stored
 
 test('People discovery remains journal-derived through recovery without a visible People tab', async ({ page }) => {
   await startGame(page);
-  await expect(knownPeople(page)).resolves.toEqual([]);
+  expect(await knownPeople(page)).toEqual([]);
   await choose(page, 'Keep the name Mara Vale and begin');
   await choose(page, 'You surveyed these river channels');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
