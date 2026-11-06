@@ -7,7 +7,7 @@ import { publicSources } from './public-story';
 import { Game } from '../src/game';
 
 // Canonical SHA-256 for the assembled Chapter 1 relocation story.
-const currentSourceHash = '72a92ebc08f82ac2cba1ad529600878f51e3545d9cb60f0ab9e9886748b1e0c5';
+const currentSourceHash = 'db39a1d572d28acf9bbfc6a5185bdcf80950b9065e7f6f216fabfaf2c48ff6a5';
 test('the ordered sources reproduce the final Chapter 1 and no legacy chapters', () => {
   assert.deepEqual(publicStoryFiles.map(path => path.split('/').at(-1)), ['globals.story', 'chapter-01-simple-assignment.story']);
   const parts = publicSources();

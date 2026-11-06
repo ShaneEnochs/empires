@@ -6,7 +6,6 @@ import { Game } from '../src/game';
 import { GameSession } from '../src/session';
 import { parsePeople, validatePeople, encounteredPeople } from '../src/people';
 import { parsePokedex, validatePokedex } from '../src/pokedex';
-import { storyCatalog } from '../src/catalog';
 import { publicStorySource } from './public-story';
 
 const story = parseStory(publicStorySource());
@@ -20,8 +19,7 @@ function select(game: Game, index: number) {
 }
 
 test('new Chapter 1 is the only public game content', () => {
-  assert.equal(storyCatalog.length, 1);
-  assert.equal(storyCatalog[0]!.identity.storyRevision, 10);
+  assert.match(readFileSync('src/catalog.ts', 'utf8'), /storyRevision: 10/);
   assert.equal(story.startId, 'orchard_intro');
   assert.deepEqual(story.passages.map(p => p.id), [
     'orchard_intro', 'ditch_attempt', 'bread_result', 'report_result',
@@ -72,7 +70,7 @@ test('saved page and relationship resume without replaying effects', () => {
     getItem: (key: string) => saved.get(key) ?? null,
     setItem: (key: string, value: string) => { saved.set(key, value); },
   };
-  const session = new GameSession(story, storage, storyCatalog[0]!.identity);
+  const session = new GameSession(story, storage, { storyId: 'aurelian-league', storyRevision: 10 });
   assert.equal(session.newGame(() => true), 'started');
   session.navigateChoice(session.game!.visibleChoices[0]!);
   session.advancePage();

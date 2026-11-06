@@ -61,18 +61,26 @@ test('real TextMate tokenization covers directives, choices, conditions, strings
     assert.ok(tokens('*journal event "Hello ${name}"').some(token=>token.scopes.includes(scope)),scope);
   assert.deepEqual(tokens('Ordinary narrative.')[0].scopes,['source.pokemon-story']);
 });
-test('public chapter diagnostics assemble saved siblings and unsaved document text with source locations', () => {
+test('public chapter diagnostics assemble globals and the sole Chapter 1 source', () => {
   const { chapterProblem } = require('../src/diagnostics.cjs');
   const { publicStoryFiles } = require('../dist/parser.cjs');
   const root = fs.mkdtempSync(path.join(require('node:os').tmpdir(),'pokemon-chapters-'));
   const files = publicStoryFiles.map(file => path.join(root,file));
-  const sources = ['*var name "Ari"', '*chapter One\n*passage start\n*title Start\nHello, ${name}.\n*continue end', '*chapter Two\n*passage end\n*title End\nDone.'];
+  assert.equal(files.length,2);
+  const sources = [
+    '*var name "Ari"',
+    '*chapter One\n*passage start\n*title Start\nHello, ${name}.\n*continue end\n*passage end\n*title End\nDone.',
+  ];
   try {
     files.forEach((file,index)=>{fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,sources[index]);});
     assert.equal(chapterProblem(files[1],sources[1]).error,undefined);
-    const invalid=chapterProblem(files[2],'*chapter Two\n*passage start\n*title Duplicate\nDone.').error;
-    assert.equal(invalid.path,files[2]);assert.equal(invalid.line,1);assert.match(invalid.message,/Duplicate passage ID/);
-    const unsaved='*chapter Two\n*passage end\n*title End\nHello, ${other}.';
-    assert.equal(chapterProblem(files[2],unsaved,[{uri:{fsPath:files[0]},getText:()=>'*var name "Ari"\n*var other "Sam"'}]).error,undefined);
+    const invalid='*chapter One\n*passage start\n*title Start\nHello.\n*passage start\n*title Duplicate\nDone.';
+    const result=chapterProblem(files[1],invalid).error;
+    assert.equal(result.path,files[1]);
+    assert.equal(result.line,4);
+    assert.match(result.message,/Duplicate passage ID/);
+    const unsaved='*chapter One\n*passage start\n*title Start\nHello, ${other}.';
+    const savedOther={uri:{fsPath:files[0]},getText:()=>'*var name "Ari"\n*var other "Sam"'};
+    assert.equal(chapterProblem(files[1],unsaved,[savedOther]).error,undefined);
   } finally {fs.rmSync(root,{recursive:true,force:true});}
 });
