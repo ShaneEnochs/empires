@@ -26,7 +26,12 @@ for (const width of [320,1280]) test('public views remain inert and readable at 
       for(const hidden of ['Skills','Journal','People']) await expect(page.getByRole('button',{name:hidden,exact:true})).toHaveCount(0);
     }
     if(name==='Party') await expect(page.locator('#party')).toContainText("You haven't partnered with any Pokémon yet.");
-    if(name==='Pokédex') await expect(page.locator('#pokedex')).toContainText('No Pokémon recorded yet.');
+    if(name==='Pokédex') {
+      await expect(page.locator('#pokedex summary')).toHaveText('#0152 Chikorita');
+      await page.locator('#pokedex summary').click();
+      await expect(page.locator('#pokedex dd')).toHaveText(['Grass']);
+      await expect(page.locator('#pokedex .discovery-status')).toHaveText('Encountered · Chapter 1: A Simple Assignment');
+    }
     expect(await page.evaluate(k=>localStorage.getItem(k),key)).toBe(original);
   }
   await page.getByRole('button',{name:'Story',exact:true}).click();

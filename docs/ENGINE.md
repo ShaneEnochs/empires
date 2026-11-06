@@ -1,19 +1,19 @@
 # The Aurelian League engine
 
 The sole public story is assembled from content/aurelian-league/sources.json, identity aurelian-league,
-revision 11. Pokémon-themed private examples exercise historical engine features;
+revision 12. Pokémon-themed private examples exercise historical engine features;
 they are not public stories or additional Aurelia lore. See README for the current
 workflow and SCRIPTING.md for all syntax.
 
 ## Opt-in Pokémon research (engine capability)
 
-The current public Chapter 1 has no Pokédex scans, and its public species
-metadata is empty. Later chapters can author `scanned_...` journal events and,
-if needed, declare `dex_installed` to gate use of the Pokédex. The reader now supplies an uninstalled/empty state,
-numbered native disclosure entries, recorded observations and in-story lookup
-cards. These derive from committed scan events, with no new persistence store or
-runtime information fetch. Existing private fixtures may omit the installation
-variable and optional numbered species fields.
+The public Chapter 1 records an opening Chikorita encounter with an ordinary
+`*journal` effect linked by `discoveryEvents` to authored species metadata.
+The Pokédex derives Encountered entries automatically from committed events;
+there is no encounter registry or new parser command. Species without metadata
+and mere prose mentions produce no entry. Encounter events do not add companions
+or show scan cards. Explicit `scanned_...` events remain available for authored
+lookups. The optional `dex_installed` gate remains unchanged; Chapter 1 omits it.
 
 ## Optional visual passage headings
 
@@ -482,7 +482,7 @@ boundary). Try Again re-enters that checkpoint once, discards later changes, and
 saves the recovered current state without moving the checkpoint boundary.
 
 Storage is local to this browser and device; it does not synchronize. The public
-story uses identity `aurelian-league`, revision 11, and key
+story uses identity `aurelian-league`, revision 12, and key
 `pokemon:checkpoint:aurelian-league`. Private fixture identities are separate.
 
 Format 4 stores one atomic JSON record:
@@ -526,7 +526,7 @@ preview clears temporary progress. It never reads or writes public localStorage.
 `src/catalog.ts` is a frozen list of explicit application IDs, titles, descriptions,
 Vite `?raw` source, People definitions, and validated StorySaveIdentity records.
 Initialization checks distinct catalog/save IDs. Only The Aurelian League
-(`aurelian-league`, revision 11) is published. Opening the app parses that entry,
+(`aurelian-league`, revision 12) is published. Opening the app parses that entry,
 constructs its session and presents startup. It reads only that identity's save;
 empty startup never constructs a Game. Continue and confirmed replacement keep
 the existing validation and explicit unsaved-play semantics.
@@ -889,17 +889,15 @@ chapter, without reading prose, party names or persistence. Every event referenc
 must exist in the selected story. Acquisition status requires an authored journal
 event paired with the party effect, so it survives removal without a second store.
 
-The public catalog loads content/aurelian-league.pokedex.json (currently empty); author preview accepts
-optional local .pokedex.json metadata with the same validation and memory-only play.
-The public Chapter 1 does not record scans. Pokédex metadata uses explicit scanned_
-events after registration, not sighting IDs. Source assembly preserves every
-passage, page, choice, effect and narrative outcome.
+The public catalog loads content/aurelian-league.pokedex.json with Chikorita's
+number, Grass type, description and opening encounter event. Author preview uses
+the same metadata and accepts optional local .pokedex.json files in memory-only
+play. Source assembly preserves narrative, choices and outcomes.
 
-Pokédex presentation adds no GameState field, save format, or key. Revision-10
-saves retain exactly their recorded lookups; absent observations stay undiscovered;
-Continue never replays or backfills. The separate Chapter 2 rename advances the
-story revision because journal chapter labels are validated. Checkpoints preserve
-exactly their journal-based discovery boundary, matching People semantics.
+This adds no GameState field, save format or key. Revision 12 intentionally
+rejects revision-11 and older progress because Continue must not backfill or
+replay the newly added initial event. Checkpoints preserve exactly their
+journal-based discovery boundary, matching People semantics.
 
 Subsection selection changes only native pressed buttons and hidden content within
 Character; headings receive focus. The reader keeps the story DOM and any drafts,
@@ -932,7 +930,8 @@ author-controlled and unchanged. See AUTHORING.md for the full contract/examples
 
 The original physical split preserved the then-current source and gameplay.
 The Chapter 1 replacement originally advanced the public story to revision 10.
-The subsequent Public Sans/four-tab/field-kit update advances it to revision 11.
+The subsequent Public Sans/four-tab/field-kit update advanced it to revision 11.
+The initial Chikorita encounter then advances it to revision 12.
 The story ID, storage key, GameState schema, save formats, and checkpoint semantics
 remain unchanged. Existing revision-8 saves are rejected rather than migrated
 because their recorded chapter labels are incompatible.

@@ -19,7 +19,7 @@ function select(game: Game, index: number) {
 }
 
 test('new Chapter 1 is the only public game content', () => {
-  assert.match(readFileSync('src/catalog.ts', 'utf8'), /storyRevision: 11/);
+  assert.match(readFileSync('src/catalog.ts', 'utf8'), /storyRevision: 12/);
   assert.equal(story.startId, 'orchard_intro');
   assert.deepEqual(story.passages.map(p => p.id), [
     'orchard_intro', 'ditch_attempt', 'bread_result', 'report_result',
@@ -34,13 +34,13 @@ test('Cassius appears in People immediately and old metadata is absent', () => {
   const game = new Game(story);
   assert.deepEqual(encounteredPeople(people, game.state).map(p => p.id), ['cassius']);
   assert.match(people[0]!.description, /senior.*field warden/i);
-  assert.equal(pokedex.length, 0);
+  assert.deepEqual(pokedex.map(entry => entry.id), ['chikorita']);
   assert.deepEqual(game.state.inventory, {
     field_bag: 1, protective_gloves: 1, approved_treats: 1,
     first_aid_kit: 1, id_scanner: 1, collection_net: 1, collapsible_carrier: 1,
   });
   assert.equal(game.state.variables.occupation, 'Junior League field warden');
-  assert.deepEqual(game.state.journal.map(e => e.id), ['met_cassius']);
+  assert.deepEqual(game.state.journal.map(e => e.id), ['met_cassius', 'encountered_chikorita_orchard']);
 });
 test('all 64 binary-choice routes reach the terminal capture with correct state', () => {
   const ids = ['orchard_intro','ditch_attempt','bread_result','report_result',
@@ -65,7 +65,7 @@ test('all 64 binary-choice routes reach the terminal capture with correct state'
     assert.equal(game.availableChoices.length, 0);
     assert.equal(game.passage.continueTo, undefined);
     assert.match(game.currentParagraphs.at(-1)!.text, /You hope he's right/);
-    assert.deepEqual(game.state.journal.map(e => e.id), ['met_cassius']);
+    assert.deepEqual(game.state.journal.map(e => e.id), ['met_cassius', 'encountered_chikorita_orchard']);
     assert.equal(game.state.party.length, 0);
     assert.equal(Object.keys(game.state.inventory).length, 7);
   }
@@ -76,13 +76,13 @@ test('saved page and relationship resume without replaying effects', () => {
     getItem: (key: string) => saved.get(key) ?? null,
     setItem: (key: string, value: string) => { saved.set(key, value); },
   };
-  const session = new GameSession(story, storage, { storyId: 'aurelian-league', storyRevision: 11 });
+  const session = new GameSession(story, storage, { storyId: 'aurelian-league', storyRevision: 12 });
   assert.equal(session.newGame(() => true), 'started');
   session.navigateChoice(session.game!.visibleChoices[0]!);
   session.advancePage();
   const oldState = session.game!.state;
   const oldPage = session.game!.currentParagraphs.map(p => p.text);
-  const resumedSession = new GameSession(story, storage, { storyId: 'aurelian-league', storyRevision: 11 });
+  const resumedSession = new GameSession(story, storage, { storyId: 'aurelian-league', storyRevision: 12 });
   assert.equal(resumedSession.startup.status, 'ready');
   const resumed = resumedSession.continueGame();
   assert.deepEqual(resumed.state, oldState);

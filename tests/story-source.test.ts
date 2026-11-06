@@ -6,12 +6,17 @@ import { assembleStorySources, parseStorySources, publicStoryFiles } from '../sr
 import { publicSources } from './public-story';
 import { Game } from '../src/game';
 
-// Canonical SHA-256 for the assembled Chapter 1 relocation story with its starting equipment.
-const currentSourceHash = '2c01c06b47c5d15b4ca0f154558d977359e1c1a88013b74914c46a2a98f1e1a6';
+// Canonical SHA-256 for the assembled Chapter 1 relocation story with its starting equipment and Chikorita encounter.
+const currentSourceHash = '3ecd7bd12443a6ab552a5136c9a0e43645bac4fdea898a88c84d44c4e4b74de4';
 test('the ordered sources reproduce the final Chapter 1 and no legacy chapters', () => {
   assert.deepEqual(publicStoryFiles.map(path => path.split('/').at(-1)), ['globals.story', 'chapter-01-simple-assignment.story']);
   const parts = publicSources();
   assert.equal(createHash('sha256').update(assembleStorySources(parts)).digest('hex'), currentSourceHash);
+  // The encounter effect is the only source change: prose, dialogue and choices stay exact.
+  const previousSource = assembleStorySources(parts).replace(
+    '*journal encountered_chikorita_orchard "You encountered Chikorita during the relocation assignment outside Lezano."\n', '');
+  assert.equal(createHash('sha256').update(previousSource).digest('hex'),
+    '2c01c06b47c5d15b4ca0f154558d977359e1c1a88013b74914c46a2a98f1e1a6');
   const story = parseStorySources(parts);
   assert.equal(story.startId, 'orchard_intro');
   assert.equal(story.passages.length, 7);

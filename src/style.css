@@ -94,9 +94,7 @@ input[aria-invalid='true'] { border: 2px solid var(--text); }
 /* Headings receive reading focus without an interactive-control outline. */
 h1[tabindex='-1']:focus-visible, h2[tabindex='-1']:focus-visible { outline: none; }
 .title-screen { text-align: center; }
-.title-screen .app-header { border: 0; margin-block-end: 1.5rem; padding-block-end: 0; }
-.title-screen .brand { font-size: 0.95rem; }
-.title-screen h1 { font-size: clamp(2.2rem, 6vw, 3.15rem); margin-block-end: 1rem; }
+.title-screen h1 { font-size: clamp(1.8rem, 5vw, 2.8rem); margin-block-end: 1rem; }
 .startup-description { max-inline-size: 33rem; margin: 0 auto 1.5rem; }
 .title-screen .startup-actions { max-inline-size: 25rem; margin: 0 auto; border: 0; padding: 0; gap: 0.8rem; }
 .primary-action { color: var(--surface); background: var(--accent); border-color: var(--accent); }

@@ -10,6 +10,7 @@
 *add_item collection_net 1
 *add_item collapsible_carrier 1
 *journal met_cassius "You worked alongside Cassius, the senior League field warden assigned to supervise you near Lezano."
+*journal encountered_chikorita_orchard "You encountered Chikorita during the relocation assignment outside Lezano."
 
 The countryside outside the port city of Lezano is actually quite pleasant on mornings when you're not chasing anything. A few miles inland, the busy streets and crowded docks give way to gently rolling farmland, with orchards covering the lower hills and open fields stretching toward the distant treeline. Low stone walls mark the boundaries of some of the older properties, while hedges and narrow dirt paths separate the rest. The fruit trees are heavy with yellow fruit that smells sweet whenever the breeze carries the scent across the road. A narrow irrigation channel brings water down from the hills, feeding the fields before passing beneath a small stone bridge farther west. You would quite happily spend the rest of the morning here if you weren't so busy making a fool out of yourselves trying to catch this Chikorita for relocation.
 

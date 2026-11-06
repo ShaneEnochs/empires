@@ -12,7 +12,7 @@ for (const width of [320, 1280]) for (const alternate of [false, true]) {
   test('Chapter 1 completes at ' + width + 'px, branch ' + (alternate ? 'chase/patience' : 'help/clover'), async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('The Aurelian League');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('THE AURELIAN LEAGUE');
     await page.getByRole('button', { name: 'New Game', exact: true }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('A Simple Assignment');
     await expect(page.locator('.chapter-label')).toHaveText('Chapter 1: A Simple Assignment');
@@ -44,13 +44,13 @@ for (const width of [320, 1280]) for (const alternate of [false, true]) {
     await expect(page.getByRole('button', { name: 'Continue', exact: true })).toHaveCount(0);
     const raw = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
     const save = JSON.parse(raw!);
-    expect(save.storyRevision).toBe(11);
+    expect(save.storyRevision).toBe(12);
     expect(save.currentState.passageId).toBe('capture_attempt');
     expect(save.currentState.variables.cassius_relationship).toBe(alternate ? 10 : 15);
     expect(save.currentState.variables.capture_plan).toBe(alternate ? 'carrier' : 'clover');
     expect(save.currentState.party).toEqual([]);
     expect(Object.keys(save.currentState.inventory)).toEqual(['field_bag', 'protective_gloves', 'approved_treats', 'first_aid_kit', 'id_scanner', 'collection_net', 'collapsible_carrier']);
-    expect(save.currentState.journal.map((e: { id: string }) => e.id)).toEqual(['met_cassius']);
+    expect(save.currentState.journal.map((e: { id: string }) => e.id)).toEqual(['met_cassius', 'encountered_chikorita_orchard']);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.reload();
     await page.getByRole('button', { name: 'Continue Game', exact: true }).click();
