@@ -88,9 +88,9 @@ test('reload and Continue preserve both saved records without writing or replayi
     await expectStartup(page);
     await action(page, titlePage.continueGameLabel, 'Six Sacks and a Day');
     await crisisCharacter(page, ['Rowan 周', '3', '1', 'Undecided']);
+    expect(await storageAccess(page)).toEqual([{ operation: 'read', key: crisisKey }]);
     await expectItems(page, 'Skills', ['Rescue Training', 'Channel Knowledge']);
     await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
-    expect(await storageAccess(page)).toEqual([{ operation: 'read', key: crisisKey }]);
     expect(await records(page)).toEqual(saved);
   }
 });
