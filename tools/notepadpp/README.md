@@ -155,7 +155,7 @@ Windows interactive UDL import/completion verification remains unavailable here.
 
 ## Pokémon companions
 
-The public opening is `content/aurelian-league/chapter-01-crossing.story`. Initial declarations support
+The public opening is `content/aurelian-league/chapter-01-simple-assignment.story`. Initial declarations support
 `*pokemon id "Species"`. Use `*add_pokemon id [nickname_variable]` and
 `*remove_pokemon id` as entry effects. The nickname operand must name a global string
 (empty means no nickname); it is copied once when joining. Party holds six, with

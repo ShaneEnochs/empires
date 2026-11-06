@@ -1,16 +1,15 @@
 # The Aurelian League engine
 
 The sole public story is assembled from content/aurelian-league/sources.json, identity aurelian-league,
-revision 9. Pokémon-themed private examples exercise historical engine features;
+revision 10. Pokémon-themed private examples exercise historical engine features;
 they are not public stories or additional Aurelia lore. See README for the current
 workflow and SCRIPTING.md for all syntax.
 
-## Opt-in Pokémon research (current story scope)
+## Opt-in Pokémon research (engine capability)
 
-At Lezano registration, the story grants `dex_installed = true` and records a
-journal event. The public Pokédex metadata now refers only to explicit
-`scanned_...` journal events, so ferry sightings and later non-looked-up
-Pokémon do not appear in it. The reader now supplies an uninstalled/empty state,
+The current public Chapter 1 has no Pokédex scans, and its public species
+metadata is empty. Later chapters can author `scanned_...` journal events and,
+if needed, declare `dex_installed` to gate use of the Pokédex. The reader now supplies an uninstalled/empty state,
 numbered native disclosure entries, recorded observations and in-story lookup
 cards. These derive from committed scan events, with no new persistence store or
 runtime information fetch. Existing private fixtures may omit the installation
@@ -24,8 +23,7 @@ optional static `*hide_title` immediately after `*title` records
 available to assistive technologies, with the same ID and region association,
 but uses the existing `visually-hidden` CSS class. Internal passage titles,
 story navigation, author preview, reading context, and save formats are
-unchanged. Chapters are explicitly authored as `Chapter 1: The Crossing`
-and `Chapter 2: Arrival` for the public story.
+unchanged. The current public story has only `Chapter 1: A Simple Assignment`.
 
 ## Party and save schema
 
@@ -493,7 +491,7 @@ boundary). Try Again re-enters that checkpoint once, discards later changes, and
 saves the recovered current state without moving the checkpoint boundary.
 
 Storage is local to this browser and device; it does not synchronize. The public
-story uses identity `aurelian-league`, revision 9, and key
+story uses identity `aurelian-league`, revision 10, and key
 `pokemon:checkpoint:aurelian-league`. Private fixture identities are separate.
 
 Format 4 stores one atomic JSON record:
@@ -537,7 +535,7 @@ preview clears temporary progress. It never reads or writes public localStorage.
 `src/catalog.ts` is a frozen list of explicit application IDs, titles, descriptions,
 Vite `?raw` source, People definitions, and validated StorySaveIdentity records.
 Initialization checks distinct catalog/save IDs. Only The Aurelian League
-(`aurelian-league`, revision 9) is published. Opening the app parses that entry,
+(`aurelian-league`, revision 10) is published. Opening the app parses that entry,
 constructs its session and presents startup. It reads only that identity's save;
 empty startup never constructs a Game. Continue and confirmed replacement keep
 the existing validation and explicit unsaved-play semantics.
@@ -901,13 +899,13 @@ chapter, without reading prose, party names or persistence. Every event referenc
 must exist in the selected story. Acquisition status requires an authored journal
 event paired with the party effect, so it survives removal without a second store.
 
-The public catalog loads content/aurelian-league.pokedex.json; author preview accepts
+The public catalog loads content/aurelian-league.pokedex.json (currently empty); author preview accepts
 optional local .pokedex.json metadata with the same validation and memory-only play.
-Ferry sightings remain journal-only. Public Pokédex metadata uses explicit scanned_
+The public Chapter 1 does not record scans. Pokédex metadata uses explicit scanned_
 events after registration, not sighting IDs. Source assembly preserves every
 passage, page, choice, effect and narrative outcome.
 
-Pokédex presentation adds no GameState field, save format, or key. Revision-9
+Pokédex presentation adds no GameState field, save format, or key. Revision-10
 saves retain exactly their recorded lookups; absent observations stay undiscovered;
 Continue never replays or backfills. The separate Chapter 2 rename advances the
 story revision because journal chapter labels are validated. Checkpoints preserve
@@ -922,7 +920,7 @@ on later resize/text scaling. No parser or gameplay transition changes are neede
 ## Ordered chapter sources and completed Pokédex presentation
 
 The public story is assembled eagerly from the ordered
-`content/aurelian-league/sources.json` list: globals, Chapter 1 and Chapter 2.
+`content/aurelian-league/sources.json` list: globals and Chapter 1.
 One complete source still enters the existing parser and one Game/session;
 no dynamic loading or per-chapter state/save exists. The pure story-source helper
 normalizes file boundaries and maps parser diagnostics to a filename/local line.
@@ -943,7 +941,7 @@ entry. No new directive is needed. The restaurant delay/Livia consequences remai
 author-controlled and unchanged. See AUTHORING.md for the full contract/examples.
 
 The original physical split preserved the then-current source and gameplay.
-The subsequent Chapter 2 rename to Arrival advances the public story to revision 9.
+The Chapter 1 replacement advances the public story to revision 10.
 The story ID, storage key, GameState schema, save formats, and checkpoint semantics
 remain unchanged. Existing revision-8 saves are rejected rather than migrated
 because their recorded chapter labels are incompatible.

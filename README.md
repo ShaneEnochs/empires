@@ -1,18 +1,20 @@
 # The Aurelian League
 
-A Pokémon interactive-fiction prototype set in Aurelia, a modern region influenced
-by Roman architecture and civic institutions. Contestants earn eight Laurels through
-many kinds of accomplishment; battling is not required. The three highest-ranked
-contestants with eight Laurels qualify for the Triumvirate championship.
+A Pokémon interactive-fiction mystery set in Aurelia, a remote Roman-influenced
+region. You play a junior Aurelian League field warden who believes their work
+helps wild Pokémon. The League's public competition conceals a Team Rocket
+operation the protagonist has yet to discover.
 
-The playable opening takes place aboard a crowded ferry bound for Lezano.
-An early choice introduces the crew's working Pokémon. Meet Lucia, enter your
-first name, decide whether to exchange contact details, and choose your pronouns
-in conversation. You can learn about the League, speak with other contestants,
-listen in, or spend time on the observation deck. Chapter 1, The Crossing, takes place aboard the Portia. In Chapter 2, Arrival, the player disembarks at Lezano, encounters the rude contestant wearing CHAMP on his jacket, and receives 100 credits and a silver League bracelet that handles identification, payments, maps, hotel access, Pokédex lookups, and voluntary Pokémon partnerships. Pokémon appear in the Pokédex only after the player deliberately looks one up. The hotel branch has an extended luggage search involving Victra, two ways to investigate her claim, optional assistance at the annex, and a choice to exchange bracelet contacts. The restaurant branch has a time-sensitive Wattrel rescue; choosing to scan instead of helping can damage Livia's initial impression. Lucia can invite the player to walk to the Civic Forum if they exchanged numbers on the ferry. Both branches end before the four-o'clock orientation and starter selection. The seven planned first-partner options are Charmander, Chikorita, Piplup, Scatterbug, Sandile, Tinkatink, and Lillipup. The mutual-choice starter selection is not yet implemented; see [the story bible](docs/STORY_BIBLE.md) and [future ideas](FUTURE_IDEAS.md).
-The engine's party system is implemented, but players cannot acquire Pokémon
-in this chapter. Battles, evolution, levels, storage boxes, rankings, and external
-Pokémon services are not implemented.
+**Playable now: Chapter 1, A Simple Assignment.** You and senior warden Cassius
+pursue an elusive Chikorita through orchards and farmland outside Lezano.
+Your choices shape your relationship with Cassius and your approach to the
+capture. The chapter ends with the Chikorita in a carrier. Chapter 2 is not
+written or linked yet.
+
+The engine's party, inventory, journal, People and Pokédex systems remain available
+for future chapters. The current chapter has no starter selection, owned Pokémon,
+Pokédex scan or trainer-name input. See the [story bible](docs/STORY_BIBLE.md)
+and [working outline](docs/STORY_OUTLINE.md) for the new direction.
 
 ## Install, run, and play
 
@@ -28,7 +30,7 @@ Choice menus require selecting an option before Continue. Text input accepts 1�
 Unicode code points, trims outer whitespace, and rejects controls and line breaks.
 
 The read-only primary views are Story, Character, Party, Pokédex, and People.
-Character defaults to Stats (trainer name/pronouns and configured statistics),
+Character defaults to Stats (only explicitly authored statistics),
 with selectable Skills, Inventory, and Journal subsections. Journal groups events
 by chapter. The chapter bar is visible only in Story, and `*hide_title` suppresses secondary passage headings visually without removing their accessible labels. Party shows up to
 six companions in joining order, as `Pip (Piplup)` or `Piplup`. It has no management
@@ -78,8 +80,8 @@ an existing companion. Pokémon are separate from inventory items and trainer sk
 
 `has_pokemon id` and `lacks_pokemon id` work in `*if`, `*show_if`, and choice
 conditions. Definitions, commands, and conditions are validated even in hidden or
-unreachable passages. See the public [opening](content/aurelian-league/chapter-01-crossing.story) for
-name input and all five pronoun variables plus plural verb agreement.
+unreachable passages. See the public [opening](content/aurelian-league/chapter-01-simple-assignment.story) for
+conditional paragraphs, choice assignments, relationship effects and page breaks.
 
 The engine retains variables, skills, item quantities, journal discovery, People,
 conditional narrative/actions/effects, checkpoints, automatic saves, text input,
@@ -104,7 +106,7 @@ published build. No editor uploads, accounts, APIs, or new runtime dependencies 
 
 ## Saves and recovery
 
-The sole public story has `storyId: aurelian-league`, `storyRevision: 9`, and key
+The sole public story has `storyId: aurelian-league`, `storyRevision: 10`, and key
 `pokemon:checkpoint:aurelian-league`. This fresh namespace never reads, migrates,
 or deletes the former game's browser records.
 
@@ -173,8 +175,7 @@ The public story is assembled from globals and chapter files under
 Globals holds shared declarations; each chapter holds its chapter label and
 passages. The application eagerly assembles all text before the existing parser,
 so cross-chapter navigation shares one complete Story, Game and save. There is
-no runtime chapter loading or new story command. The physical split preserves
-the original revision-8 source and gameplay exactly.
+no runtime chapter loading or new story command. The old ferry and arrival chapters have been replaced by the new Chapter 1.
 
 Run `npm run check:stories` or pass any public chapter to check the complete
 ordered story. VS Code diagnostics/tasks and Notepad++ validation use that order;
@@ -183,30 +184,14 @@ development author preview choose **Preview public chapter files** to play the
 same assembled sources with public metadata and private memory saves. Standalone
 single-file drafts remain supported.
 
-## Opt-in Pokédex
+## People and Pokédex metadata
 
-Registration activates the Pokédex through the League bracelet (`dex_installed`). Before then the Pokédex panel explains
-that it is unavailable; installation alone leaves it empty. Only deliberate
-`scanned_...` journal events unlock public entries. Ferry sightings, Lucia's
-Lapras necklace, and Pokémon mentioned in conversation do not count.
+Chapter 1 does not introduce Pokédex scans, so its public Pokédex metadata is
+currently empty. Cassius is recorded as a known person when the opening begins.
+Later chapters can add discovery and scan events using the engine's existing
+journal-driven metadata system.
 
-`content/aurelian-league.pokedex.json` contains incremental species definitions,
-National numbers, types, classifications, official-source summaries/links, and
-observations keyed to explicit journal IDs. Native collapsed entries expand by
-mouse, touch or keyboard. Only recorded observations appear, in journal order;
-multiple scans of Wattrel remain one entry. Older private metadata with only the
-original fields still works, without requiring the public installation variable.
-
-Lookup passages also display a text-only app information card, derived from their
-recorded scan effects. It never writes a save or triggers discovery. The restaurant's
-urgent lookup still delays assistance and affects Livia; the UI neither softens nor
-undoes that choice. No runtime database, API, image or external-information fetch
-has been added.
-
-See [the authoring guide](docs/AUTHORING.md) for the source list, metadata fields,
-lookup events and observation examples. The story now uses revision 9 because
-renaming Chapter 2 to Arrival changes the chapter recorded with journal entries.
-Existing revision-8 saves are incompatible and are not automatically migrated.
-Save formats and the storage key remain unchanged. Within revision 9, Continue
-and recovery retain exactly the scans in their journal state;
-there is no new tracking collection and no automatic backfill of unseen notes.
+Revision 10 deliberately invalidates saves from the ferry storyline (revision 9).
+The browser storage key remains `pokemon:checkpoint:aurelian-league`. A confirmed
+New Game replaces incompatible progress; the app never silently migrates or
+deletes the old save.

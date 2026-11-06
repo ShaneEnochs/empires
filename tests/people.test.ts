@@ -116,121 +116,17 @@ test('People facts validate event references, reject malformed records, and are 
   assert.throws(() => validatePeople(city, invalidEvents), /unknown journal event/);
 });
 
-test('Lucia appears on introduction and learns facts only from visited scenes', () => {
+test('Cassius alone appears as the initial public People entry', () => {
   const publicStory = parseStory(publicStorySource());
   const publicPeople = validatePeople(publicStory, parsePeople(
     JSON.parse(readFileSync('content/aurelian-league.people.json', 'utf8'))));
-  const lucia = publicPeople.find(person => person.id === 'lucia')!;
+  assert.deepEqual(publicPeople.map(person => person.id), ['cassius']);
+  assert.match(publicPeople[0]!.description, /senior.*field warden/i);
   const game = new Game(publicStory);
-  const recorded = () => learnedPersonFacts(lucia, game.state);
-  game.navigate('ferry_windows');
-  game.navigate('ferry_context');
-  game.navigate('ferry_ad');
-  game.advancePage();
-  assert.deepEqual(encounteredPeople(publicPeople, game.state), []);
-  game.navigate('name');
-  assert.deepEqual(encounteredPeople(publicPeople, game.state).map(person => person.name), ['Lucia']);
-  assert.equal(recorded().length, 1);
-  assert.match(recorded()[0]!, /journalist/);
-  assert.doesNotMatch(recorded().join(' '), /Floatzel|brother|wetlands|rank/);
-
-  game.submitText('Ari');
-  game.navigate('contact_no');
-  game.navigate('pronouns');
-  assert.equal(recorded().length, 2);
-  assert.match(recorded().join(' '), /she\/her/);
-  assert.doesNotMatch(recorded().join(' '), /exchanged phone numbers/);
-  game.navigate('they');
-  game.navigate('lucia_chat');
-  assert.equal(recorded().length, 5);
-  assert.match(recorded().join(' '), /Floatzel/);
-  assert.doesNotMatch(recorded().join(' '), /wetlands|brother|ranks/);
-
-  const committed = game.state;
-  const savedFacts = recorded();
-  assert.deepEqual(recorded(), savedFacts);
-  assert.equal(game.state, committed);
-  game.navigate('lucia_wildlife');
-  assert.equal(recorded().length, 7);
-  assert.match(recorded().join(' '), /brother|wetlands/);
-  assert.doesNotMatch(recorded().join(' '), /ranks/);
+  const state = game.state;
+  assert.deepEqual(encounteredPeople(publicPeople, state).map(person => person.name), ['Cassius']);
+  assert.deepEqual(learnedPersonFacts(publicPeople[0]!, state), []);
+  assert.equal(game.state, state);
   game.restoreCheckpoint();
-  assert.deepEqual(encounteredPeople(publicPeople, game.state), []);
-  assert.deepEqual(recorded(), []);
-
-  const other = new Game(publicStory);
-  for (const destination of ['ferry_cafe','ferry_context','ferry_ad']) other.navigate(destination);
-  other.advancePage();
-  other.navigate('name');
-  other.submitText('Ari');
-  other.navigate('contact_yes');
-  other.navigate('pronouns');
-  other.navigate('he');
-  other.navigate('lucia_chat');
-  other.navigate('lucia_rules');
-  const alternativeFacts = learnedPersonFacts(lucia, other.state).join(' ');
-  assert.match(alternativeFacts, /exchanged phone numbers/);
-  assert.match(alternativeFacts, /willingly choose their trainers/);
-  assert.doesNotMatch(alternativeFacts, /wetlands|brother/);
-  assert.equal(encounteredPeople(publicPeople, other.state).filter(person => person.id === 'lucia').length, 1);
-});
-
-test('Victra and Livia facts follow the actual multi-stage subplot outcomes', () => {
-  const pub = parseStory(publicStorySource());
-  const people = validatePeople(pub,parsePeople(JSON.parse(readFileSync('content/aurelian-league.people.json','utf8'))));
-  assert.deepEqual(people.map(p=>p.name),['Lucia','Cassius','Octavia','Victra','Livia']);
-  function arrive(destination: 'hotel_route'|'food_route') {
-    const game=new Game(pub);
-    for(const id of ['ferry_windows','ferry_context','ferry_ad']) game.navigate(id);
-    game.advancePage();game.navigate('name');game.submitText('Ari');
-    for(const id of ['contact_yes','pronouns','they','lucia_chat','open_deck','rail','dock_approach']) game.navigate(id);
-    game.navigateChoice(game.visibleChoices[0]!);
-    game.navigate('lezano_checkin');while(game.canAdvancePage)game.advancePage();game.navigate('harbor_lookup');game.navigate('harbor_destination');
-    game.navigate(destination);
-    return game;
-  }
-  const victra=people.find(p=>p.id==='victra')!,livia=people.find(p=>p.id==='livia')!;
-  for (const accompanied of [true, false]) {
-    const game = arrive('hotel_route');
-    game.navigateChoice(game.visibleChoices[0]!); // reassure
-    game.navigate('hotel_checkin');
-    game.navigateChoice(game.visibleChoices[0]!); // offer help
-    assert.equal(encounteredPeople(people, game.state).some(p => p.id === 'victra'), true);
-    game.navigateChoice(game.visibleChoices[accompanied ? 0 : 1]!); // manifest or carts
-    game.navigate('hotel_followup');
-    game.navigateChoice(game.visibleChoices[accompanied ? 0 : 1]!); // accompany or directions
-    if (accompanied) {
-      game.navigateChoice(game.visibleChoices[0]!); // batch number
-      game.navigate('hotel_annex_case');
-      game.navigateChoice(game.visibleChoices[1]!); // distinctive mark
-      game.navigate('hotel_annex_recovered');
-    }
-    assert.equal(game.state.variables.victra_case, accompanied ? 'recovered' : 'pending');
-    assert.equal(game.state.journal.some(e => e.id === 'victra_suitcase'), accompanied);
-    assert.equal(game.state.journal.some(e => e.id === 'victra_directions'), !accompanied);
-    game.navigate('hotel_victra_contact_offer');
-    game.navigateChoice(game.visibleChoices[accompanied ? 0 : 1]!); // accept / decline
-    assert.equal(game.state.journal.some(e => e.id === 'victra_contact_shared'), accompanied);
-    assert.equal(learnedPersonFacts(victra,game.state).length, accompanied ? 2 : 1);
-  }
-  const skipped = arrive('hotel_route');
-  skipped.navigateChoice(skipped.visibleChoices[1]!); // quiet flavor choice
-  skipped.navigate('hotel_checkin');
-  skipped.navigateChoice(skipped.visibleChoices[2]!); // leave the staff to investigate
-  skipped.navigate('hotel_resolution');
-  assert.equal(skipped.state.variables.victra_case,'unknown');
-  assert.equal(encounteredPeople(people,skipped.state).some(p=>p.id==='victra'),false);
-
-  for(const action of [0,1,2]){
-    const game=arrive('food_route');
-    game.navigateChoice(game.visibleChoices[action]!);
-    assert.equal(game.state.variables.livia_impression,action===2?'distracted':'helpful');
-    game.navigateChoice(game.visibleChoices[0]!);
-    game.navigate('food_lunch');
-    assert.equal(game.state.variables.credits,88);
-    assert.equal(encounteredPeople(people,game.state).some(p=>p.id==='livia'),true);
-    const facts=learnedPersonFacts(livia,game.state).join(' ');
-    assert.match(facts,action===2?/disappointed/:/appreciated/);
-    assert.equal(game.state.journal.some(e=>e.id==='livia_disappointed'),action===2);
-  }
+  assert.deepEqual(encounteredPeople(publicPeople, game.state).map(person => person.id), ['cassius']);
 });

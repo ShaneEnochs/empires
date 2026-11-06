@@ -2,7 +2,7 @@
 ## Story Bible — Version 2.0
 **Revised: November 5, 2026 | Status: Narrative redesign, established canon and working outline assumptions**
 
-> **Authority and implementation:** This document supersedes the November 4, 2026 version 1.2 story bible. It is the source of truth for new narrative planning. The currently published game, README, existing chapter scripts, and some older planning notes still represent the *previous* League-contestant story until those files are deliberately rewritten. Nothing described here should be mistaken for already playable content.
+> **Authority and implementation:** This document supersedes the November 4, 2026 version 1.2 story bible. It is the source of truth for new narrative planning. The published game now includes the redesigned Chapter 1, *A Simple Assignment*, ending with the Chikorita's capture. The cargo-ship mystery and all later chapters are not yet playable. Some older planning notes elsewhere in the repository may still concern the superseded contestant prototype.
 >
 > **Labels:** **Established** means agreed story direction; **Open** means an undecided detail or a suggested approach. This document deliberately avoids inventing answers to open questions.
 

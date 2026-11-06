@@ -118,73 +118,25 @@ test('a failed entry cannot record a discovery', () => {
   assert.throws(() => game.navigate('fail'), /insufficient inventory/);
   assert.equal(game.state, before); assert.deepEqual(discoveredPokemon(failedDex, game.state), []);
 });
-test('pre-install sightings never populate the public Pokédex', () => {
-  for(const first of ['ferry_cafe','ferry_windows'] as const){
-    const game = new Game(publicStory);
-    game.navigate(first);
-    assert.deepEqual(discoveredPokemon(publicDex, game.state), []);
-    game.navigate('ferry_context'); game.navigate('ferry_ad'); game.advancePage();
-    game.navigate('name');
-    assert.deepEqual(discoveredPokemon(publicDex, game.state), []);
-    assert.equal(game.state.variables.dex_installed, false);
-    assert.ok(game.state.journal.some(e => e.id.startsWith('saw_')));
-  }
-  assert.ok(!publicDex.some(entry => ['Lapras', 'Floatzel', 'Magikarp'].includes(entry.name)));
+test('the current public opening has no Pokédex scans or species records', () => {
+  const game = new Game(publicStory);
+  assert.deepEqual(publicDex, []);
+  assert.deepEqual(discoveredPokemon(publicDex, game.state), []);
+  assert.equal(game.state.variables.dex_installed, undefined);
+  assert.equal(game.state.journal.length, 1);
+  assert.equal(game.state.journal[0]!.id, 'met_cassius');
 });
-test('existing revision-9 saves remain valid and are never backfilled during Continue', () => {
-  const identity = { storyId: 'aurelian-league', storyRevision: 9 };
-  const memory = new Memory(); const session = new GameSession(publicStory, memory, identity);
-  session.newGame(() => true); session.navigate('ferry_windows');
-  const old = JSON.parse(memory.raw!); old.currentState.journal = [];
-  memory.raw = JSON.stringify(old);
-  const raw = memory.raw, writes = memory.writes;
-  const reopened = new GameSession(publicStory, memory, identity);
-  assert.equal(reopened.startup.status, 'ready');
-  assert.deepEqual(discoveredPokemon(publicDex, reopened.continueGame().state), []);
-  assert.equal(memory.raw, raw); assert.equal(memory.writes, writes);
-  assert.equal(checkpointKey(identity), 'pokemon:checkpoint:aurelian-league');
-});
-
-test('revision-8 progress is rejected instead of loading incompatible chapter labels', () => {
+test('revision-9 saved progress remains intact but cannot load under revision 10', () => {
   const memory = new Memory();
-  const previous = { storyId: 'aurelian-league', storyRevision: 8 };
+  const previous = { storyId: 'aurelian-league', storyRevision: 9 };
   const oldSession = new GameSession(publicStory, memory, previous);
-  oldSession.newGame(() => true);
-  oldSession.navigate('ferry_windows');
-  const original = memory.raw;
-  const current = new GameSession(publicStory, memory, { storyId: 'aurelian-league', storyRevision: 9 });
-  assert.equal(current.startup.status, 'invalid');
-  assert.match(current.startup.status === 'invalid' ? current.startup.message : '', /incompatible story revision/);
-  assert.equal(memory.raw, original);
-});
-
-test('a post-install opt-in lookup is the only public discovery path', () => {
-  const reach = () => {
-    const game = new Game(publicStory);
-    game.navigate('ferry_cafe'); game.navigate('ferry_context'); game.navigate('ferry_ad'); game.advancePage();
-    game.navigate('name'); game.submitText('Ari');
-    for(const id of ['contact_no','pronouns','he','lucia_chat','open_deck','rail','dock_approach']) game.navigate(id);
-    game.navigateChoice(game.visibleChoices[1]!);
-    assert.equal(discoveredPokemon(publicDex,game.state).length,0);
-    game.navigate('lezano_checkin');
-    while (game.canAdvancePage) game.advancePage();
-    assert.equal(game.state.variables.dex_installed,true);
-    assert.ok(game.state.journal.some(e=>e.id==='installed_pokedex_app'));
-    game.navigate('harbor_lookup');
-    return game;
-  };
-  const skipped = reach(); skipped.navigate('harbor_destination');
-  assert.deepEqual(discoveredPokemon(publicDex,skipped.state),[]);
-  const wattrel = reach(); wattrel.navigate('harbor_scan_wattrel');
-  assert.deepEqual(discoveredPokemon(publicDex,wattrel.state).map(p=>p.id),['wattrel']);
-  assert.equal(discoveredPokemon(publicDex,wattrel.state)[0]!.chapter, 'Chapter 2: Arrival');
-  const machoke = reach(); machoke.navigate('harbor_scan_machoke');
-  assert.deepEqual(discoveredPokemon(publicDex,machoke.state).map(p=>p.id),['machoke']);
-  wattrel.navigate('harbor_destination'); wattrel.navigate('food_route');
-  wattrel.navigateChoice(wattrel.visibleChoices[2]!);
-  assert.equal(discoveredPokemon(publicDex,wattrel.state).filter(p=>p.id==='wattrel').length,1);
-  assert.ok(wattrel.state.journal.some(e=>e.id==='delayed_restaurant_help'));
-  assert.equal(machoke.state.journal.some(e=>e.id==='scanned_wattrel_emergency'),false);
+  assert.equal(oldSession.newGame(() => true), 'started');
+  const raw = memory.raw;
+  const next = new GameSession(publicStory, memory, { storyId: 'aurelian-league', storyRevision: 10 });
+  assert.equal(next.startup.status, 'invalid');
+  assert.match(next.startup.status === 'invalid' ? next.startup.message : '', /incompatible story revision/);
+  assert.equal(memory.raw, raw);
+  assert.equal(checkpointKey(previous), 'pokemon:checkpoint:aurelian-league');
 });
 
 test('numbered species metadata is preserved, copied and frozen', () => {
@@ -221,30 +173,9 @@ test('the installation gate applies only when the story declares dex_installed',
   assert.equal(discoveredPokemon(dex,{...game.state,variables:{...game.state.variables,dex_installed:true}}).length,1);
 });
 
-test('multiple deliberate Wattrel scans retain all observations and urgent lookup consequences',()=>{
-  const game=new Game(publicStory);
-  for(const id of ['ferry_cafe','ferry_context','ferry_ad'])game.navigate(id);
-  game.advancePage();game.navigate('name');game.submitText('Ari');
-  for(const id of ['contact_no','pronouns','they','lucia_chat','open_deck','rail','dock_approach'])game.navigate(id);
-  game.navigateChoice(game.visibleChoices[1]!);
-  game.navigate('lezano_checkin');
-  while (game.canAdvancePage) game.advancePage();
-  for(const id of ['harbor_lookup','harbor_scan_wattrel','harbor_destination','food_route'])game.navigate(id);
-  game.navigateChoice(game.visibleChoices[2]!);
-  assert.equal(game.state.variables.livia_impression,'distracted');
-  assert.ok(game.state.journal.some(event=>event.id==='delayed_restaurant_help'));
-  game.navigateChoice(game.visibleChoices[0]!);game.navigate('food_lunch');game.navigate('food_scan_wattrel');
-  const entries=discoveredPokemon(publicDex,game.state);
-  assert.equal(entries.length,1);assert.equal(entries[0]!.nationalNumber,940);
-  assert.deepEqual(entries[0]!.observations.map(note=>note.eventId),['scanned_wattrel_harbor','scanned_wattrel_emergency','scanned_wattrel_rest']);
-  assert.equal(game.state.variables.livia_impression,'distracted');assert.equal(game.state.variables.credits,88);
-  assert.ok(game.state.journal.some(event=>event.id==='livia_disappointed'));
-});
-
-test('National numbers use four digits, while legacy entries retain their species names',()=>{
-  for(const [id,number] of [['machoke','0067'],['wingull','0278'],['minccino','0572'],['wattrel','0940']]) {
-    const entry=publicDex.find(entry=>entry.id===id)!;assert.equal(pokemonLabel(entry),'#'+number+' '+entry.name);
-  }
+test('National numbers render with four digits for authored entries', () => {
+  const numbered = parsePokedex([{...definition, nationalNumber: 940}])[0]!;
+  assert.equal(pokemonLabel(numbered), '#0940 Piplup');
   assert.equal(pokemonLabel(dex[0]!), 'Piplup');
 });
 test('lookup cards require a committed scan effect in the current passage, including conditional effects',()=>{
@@ -303,12 +234,8 @@ A later observation.
   assert.deepEqual(discoveredPokemon(entries,again.game!.state)[0]!.observations.map(note=>note.text),['First.']);
 });
 
-test('public species contain descriptions and observations without trainer notes or external links', () => {
-  assert.deepEqual(publicDex.map(entry => entry.id).sort(), ['machoke','minccino','wattrel','wingull']);
-  for (const entry of publicDex) {
-    assert.ok((entry.officialSummary?.length ?? 0) > 150, entry.id + ' needs a descriptive overview');
-    assert.equal(entry.trainerNotes, undefined);
-    assert.ok(entry.observations.length > 0);
-    assert.equal(Object.hasOwn(entry, 'sourceUrl'), false);
-  }
+test('public metadata intentionally starts empty until a scan is authored', () => {
+  assert.deepEqual(publicDex, []);
+  assert.ok(publicStory.passages.every(passage => passage.effects.every(effect =>
+    effect.kind !== 'journal' || !effect.id.startsWith('scanned_'))));
 });

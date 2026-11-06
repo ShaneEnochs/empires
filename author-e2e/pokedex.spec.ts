@@ -58,12 +58,14 @@ test('authored encounters/acquisitions deduplicate, survive recovery and stay is
 test('the public chapter preview shares ordered sources and metadata without accessing public saves',async({page})=>{
  await page.goto('/author.html');await page.evaluate(()=>localStorage.setItem('pokemon:checkpoint:aurelian-league','unchanged'));
  await page.getByRole('button',{name:'Preview public chapter files',exact:true}).click();
- await expect(page.getByRole('status')).toContainText('Loaded 3 public chapter files');
+ await expect(page.getByRole('status')).toContainText('Loaded 2 public chapter files: 7 passages');
  await page.getByRole('button',{name:'New Game',exact:true}).click();
- await expect(page.locator('#passage-heading')).toHaveText('Approaching Lezano Aboard the Portia');
- await page.getByLabel('Find passage by ID or title').fill('food_emergency');
- await expect(page.getByRole('list',{name:'Passage index'}).getByRole('button')).toHaveText(['food_emergency: A Difficult Rescue']);
+ await expect(page.locator('#passage-heading')).toHaveText('A Simple Assignment');
+ await page.getByLabel('Find passage by ID or title').fill('capture_attempt');
+ await expect(page.getByRole('list',{name:'Passage index'}).getByRole('button')).toHaveText(['capture_attempt: A Different Approach']);
  await page.getByRole('button',{name:'Pokédex',exact:true}).click();
- await expect(page.locator('#pokedex')).toContainText('Your League bracelet activates the Pokédex');
+ await expect(page.locator('#pokedex')).toContainText('No Pokémon recorded yet.');
+ await page.getByRole('button',{name:'People',exact:true}).click();
+ await expect(page.locator('#people')).toContainText('Cassius');
  expect(await page.evaluate(()=>localStorage.getItem('pokemon:checkpoint:aurelian-league'))).toBe('unchanged');
 });

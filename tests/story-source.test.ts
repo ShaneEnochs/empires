@@ -6,16 +6,19 @@ import { assembleStorySources, parseStorySources, publicStoryFiles } from '../sr
 import { publicSources } from './public-story';
 import { Game } from '../src/game';
 
-// Canonical SHA-256 for the assembled, authored revision-8 story after renaming Chapter 2 to Arrival.
-const currentSourceHash = '374f8cbdb8d6d1aacbef939c60f80ccb7a0165787edb4fef0d1d66f5ade8befd';
-test('the fixed ordered chapter list reconstructs exactly the revision-9 source', () => {
-  assert.deepEqual(publicStoryFiles.map(path => path.split('/').at(-1)), ['globals.story', 'chapter-01-crossing.story', 'chapter-02-arrival.story']);
+// Canonical SHA-256 for the assembled Chapter 1 relocation story.
+const currentSourceHash = 'db39a1d572d28acf9bbfc6a5185bdcf80950b9065e7f6f216fabfaf2c48ff6a5';
+test('the ordered sources reproduce the final Chapter 1 and no legacy chapters', () => {
+  assert.deepEqual(publicStoryFiles.map(path => path.split('/').at(-1)), ['globals.story', 'chapter-01-simple-assignment.story']);
   const parts = publicSources();
   assert.equal(createHash('sha256').update(assembleStorySources(parts)).digest('hex'), currentSourceHash);
   const story = parseStorySources(parts);
-  assert.equal(story.startId, 'ferry');
-  assert.equal(story.passages.find(passage => passage.id === 'lezano_checkin')!.chapter, 'Chapter 2: Arrival');
+  assert.equal(story.startId, 'orchard_intro');
+  assert.equal(story.passages.length, 7);
+  assert.ok(story.passages.every(passage => passage.chapter === 'Chapter 1: A Simple Assignment'));
+  assert.equal(story.passages.at(-1)!.id, 'capture_attempt');
 });
+
 const parts = [
   { path: 'globals.story', text: '*var name "Ari"\n*var count 1\n*item pass "Pass"' },
   { path: 'chapter-1.story', text: '*chapter Chapter One\n*passage start\n*title Start\n*add_item pass 1\n*journal started "${name} began."\nBegin.\n*continue next' },
@@ -37,7 +40,7 @@ test('BOMs, CRLF, and missing final newlines assemble through the same parser', 
   assert.ok(assembleStorySources(normalized).includes('\n*chapter'));
 });
 test('checking a selected public chapter validates the entire ordered story', () => {
-  const result = spawnSync(process.execPath, ['--import','tsx','scripts/check-stories.ts', publicStoryFiles[2]!, publicStoryFiles[0]!], {encoding:'utf8'});
+  const result = spawnSync(process.execPath, ['--import','tsx','scripts/check-stories.ts', publicStoryFiles[1]!, publicStoryFiles[0]!], {encoding:'utf8'});
   assert.equal(result.status,0,result.stdout+result.stderr); assert.match(result.stdout,/Total: 0 errors, 0 warnings/);
   assert.equal((result.stdout.match(/INFORMATION ANALYSIS_SCOPE/g) ?? []).length,1);
 });
