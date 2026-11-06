@@ -34,7 +34,8 @@ export function appHeader(branding = 'Aurelian League'): HTMLElement {
 }
 
 export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story, storage: CheckpointStorage, backToLibrary?: () => void): void {
-  const people = validatePeople(story, entry.people);
+  // Keep validating hidden People metadata for story and authoring integrity.
+  validatePeople(story, entry.people);
   const pokedex = validatePokedex(story, entry.pokedex ?? []);
   const session = new GameSession(story, storage, entry.identity);
   let reportedNotice: unknown;
@@ -184,7 +185,7 @@ export function mountReader(root: HTMLElement, entry: ReaderEntry, story: Story,
     storyButton.textContent = 'Story';
     storyButton.setAttribute('aria-controls', 'story-content');
     storyButton.addEventListener('click', () => selectView('Story'));
-    const panels = createPanels(story, game, people, pokedex, selectView);
+    const panels = createPanels(story, game, pokedex, selectView);
     const navigation = document.createElement('nav');
     navigation.className = 'view-navigation';
     navigation.setAttribute('aria-label', 'Reading views');
