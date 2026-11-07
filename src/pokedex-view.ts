@@ -1,13 +1,27 @@
 import { pokemonLabel } from './pokedex';
 import type { DiscoveredPokemon } from './pokedex';
 
-/** Shared, text-only presentation for notebook entries and narrative lookup cards. */
+// Species IDs match authored metadata. Add future local asset URL entries here.
+const artwork: Readonly<Record<string, string>> = Object.freeze({
+  chikorita: new URL('../images/152-chikorita.png', import.meta.url).href,
+});
+
+/** Shared presentation for notebook entries and narrative lookup cards. */
 export function pokemonInformation(entry: DiscoveredPokemon): HTMLElement {
   const content = document.createElement('div');
   content.className = 'pokemon-information';
   const status = document.createElement('p');
   status.className = 'discovery-status'; status.textContent = `${entry.status} · ${entry.chapter}`;
   content.append(status);
+  const source = Object.hasOwn(artwork, entry.id) ? artwork[entry.id] : undefined;
+  if (source) {
+    const image = document.createElement('img');
+    image.className = 'pokemon-artwork';
+    image.src = source;
+    image.alt = entry.name + ' artwork';
+    image.addEventListener('error', () => image.remove(), { once: true });
+    content.append(image);
+  }
   const values = document.createElement('dl');
   for (const [label, value] of [['Type', entry.types?.join(' / ')], ['Category', entry.category]]) {
     if (value === undefined) continue;

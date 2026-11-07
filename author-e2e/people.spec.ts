@@ -16,7 +16,7 @@ test('optional People files validate, replace and recover while their tab is hid
   await page.getByLabel('Open a .story file').setInputFiles({ name: 'draft.story', mimeType: 'text/plain', buffer: story });
   const start = () => page.getByRole('button', { name: 'New Game', exact: true }).click();
   await start();
-  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', 'Character', 'Party', 'Pokédex']);
+  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', 'Inventory', 'Pokédex']);
   await page.getByRole('radio', { name: 'Listen to the ferryman', exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByRole('button', { name: 'People', exact: true })).toHaveCount(0);

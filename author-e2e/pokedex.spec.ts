@@ -39,11 +39,11 @@ test('authored encounters/acquisitions deduplicate, survive recovery and stay is
   const story = async () => { await page.getByRole('button', { name: 'Story', exact: true }).click(); };
   const proceed = async () => { await page.getByRole('button', { name: 'Continue', exact: true }).click(); };
   await showDex(); await expect(page.locator('#pokedex li')).toHaveCount(0); await story(); await proceed();
-  await showDex(); await page.locator('#pokedex summary').click(); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Encountered · Prologue']);
+  await showDex(); await page.locator('#pokedex summary').click(); await expect(page.locator('#pokedex img')).toHaveCount(0); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Encountered · Prologue']);
   await story(); await page.getByRole('radio', { name: 'Look again', exact: true }).check(); await proceed();
   await showDex(); await expect(page.locator('#pokedex li')).toHaveCount(1); await story();
   await page.getByRole('radio', { name: 'Partner', exact: true }).check(); await proceed(); await proceed(); await proceed();
-  await page.getByRole('button', { name: 'Party', exact: true }).click(); await expect(page.locator('#party li')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Party', exact: true })).toHaveCount(0);
   await showDex(); await page.locator('#pokedex summary').click(); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Acquired · Prologue']);
   await story(); await page.getByRole('button', { name: 'Try Again', exact: true }).click();
   await showDex(); await page.locator('#pokedex summary').click(); await expect(page.locator('#pokedex .discovery-status')).toHaveText(['Acquired · Prologue']);
@@ -65,7 +65,7 @@ test('the public chapter preview shares ordered sources and metadata without acc
  await expect(page.getByRole('list',{name:'Passage index'}).getByRole('button')).toHaveText(['capture_attempt: A Different Approach']);
  await page.getByRole('button',{name:'Pokédex',exact:true}).click();
  await expect(page.locator('#pokedex summary')).toHaveText('#0152 Chikorita');
- await expect(page.getByRole('navigation',{name:'Reading views'}).getByRole('button')).toHaveText(['Story','Character','Party','Pokédex']);
+ await expect(page.getByRole('navigation',{name:'Reading views'}).getByRole('button')).toHaveText(['Story','Inventory','Pokédex']);
  await expect(page.getByRole('button',{name:'People',exact:true})).toHaveCount(0);
  expect(await page.evaluate(()=>localStorage.getItem('pokemon:checkpoint:aurelian-league'))).toBe('unchanged');
 });

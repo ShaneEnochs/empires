@@ -25,8 +25,8 @@ for (const width of [320, 1280]) test('single responsive title and unchanged sta
   await page.locator('#pokedex summary').click();
   await expect(page.locator('#pokedex')).toContainText(pokedex[0]!.description);
   await expect(page.locator('#pokedex dd')).toHaveText(['Grass']);
-  await page.getByRole('button', { name: 'Party', exact: true }).click();
-  await expect(page.locator('#party li')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Party', exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pokemon:checkpoint:aurelian-league')!).currentState.party)).toEqual([]);
   const key = 'pokemon:checkpoint:aurelian-league';
   const raw = await page.evaluate(k => localStorage.getItem(k), key);
   await page.reload();

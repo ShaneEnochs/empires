@@ -1,5 +1,25 @@
 # The Aurelian League engine
 
+## Current interface
+
+The primary views are **Story | Inventory | Pokédex**, in that order. Inventory
+opens directly and shows authored item names and quantities, or an empty message.
+Character, Stats, Party, Skills, Journal and People have no visible controls.
+Statistics, skills, relationships, journal events, individual Pokémon IDs,
+nicknames and the six-member party limit remain supported by the engine and saves.
+Switching views preserves choices, text drafts, story state and saved bytes.
+Navigation stays sticky; the chapter bar appears beneath it only in Story.
+
+Pokédex discoveries still derive exclusively from committed authored journal
+events. Expandable entries can show local artwork. The species-ID map in
+`src/pokedex-view.ts` uses Vite-compatible `new URL(..., import.meta.url)` assets;
+Chikorita uses `images/152-chikorita.png`. To add another species, add its local
+asset and a matching stable species-ID map entry. Missing artwork leaves the
+text entry usable; failed image requests remove only the image. Artwork retains
+its transparency and aspect ratio. No save schema, identity or revision changes
+are needed for these presentation changes. The opening screen is unchanged.
+
+
 The sole public story is assembled from content/aurelian-league/sources.json, identity aurelian-league,
 revision 12. Pokémon-themed private examples exercise historical engine features;
 they are not public stories or additional Aurelia lore. See README for the current
@@ -34,7 +54,7 @@ Duplicate additions and absent removals are no-ops. Rejoining appends. An absent
 seventh member, invalid nickname or later unrelated effect failure rejects the
 whole entry, including a proposed checkpoint. Nicknames resolve global string
 variables once; they never track later variable changes. Conditions reuse the
-shared typed AST/evaluator. The Party view derives directly from committed state.
+shared typed AST/evaluator. Party remains hidden in the reader; conditions derive directly from committed state.
 
 The current schema explicitly writes format 4 (plain) or 5 (page/temp context).
 Checkpoint-only engine APIs use format 6, retaining checkpoint-entry semantics.
@@ -312,22 +332,12 @@ Labels remain literal. String, number, and boolean variable behavior is unchange
 This metadata adds no state fields, effects, conditions, formulas, categories,
 or conditional visibility.
 
-`panels.ts` owns the Character, Party and Pokédex panels. Character contains
-selectable Stats and Inventory subsections; Stats is the default. People metadata
-is validated by `reader.ts` and remains journal-derived, but has no visible panel.
-A small private helper shares native button/section setup, heading creation,
-`hidden`, and `aria-pressed`/`aria-controls`/`aria-labelledby` behavior.
-Another helper shares plain text lists; journal state remains available to story logic.
-This is limited rendering code, with no component registry or screen framework.
-`reader.ts` retains startup, actions, input, errors, notices, and heading focus.
-
-`characterStats(story, state)` derives disposable display text from committed
-variables without caching. Character renders it in `dl`/`dt`/`dd` elements using
-`textContent` for labels and values. Booleans become Yes/No; numbers/strings use
-`String(value)` without mutating their values. No configuration shows
-“No character information recorded yet.” The shared reader retains transient active-view selection; each presented view reads current
-gameplay data. Navigation, submission, Continue Game, and recovery select Story;
-information reflects the latest committed data when presented again.
+`panels.ts` owns the Inventory and Pokédex panels. Both read committed state
+when selected. A small helper builds their native buttons, sections and headings;
+`reader.ts` retains startup, actions, input, errors, notices and heading focus.
+`characterStats(story, state)` remains a pure helper for engine tooling/tests,
+but no Stats, Character or Party view is rendered. Inventory is a plain list.
+Navigation, submission, Continue Game and recovery select Story.
 Toggles never navigate, execute effects, submit drafts, read/write storage, or
 change state; focus/error behavior stays in the existing action handlers.
 
@@ -349,7 +359,7 @@ paragraphs and buttons retain their semantics and keyboard behavior. All display
 content uses `textContent`; heading focus follows navigation.
 
 Stage 8B adds CSS hooks for startup, passage actions, death presentation, and
-the three info panels, plus a labeled `role="group"` wrapper for utility buttons.
+the two info panels, plus a labeled `role="group"` wrapper for utility buttons.
 `style.css` provides a bounded responsive reading column, stacked story actions,
 wrapping utility controls, minimum 44px touch targets, visible focus, and consistent
 panel/form/error/warning styling. Long content wraps naturally; panels have no
@@ -368,14 +378,14 @@ remains, the field is marked `aria-invalid` and associated with a `role="alert"`
 message, and focus returns to it. On success the destination renders and receives
 heading focus. Authored labels, narrative, and errors use `textContent`.
 Draft text exists only in the field until submission. Rendering or toggling
-Character, Party, or Pokédex never submits it; view changes do not rebuild the input form.
+Inventory or Pokédex never submits it; view changes do not rebuild the input form.
 
 Journal entries and acquired Skills remain in `GameState` for authoring, conditional
-narrative, discovery, saves, and recovery. Their visible Character subsections and
-the People tab are temporarily hidden in the public and author readers. Existing
+narrative, discovery, saves, and recovery. Character, Stats, Party and
+the People tab are hidden in the public and author readers. Existing
 parsing, validation, event tracking, and tests for their state remain intact.
 
-Inventory follows Stats within Character, with its own labeled heading.
+Inventory is a primary view with its own labeled heading.
 `Object.entries(game.state.inventory)` determines insertion order and
 quantities; immutable item definitions supply names. Only positive quantities
 exist in committed state. List entries use `textContent` for `Name × quantity`;
@@ -757,7 +767,7 @@ or merge anything.
 
 ## Compact reading views and deliberate choices (Stages 10B–10C)
 
-Gameplay starts with four responsive controls: Story, Character, Party and Pokédex. The primary grid keeps one row at 320px. Flat tabs have at least 44px targets, approximately 0.9rem labels,
+Gameplay starts with three responsive controls: Story, Inventory and Pokédex. The primary grid keeps one row at 320px. Flat tabs have at least 44px targets, approximately 0.9rem labels,
 and exactly one active bottom-border indicator. No tab interaction underlines text.
 An opaque CSS sticky wrapper holds the tabs and a separate compact chapter bar,
 derived from `game.passage.chapter` after each successful action and visible only
@@ -880,7 +890,7 @@ Preflight advances through visible pages without replaying effects, then explore
 only enabled routes. Analysis is bounded; it does not prove all loops/resources or
 all possible input-dependent grammar. Use local playtests alongside diagnostics.
 
-## Event-derived Pokédex and Character subsections
+## Event-derived Pokédex and Inventory
 
 `pokedex.ts` validates copied/frozen per-species metadata (stable ID, display name,
 description, discoveryEvents and optional acquisitionEvents) before sessions start.
@@ -899,8 +909,8 @@ rejects revision-11 and older progress because Continue must not backfill or
 replay the newly added initial event. Checkpoints preserve exactly their
 journal-based discovery boundary, matching People semantics.
 
-Subsection selection changes only native pressed buttons and hidden content within
-Character; headings receive focus. The reader keeps the story DOM and any drafts,
+View selection changes only native pressed buttons and hidden content;
+headings receive focus. The reader keeps the story DOM and any drafts,
 errors or selections. Primary navigation stays in one row with 44px targets. The
 chapter is hidden in information views, and header height updates before focus plus
 on later resize/text scaling. No parser or gameplay transition changes are needed.

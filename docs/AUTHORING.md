@@ -1,5 +1,25 @@
 # Local Pokémon story authoring
 
+## Current interface
+
+The primary views are **Story | Inventory | Pokédex**, in that order. Inventory
+opens directly and shows authored item names and quantities, or an empty message.
+Character, Stats, Party, Skills, Journal and People have no visible controls.
+Statistics, skills, relationships, journal events, individual Pokémon IDs,
+nicknames and the six-member party limit remain supported by the engine and saves.
+Switching views preserves choices, text drafts, story state and saved bytes.
+Navigation stays sticky; the chapter bar appears beneath it only in Story.
+
+Pokédex discoveries still derive exclusively from committed authored journal
+events. Expandable entries can show local artwork. The species-ID map in
+`src/pokedex-view.ts` uses Vite-compatible `new URL(..., import.meta.url)` assets;
+Chikorita uses `images/152-chikorita.png`. To add another species, add its local
+asset and a matching stable species-ID map entry. Missing artwork leaves the
+text entry usable; failed image requests remove only the image. Artwork retains
+its transparency and aspect ratio. No save schema, identity or revision changes
+are needed for these presentation changes. The opening screen is unchanged.
+
+
 Use UTF-8 `.story` files. Read the full [language reference](SCRIPTING.md) and
 [engine boundaries](ENGINE.md). Declarations come first; effects follow a passage's
 title/checkpoint and precede prose. The public story is
@@ -26,7 +46,7 @@ is bounded and never proves every possible route safe.
 ## Private browser preview
 
 Use the local Vite server's `/author.html` page. Select your saved `.story`, optionally
-a `.people.json`, then New Game. The shared reader supports the four public views, party,
+a `.people.json`, then New Game. The shared reader supports the three public views and hidden party state,
 input, choices, pages and recovery. Files remain in the browser and saves use private
 memory, never public localStorage. Restart preview resets progress. Re-select files
 after edits, even with the same name. The passage index searches IDs/titles and
@@ -46,7 +66,7 @@ passages hide their headings.
 ## Trainer creation and companions
 
 Use a global `trainer_name` string with `*input_text`; use choices and ordinary sets
-for the five pronoun strings plus a plural-verb boolean. The current Chapter 1 has not yet introduced name or pronoun selection. Character displays values selected with `*stat`; there is no
+for the five pronoun strings plus a plural-verb boolean. The current Chapter 1 has not yet introduced name or pronoun selection. The engine retains values selected with `*stat` without displaying a Stats interface; there is no
 independent gender/background/class subsystem.
 
 Declare individuals with `*pokemon starter_piplup "Piplup"`. Join with
@@ -155,8 +175,7 @@ save formats remain unchanged.
 
 ## Pokédex installation, lookup events and observations
 
-The four primary views are Story, Character, Party and Pokédex. Character has
-Stats and Inventory only. People, Journal and Skills stay in engine state and
+The three primary views are Story, Inventory and Pokédex. Inventory is directly accessible. People, Journal and Skills stay in engine state and
 metadata without visible buttons. Chapter labels appear only in Story. Views, disclosure
 controls, and information cards are read-only and preserve choices, drafts and
 saved bytes. Entries start collapsed and use native keyboard-accessible details/

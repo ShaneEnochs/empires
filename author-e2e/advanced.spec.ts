@@ -9,7 +9,7 @@ for(const width of [320,375,768,1280])test('advanced example pages, keyboard cho
  await expect(page.locator('#story-content strong em')).toHaveText('Alexander');await expect(page.locator('#story-content')).toContainText('ALEXANDER');
  await expect(page.getByRole('radio')).toHaveCount(0);
  await page.getByRole('button',{name:'Continue',exact:true}).click();await expect(page.locator('#story-content')).toContainText('They are waiting.');
- await page.getByRole('button',{name:'Character',exact:true}).click();await page.getByRole('button',{name:'Story',exact:true}).click();
+ await page.getByRole('button',{name:'Inventory',exact:true}).click();await page.getByRole('button',{name:'Story',exact:true}).click();
  await expect(page.locator('#story-content')).toContainText('They are waiting.');await page.getByRole('button',{name:'Continue',exact:true}).click();
  await expect(page.getByRole('radio',{name:'Take the advanced route (10 tokens)',exact:true})).toBeDisabled();
  await page.getByRole('radio',{name:'Risk the crossing',exact:true}).check();await page.getByRole('button',{name:'Continue',exact:true}).click();
@@ -36,7 +36,7 @@ test('real reader resumes page two with exact temps and no repeated rewards usin
  await page.reload();await mount(raw);await page.getByRole('button',{name:'Continue Game',exact:true}).click();
  await expect(page.locator('#story-content')).toContainText('He is waiting.');
  expect(await page.evaluate(()=>Reflect.get(window,'__privateProgress'))).toBe(raw);
- await page.getByRole('button',{name:'Character',exact:true}).click();await page.getByRole('button',{name:'Inventory',exact:true}).click();await expect(page.getByRole('region',{name:'Inventory',exact:true})).toContainText('Letter × 1');
+ await page.getByRole('button',{name:'Inventory',exact:true}).click();await expect(page.getByRole('region',{name:'Inventory',exact:true})).toContainText('Letter × 1');
 });
 
 test('player input cannot introduce authored markup, inline expressions or commands',async({page})=>{

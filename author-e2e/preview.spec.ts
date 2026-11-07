@@ -59,11 +59,7 @@ test('local upload uses the shared reader, index, restart and isolated checkpoin
   await page.getByRole('button', { name: 'fatal: Fallen', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Passage reference' })).toContainText('Chapter: Arrival. Destinations: None.');
   await expect(page.locator('#passage-heading')).toHaveText('Camp');
-  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', 'Character', 'Party', 'Pokédex']);
-  await page.getByRole('button', { name: 'Character', exact: true }).click();
-  const character = page.getByRole('region', { name: 'Character', exact: true });
-  await expect(character.getByRole('group', { name: 'Character sections' }).getByRole('button')).toHaveText(['Stats', 'Inventory']);
-  await expect(character).toContainText('Ada');
+  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', 'Inventory', 'Pokédex']);
   await page.getByRole('button', { name: 'Inventory', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Inventory', exact: true })).toContainText('Token × 1');
   for (const hidden of ['Skills', 'Journal', 'People']) {
@@ -76,7 +72,6 @@ test('local upload uses the shared reader, index, restart and isolated checkpoin
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Try Again', exact: true }).click();
   await expect(page.locator('#passage-heading')).toHaveText('Camp');
-  await page.getByRole('button', { name: 'Character', exact: true }).click();
   await page.getByRole('button', { name: 'Inventory', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Inventory', exact: true })).toContainText('Token × 1');
   await page.getByRole('button', { name: 'Story', exact: true }).click();

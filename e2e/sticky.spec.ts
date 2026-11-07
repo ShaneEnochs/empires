@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { choose, expectPassage, openPanel, returnToStory, expectStartup, reachBriefing, centerWithEvidence } from './helpers';
 
 for (const width of [320, 375, 768, 1280]) {
-  test('four responsive tabs and the chapter stay together while scrolling at ' + width + 'px', async ({ page }) => {
+  test('three responsive tabs and the chapter stay together while scrolling at ' + width + 'px', async ({ page }) => {
     // A short viewport exercises substantial real scrolling even on brief passages.
     await page.setViewportSize({ width, height: 240 });
     await page.goto('/');
@@ -11,7 +11,7 @@ for (const width of [320, 375, 768, 1280]) {
     await expectStartup(page);
     await page.getByRole('button', { name: titlePage.newGameLabel, exact: true }).click();
     const navigation = page.getByRole('navigation', { name: 'Reading views' });
-    await expect(navigation.getByRole('button')).toHaveText(['Story', 'Character', 'Party', 'Pokédex']);
+    await expect(navigation.getByRole('button')).toHaveText(['Story', 'Inventory', 'Pokédex']);
     const dimensions = await navigation.getByRole('button').evaluateAll(buttons => buttons.map(button => {
       const rect = button.getBoundingClientRect();
       return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
@@ -29,7 +29,7 @@ for (const width of [320, 375, 768, 1280]) {
     await centerWithEvidence(page);
     await expect(page.locator('.chapter-label')).toHaveText('Night Center');
 
-    for (const view of ['Story', 'Character', 'Party', 'Pokédex'] as const) {
+    for (const view of ['Story', 'Inventory', 'Pokédex'] as const) {
       if (view === 'Story') await returnToStory(page); else await openPanel(page, view);
       await expect(page.getByRole('button', { name: view, exact: true })).toHaveAttribute('aria-pressed', 'true');
       const heading = page.getByRole('heading', { level: view === 'Story' ? 1 : 2 });
@@ -66,7 +66,7 @@ for (const width of [320, 375, 768, 1280]) {
     // Keyboard focus on a tab stays visible above scrolled reading content.
     await navigation.getByRole('button', { name: 'Story', exact: true }).focus();
     await page.keyboard.press('Tab');
-    const character = navigation.getByRole('button', { name: 'Character', exact: true });
+    const character = navigation.getByRole('button', { name: 'Inventory', exact: true });
     await expect(character).toBeFocused();
     await expect(character).toBeInViewport();
     const outline = await character.evaluate(element => getComputedStyle(element).outlineStyle);

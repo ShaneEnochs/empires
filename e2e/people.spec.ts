@@ -12,11 +12,9 @@ async function knownPeople(page: import('@playwright/test').Page): Promise<strin
   return people.filter(person => person.discoveryEvents.some(id => ids.has(id))).map(person => person.name);
 }
 
-test('Character exposes only Stats and Inventory while other data remains stored', async ({ page }) => {
+test('Inventory is directly accessible while other data remains stored', async ({ page }) => {
   await startGame(page);
-  const character = await openPanel(page, 'Character');
-  await expect(character.getByRole('group', { name: 'Character sections' }).getByRole('button')).toHaveText(['Stats', 'Inventory']);
-  await expect(character.getByRole('button', { name: 'Stats', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  for (const name of ['Character', 'Party', 'Stats']) await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0);
   const inventory = await openPanel(page, 'Inventory');
   await expect(inventory.getByRole('listitem')).toHaveText(['Dispatch Coin × 4', 'Emergency Writ × 1']);
   await expect(page.getByRole('button', { name: 'People', exact: true })).toHaveCount(0);

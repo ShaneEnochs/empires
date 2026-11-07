@@ -55,55 +55,9 @@ function list(section: HTMLElement, entries: readonly string[], emptyText: strin
 
 /** Read-only information views; gameplay actions remain in the shared reader. */
 export function createPanels(story: Story, game: Game, pokedex: readonly PokedexEntry[], select: (title: string) => void) {
-  const character = panel('character', 'Character', select, section => {
-    const navigation = document.createElement('div');
-    navigation.className = 'character-navigation';
-    navigation.setAttribute('role', 'group');
-    navigation.setAttribute('aria-label', 'Character sections');
-    const views = ['Stats', 'Inventory'].map(title => {
-      const id = title.toLowerCase();
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = title;
-      button.setAttribute('aria-controls', 'character-' + id);
-      const content = document.createElement('section');
-      content.id = 'character-' + id;
-      content.setAttribute('aria-labelledby', id + '-heading');
-      const heading = document.createElement('h3');
-      heading.id = id + '-heading';
-      heading.textContent = title;
-      heading.tabIndex = -1;
-      content.append(heading);
-      if (title === 'Stats') {
-        if (story.stats.length === 0) list(content, [], 'No character information recorded yet.');
-        else {
-          const stats = document.createElement('dl');
-          for (const { label, value } of characterStats(story, game.state)) {
-            const term = document.createElement('dt'); term.textContent = label;
-            const description = document.createElement('dd'); description.textContent = value;
-            stats.append(term, description);
-          }
-          content.append(stats);
-        }
-      } else if (title === 'Inventory') {
-        list(content, Object.entries(game.state.inventory).map(([id, quantity]) =>
-          story.items.find(item => item.id === id)!.name + ' × ' + quantity), 'No items in inventory.');
-      }
-      button.addEventListener('click', () => {
-        show(title);
-        heading.focus();
-      });
-      return { title, button, content };
-    });
-    function show(title: string): void {
-      for (const view of views) {
-        view.button.setAttribute('aria-pressed', String(view.title === title));
-        view.content.hidden = view.title !== title;
-      }
-    }
-    navigation.append(...views.map(view => view.button));
-    section.append(navigation, ...views.map(view => view.content));
-    show('Stats');
+  const inventory = panel('inventory', 'Inventory', select, section => {
+    list(section, Object.entries(game.state.inventory).map(([id, quantity]) =>
+      story.items.find(item => item.id === id)!.name + ' × ' + quantity), 'No items in inventory.');
   });
 
   const dex = panel('pokedex', 'Pokédex', select, section => {
@@ -127,25 +81,7 @@ export function createPanels(story: Story, game: Game, pokedex: readonly Pokedex
     section.append(entries);
   });
 
-  const party = panel('party', 'Party', select, section => {
-    const heading = document.createElement('h3');
-    heading.textContent = 'Your Pokémon';
-    const count = document.createElement('p');
-    count.textContent = `${game.state.party.length} / 6`;
-    section.append(heading, count);
-    if (game.state.party.length === 0) {
-      list(section, [], "You haven't partnered with any Pokémon yet.");
-    } else {
-      const members = document.createElement('ol');
-      for (const member of game.state.party) {
-        const item = document.createElement('li');
-        item.textContent = member.nickname ? `${member.nickname} (${member.species})` : member.species;
-        members.append(item);
-      }
-      section.append(members);
-    }
-  });
-  const panels = [character, party, dex];
+  const panels = [inventory, dex];
   return {
     buttons: panels.map(panel => panel.button),
     sections: panels.map(panel => panel.section),

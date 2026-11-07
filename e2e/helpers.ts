@@ -6,9 +6,8 @@ import { checkpointKey, STORAGE_KEY } from '../src/storage';
 export const crisisKey = checkpointKey({ storyId: 'harbor-practice', storyRevision: 1 });
 export const cityKey = STORAGE_KEY;
 export const arrival = 'The last ferry reached Bellwether before the river closed.';
-export const panelNames = ['Character', 'Party', 'Pokédex'] as const;
+export const panelNames = ['Inventory', 'Pokédex'] as const;
 type PanelName = typeof panelNames[number];
-type CharacterSection = 'Stats' | 'Inventory';
 type HiddenSection = 'Skills' | 'Journal';
 
 export async function expectPassage(page: Page, title: string): Promise<void> {
@@ -37,13 +36,7 @@ export async function startGame(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: titlePage.newGameLabel, exact: true })).toHaveCount(0);
 }
 
-export async function openPanel(page: Page, name: PanelName | CharacterSection): Promise<Locator> {
-  if (name === 'Stats' || name === 'Inventory') {
-    const character = await openPanel(page, 'Character');
-    const button = character.getByRole('button', { name, exact: true });
-    if (await button.getAttribute('aria-pressed') !== 'true') await button.click();
-    return character.getByRole('region', { name, exact: true });
-  }
+export async function openPanel(page: Page, name: PanelName): Promise<Locator> {
   const button = page.getByRole('button', { name, exact: true });
   if (await button.getAttribute('aria-pressed') !== 'true') await button.click();
   const section = page.getByRole('region', { name, exact: true });
@@ -56,11 +49,12 @@ export async function returnToStory(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: 'Story', exact: true })).toHaveAttribute('aria-pressed', 'true');
 }
 
-export async function expectCharacter(page: Page, values: string[]): Promise<void> {
-  const panel = await openPanel(page, 'Character');
-  await expect(panel.locator('dt')).toHaveText(['Trainer', 'Authority', 'Public trust', 'Settlement']);
-  await expect(panel.locator('dd')).toHaveText(values);
-  await returnToStory(page);
+export async function expectCharacter(page: Page, values: string[], attemptedSave?: string): Promise<void> {
+  const raw = JSON.parse(attemptedSave ?? (await checkpointRecord(page))!);
+  const variables = raw.currentState.variables;
+  expect([variables.trainer_name, variables.authority, variables.trust, variables.plan].map(String)).toEqual(values);
+  for (const name of ['Character', 'Party', 'Stats', 'Skills', 'Journal', 'People'])
+    await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0);
 }
 
 export async function recordedState(page: Page): Promise<{ journal: { id: string; chapter: string; text: string }[]; skills: string[] }> {
@@ -70,7 +64,7 @@ export async function recordedState(page: Page): Promise<{ journal: { id: string
   return record.currentState ?? record.checkpoint.state;
 }
 
-export async function expectItems(page: Page, name: Exclude<PanelName, 'Character'> | CharacterSection | HiddenSection, items: string[]): Promise<void> {
+export async function expectItems(page: Page, name: PanelName | HiddenSection, items: string[]): Promise<void> {
   if (name === 'Skills' || name === 'Journal') {
     // The engine still tracks this data, but these tabs are intentionally hidden.
     const state = await recordedState(page);

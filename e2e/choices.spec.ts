@@ -156,9 +156,7 @@ test('failed Continue retains its selection and error, with no effects or save w
   await page.getByRole('button', { name: titlePage.continueGameLabel, exact: true }).click();
   await choose(page, 'Present the attested grain accounts');
   const saved = await checkpointRecord(page, key);
-  const character = await openPanel(page, 'Character');
-  const values = await character.locator('dd').allTextContents();
-  await returnToStory(page);
+  const values = JSON.parse((await checkpointRecord(page))!).currentState.variables;
   const entries = (await recordedState(page)).journal.map(event => event.text);
   await page.evaluate(() => {
     let writes = 0;
@@ -175,10 +173,7 @@ test('failed Continue retains its selection and error, with no effects or save w
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeEnabled();
   const error = 'Story error: Passage "ending_compact": insufficient inventory for "grain_sack"; cannot remove 6 from 3.';
   await expect(page.getByRole('alert')).toHaveText(error);
-  const after = await openPanel(page, 'Character');
-  await expect(after.locator('dt')).toHaveText(['Trainer', 'Authority', 'Public trust', 'Settlement']);
-  await expect(after.locator('dd')).toHaveText(values);
-  await returnToStory(page);
+  expect(JSON.parse((await checkpointRecord(page))!).currentState.variables).toEqual(values);
   await expectItems(page, 'Journal', entries);
   await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Grain Sack × 3', 'Attested Grain Accounts × 1']);
   await openPanel(page, 'Pokédex');
