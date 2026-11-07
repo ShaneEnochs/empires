@@ -62,7 +62,7 @@ interpreter rewrite, or unrelated abstraction is needed.
   current authored concluding input action; navigation cannot bypass it. Accept
   text before destination checkpoint/effects and roll it back on any failure.
 - Pronouns use ordinary global strings and an authored plural-verb boolean, not a
-  gender subsystem. Character shows current name/pronouns with existing stats.
+  gender subsystem. Name/pronoun variables and stats remain available to story logic.
 - Checkpoints capture the entire pre-entry state; initial entry and authored
   checkpoint entry share one path. Recovery replays effects once and does not
   recapture. Death is immutable passage metadata, not gameplay state. Try Again is
@@ -84,12 +84,12 @@ interpreter rewrite, or unrelated abstraction is needed.
   confirms replacement, constructs successfully, then writes once before activation.
   Failure preserves old bytes/game. Automatic write failures keep committed gameplay
   and display a warning. Storage failure requires explicit unsaved-play consent.
-- Keep Story, Character, Party, and Pokédex exclusive inline views.
-  Character contains selectable Stats (default) and Inventory. Skills, Journal, and
+- Keep Story, Inventory, and Pokédex exclusive inline views.
+  Character, Stats and Party have no visible controls. Skills, Journal, and
   People remain available as underlying engine state/metadata, not visible controls.
   Preserve the hidden story DOM, draft text/choices/errors and save warnings. Switching
   views changes no gameplay or storage. Focus the active heading. Use native pressed
-  buttons, 44px targets, a single-row four-tab layout at 320px, sticky navigation and
+  buttons, 44px targets, a single-row three-tab layout at 320px, sticky navigation and
   Story-only chapter, clear focus, no animation or nested panel scrolling, and no wrapping tab labels.
 - `*hide_title` keeps the required authored title accessible without displaying a large passage heading. Number public chapters and reserve visible headings for significant scene transitions.
 - Choices are native unselected radios; Continue alone commits. Optional `[set global literal]` suffixes on choices apply before destination entry. For two choices sharing a destination, pass the selected Choice object, not just its destination ID. Failed navigation

@@ -87,8 +87,8 @@ test('reload and Continue preserve both saved records without writing or replayi
     await page.reload();
     await expectStartup(page);
     await action(page, titlePage.continueGameLabel, 'Six Sacks and a Day');
-    await crisisCharacter(page, ['Rowan 周', '3', '1', 'Undecided']);
     expect(await storageAccess(page)).toEqual([{ operation: 'read', key: crisisKey }]);
+    await crisisCharacter(page, ['Rowan 周', '3', '1', 'Undecided']);
     await expectItems(page, 'Skills', ['Rescue Training', 'Channel Knowledge']);
     await expectItems(page, 'Inventory', ['Dispatch Coin × 4', 'Emergency Writ × 1', 'Grain Sack × 6']);
     expect(await records(page)).toEqual(saved);
@@ -220,7 +220,10 @@ test('failed Harbor Practice automatic save keeps its in-memory recovery and war
   await page.evaluate(key => {
     const setItem = Storage.prototype.setItem;
     Storage.prototype.setItem = function (name: string, value: string) {
-      if (this === localStorage && name === key) throw new DOMException('Storage full', 'QuotaExceededError');
+      if (this === localStorage && name === key) {
+        Reflect.set(window, '__attemptedSave', value);
+        throw new DOMException('Storage full', 'QuotaExceededError');
+      }
       return setItem.call(this, name, value);
     };
   }, crisisKey);
@@ -236,7 +239,7 @@ test('failed Harbor Practice automatic save keeps its in-memory recovery and war
   await action(page, 'Plan an evacuation of the lower town', 'Boats Before Possessions');
   await action(page, 'Force the damaged sluice as a shortcut despite the risk', 'The Gate Gives Way');
   await action(page, 'Try Again', 'When the Seal Expires');
-  await crisisCharacter(page, ['Rowan 周', '4', '2', 'Undecided']);
+  await crisisCharacter(page, ['Rowan 周', '4', '2', 'Undecided'], await page.evaluate(() => Reflect.get(window, '__attemptedSave')));
   await expectItems(page, 'Inventory', ['Dispatch Coin × 2', 'Grain Sack × 8', 'Attested Grain Accounts × 1']);
   await expect(page.getByRole('alert')).toHaveText(warning);
   expect(await records(page)).toEqual(saved);

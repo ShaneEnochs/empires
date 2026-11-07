@@ -25,7 +25,7 @@ for (const width of [320, 375, 768, 1280]) {
     }
     const navigation = page.getByRole('navigation', { name: 'Reading views' });
     const buttons = navigation.getByRole('button');
-    await expect(buttons).toHaveText(['Story', 'Character', 'Party', 'Pokédex']);
+    await expect(buttons).toHaveText(['Story', 'Inventory', 'Pokédex']);
     const dimensions = await buttons.evaluateAll(elements => elements.map(element => {
       const rect = element.getBoundingClientRect();
       const style = getComputedStyle(element);
@@ -81,7 +81,7 @@ for (const width of [320, 375, 768, 1280]) {
     }
     await navigation.getByRole('button', { name: 'Story', exact: true }).focus();
     await page.keyboard.press('Tab');
-    const character = navigation.getByRole('button', { name: 'Character', exact: true });
+    const character = navigation.getByRole('button', { name: 'Inventory', exact: true });
     await expect(character).toBeFocused();
     await expect(character).toHaveCSS('text-decoration-line', 'none');
     expect(await character.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe('none');

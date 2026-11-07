@@ -1,5 +1,25 @@
 # The Aurelian League
 
+## Current interface
+
+The primary views are **Story | Inventory | Pokédex**, in that order. Inventory
+opens directly and shows authored item names and quantities, or an empty message.
+Character, Stats, Party, Skills, Journal and People have no visible controls.
+Statistics, skills, relationships, journal events, individual Pokémon IDs,
+nicknames and the six-member party limit remain supported by the engine and saves.
+Switching views preserves choices, text drafts, story state and saved bytes.
+Navigation stays sticky; the chapter bar appears beneath it only in Story.
+
+Pokédex discoveries still derive exclusively from committed authored journal
+events. Expandable entries can show local artwork. The species-ID map in
+`src/pokedex-view.ts` uses Vite-compatible `new URL(..., import.meta.url)` assets;
+Chikorita uses `images/152-chikorita.png`. To add another species, add its local
+asset and a matching stable species-ID map entry. Missing artwork leaves the
+text entry usable; failed image requests remove only the image. Artwork retains
+its transparency and aspect ratio. No save schema, identity or revision changes
+are needed for these presentation changes. The opening screen is unchanged.
+
+
 A Pokémon interactive-fiction mystery set in Aurelia, a remote Roman-influenced
 region. You play a junior Aurelian League field warden who believes their work
 helps wild Pokémon. The League's public competition conceals a Team Rocket
@@ -29,14 +49,13 @@ Vite prints the local address. Select New Game, read each passage, and use Conti
 Choice menus require selecting an option before Continue. Text input accepts 1–80
 Unicode code points, trims outer whitespace, and rejects controls and line breaks.
 
-The four read-only primary views are Story, Character, Party, and Pokédex.
-Character contains Stats (default) and Inventory. Chapter 1 shows the junior
+The three read-only primary views are Story, Inventory, and Pokédex.
+Inventory is directly accessible; statistics and party state remain hidden. Chapter 1 shows the junior
 field-warden occupation and the seven components of the assigned field kit.
 Skills, Journal, and People remain validated and tracked by the engine but are
 not exposed as navigation tabs or Character sections. The chapter bar appears only
 in Story, and `*hide_title` suppresses secondary passage headings visually without
-removing their accessible labels. Party shows up to six companions in joining
-order, as `Pip (Piplup)` or `Piplup`, with no management buttons.
+removing their accessible labels. Party remains hidden; its individual IDs, nicknames and six-member limit are retained.
 Public Sans loads via the Google Fonts CDN, with system sans-serif fallback.
 Tabs stay on one row at narrow widths with 44px touch targets. Opening information
 never advances the story, submits a draft, or saves.

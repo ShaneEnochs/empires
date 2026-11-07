@@ -17,6 +17,6 @@ for (const [label, subject, verb] of [
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.locator('#story-content')).toContainText(`${subject} ${verb} ready to begin.`);
-  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', 'Character', 'Party', 'Pokédex']);
+  await expect(page.getByRole('navigation', { name: 'Reading views' }).getByRole('button')).toHaveText(['Story', 'Inventory', 'Pokédex']);
   await expect(page.getByRole('button', { name: 'Journal', exact: true })).toHaveCount(0);
 });
